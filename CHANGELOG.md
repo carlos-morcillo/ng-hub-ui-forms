@@ -2,36 +2,30 @@
 
 All notable changes to `ng-hub-ui-forms` are documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [21.0.0] - 2026-06-15
 
-### Added
-
-- `hub-select` now exposes an `appendTo` input (default `'body'`). The dropdown panel renders to `document.body` so it escapes `overflow`/`transform` ancestors (cards, scroll containers, modals) and is never clipped. Pass `[appendTo]="undefined"` to render it inline instead.
-
-### Changed
-
-- **BREAKING:** the `hubForm` directive no longer exposes a `hubSubmit` output. Bind the form's own idiomatic `(submit)` event instead of `(hubSubmit)`. The directive augments that native submit (prevents default, marks the tree as touched, reveals form-level errors); dropping the custom output also fixes a latent double-emit that occurs when a directive output named `submit` shadows the native `submit` event on a `<form>`.
-- `hub-select` in `buttons` format now renders the options as a single joined button group (shared borders, only the outer corners rounded) instead of separate gapped buttons.
-
-### Fixed
-
-- `hub-select` now actually forwards the projected ng-select template directives (`ng-option-tmp`, `ng-optgroup-tmp`, `ng-label-tmp`, `ng-multi-label-tmp`, `ng-header-tmp`, `ng-footer-tmp`, `ng-notfound-tmp`) to the underlying engine. Previously these were exported as a customization passthrough but ng-select's `contentChild` queries did not see through the wrapper's `<ng-content>`, so custom option/label templates were silently ignored.
-- Helper text (`formText`) and validation feedback now always render below the control in `horizontal` label layout, instead of being placed in a column to the right of the input. The horizontal field is now a 2-column grid (label · stacked control/help/errors).
-- In `horizontal` layout the label now shrinks to its content (the control takes the remaining space) and ellipsizes once it reaches the max width, instead of always reserving a fixed-width column.
-
-### Changed
-
-- Renamed token `--hub-form-label-horizontal-width` (fixed width) to `--hub-form-label-horizontal-max-width` (content-sized label, capped at this max with ellipsis). Default `12rem`.
+Initial release of the `ng-hub-ui-forms` monolith form-fields suite.
 
 ### Added
 
-- `hub-otp-input` — segmented one-time-code field (verification / 2FA / PIN) with auto-advance, backspace navigation, arrow keys and full-code paste. Inputs: `length`, `mode` (`numeric` | `alphanumeric` | `alpha`), `secret`, `separatorEvery`, `label`, `formText`. Implements `ControlValueAccessor`; emits `completed` when full.
-- `hub-input` pattern masks: `mask` input (tokens `0` digit · `A` letter · `*` alphanumeric, other chars are literal separators) plus `unmaskValue` to store the raw characters. Exposes `applyMask` / `isMaskActive` utilities. Examples for card, IBAN, phone, expiry and date.
-- Library scaffolding for `ng-hub-ui-forms` (monolith form-fields suite).
-- Shared base class `HubFormControl` with reactive `required` tracking and `show`/`hide`/`toggle` helpers.
-- Marker directives: `hubFormText`, `hubValidationError`, `hubLegend`.
-- Pipes: `hubInvertColor`, `hubJoinButLast`, `hubMap`, `hubSafeUrl`, `hubSnakeUpper`, `hubUcfirst`.
-- Cross-field validator `hubAreEqual`.
-- Shared utilities (`isDefined`, `uuid`, `get`, validator helpers, etc.).
+- **Fields**: `hub-input` (text/number/email/password/color/switch/checkbox/counter, input-group addons), `hub-textarea` (+ `hubAutoresize`), `hub-slider`, `hub-select` (dropdown/buttons/checkbox/radio formats), `hub-datepicker` (single & range), and `hub-otp-input` (segmented one-time-code with auto-advance, backspace/arrow navigation and full-code paste; `length`, `mode`, `secret`, `separatorEvery` inputs).
+- **Automatic error display** at every level: fields show their control errors; `hub-fieldset`, `form[hubForm]` and `hub-legend` surface group- and form-level (cross-field) errors with no wiring.
+- **`hub-input` pattern masks**: `mask` input (tokens `0` digit · `A` letter · `*` alphanumeric; other chars are literal separators) + `unmaskValue` to store the raw characters; `applyMask` / `isMaskActive` utilities.
+- **`hub-select` `appendTo`** input (default `'body'`): the dropdown panel renders to `document.body`, so it escapes `overflow`/`transform` ancestors (cards, scroll containers, modals) and is never clipped. Pass `[appendTo]="undefined"` to render it inline.
+- **`hub-select` template passthrough**: projected ng-select template directives (`ng-option-tmp`, `ng-optgroup-tmp`, `ng-label-tmp`, `ng-multi-label-tmp`, `ng-header-tmp`, `ng-footer-tmp`, `ng-notfound-tmp`) are forwarded to the underlying engine, so custom option/label templates work through the wrapper.
+- **Config**: `provideHubForms()` / `HUB_FORMS_CONFIG` for invalid-feedback templates, datepicker locale/labels and more (app-wide or per instance).
+- **Base classes**: `HubFormControl`, `HubFieldControl`, `HubGroupControl` (reactive `required` tracking, `show`/`hide`/`toggle` helpers).
+- **Marker directives**: `hubFormText`, `hubValidationError`, `hubLegend`.
+- **Validator**: cross-field `hubAreEqual`.
+- **Pipes**: `hubInvertColor`, `hubJoinButLast`, `hubMap`, `hubSafeUrl`, `hubSnakeUpper`, `hubUcfirst`.
+- **Signal Forms entry point** `ng-hub-ui-forms/signals` (opt-in): `HubSignalFieldControl`, `hubSignalErrorMessages`. The core never imports `@angular/forms/signals`, staying Angular-21-safe.
+- **Theming**: canonical `--hub-*` CSS variables with runtime dark mode; ships shared SCSS tokens (`ng-hub-ui-forms/src/lib/styles`).
+
+### Notes
+
+- `form[hubForm]` augments the native form `submit` (prevents default, marks the tree as touched, reveals form-level errors); bind the form's own `(submit)` for your handler — there is no custom output, which keeps the API idiomatic and avoids the double-emit a directive output named `submit` would cause on a `<form>`.
+- The horizontal label layout is a 2-column grid (label · stacked control/help/errors); the label sizes to its content and ellipsizes at `--hub-form-label-horizontal-max-width` (default `12rem`).
+- `hub-select` in `buttons` format renders a single joined button group (shared borders, rounded outer corners).
