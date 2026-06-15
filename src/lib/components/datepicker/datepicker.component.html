@@ -1,0 +1,139 @@
+<div
+	class="hub-field hub-datepicker"
+	[class.hub-field--horizontal]="labelType() === _labelTypes.Horizontal || (!label() && required())"
+	[class.hub-field--disabled]="disabled()"
+	[class.hub-field--invalid]="isInvalid"
+>
+	@if (label() || required()) {
+		<label [for]="id" class="hub-field__label">
+			{{ label() }}
+			@if (required()) {
+				<span class="hub-field__required" aria-hidden="true">*</span>
+			}
+		</label>
+	}
+
+	<div class="hub-field__body hub-datepicker__trigger" cdkOverlayOrigin #trigger="cdkOverlayOrigin">
+		<input
+			class="hub-field__control hub-datepicker__input"
+			[class.hub-field__control--invalid]="isInvalid"
+			[class.hub-datepicker__input--clearable]="clearable() && displayValue()"
+			[id]="id"
+			type="text"
+			readonly
+			[value]="displayValue()"
+			[placeholder]="placeholder()"
+			[disabled]="disabled()"
+			[required]="!!required()"
+			[attr.aria-invalid]="isInvalid"
+			[attr.aria-expanded]="_open()"
+			aria-haspopup="dialog"
+			(click)="toggleCalendar()"
+			(blur)="handleBlur($event)"
+		/>
+		@if (clearable() && displayValue() && !disabled() && !readonly()) {
+			<button type="button" class="hub-datepicker__clear" [attr.aria-label]="_labels().clear" (click)="clear()">&times;</button>
+		}
+		<button
+			type="button"
+			class="hub-datepicker__icon"
+			tabindex="-1"
+			[attr.aria-label]="_labels().openCalendar"
+			[disabled]="disabled() || readonly()"
+			(click)="toggleCalendar()"
+		></button>
+	</div>
+
+	@if (formText() || formTextTmp()) {
+		<div class="hub-field__form-text" [class.hub-field__form-text--disabled]="disabled()">
+			@if (formTextTmp()) {
+				<ng-container [ngTemplateOutlet]="formTextTmp()!"></ng-container>
+			} @else {
+				{{ formText() }}
+			}
+		</div>
+	}
+
+	@if (isInvalid) {
+		<div class="hub-field__feedback" role="alert">
+			<ul>
+				@for (error of errors | keyvalue; track error.key) {
+					<li>
+						<ng-container
+							[ngTemplateOutlet]="_errorTemplates[error.key] ?? defaultErrorTpt"
+							[ngTemplateOutletContext]="{ $implicit: error.value, value: error.value }"
+						></ng-container>
+						<ng-template #defaultErrorTpt>
+							<span class="hub-field__feedback-text" [innerHTML]="getInvalidFeedbackTemplate(error.key, error.value)"></span>
+						</ng-template>
+					</li>
+				}
+			</ul>
+		</div>
+	}
+</div>
+
+<ng-template
+	cdkConnectedOverlay
+	[cdkConnectedOverlayOrigin]="trigger"
+	[cdkConnectedOverlayOpen]="_open()"
+	[cdkConnectedOverlayHasBackdrop]="true"
+	cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+	[cdkConnectedOverlayOffsetY]="4"
+	(backdropClick)="close()"
+	(detach)="close()"
+>
+	<div class="hub-datepicker__panel" role="dialog" [attr.aria-label]="monthYearLabel()">
+		<header class="hub-datepicker__header">
+			<div class="hub-datepicker__nav-group">
+				<button type="button" class="hub-datepicker__nav" [attr.aria-label]="_labels().previousYear" (click)="shiftMonth(-12)">«</button>
+				<button type="button" class="hub-datepicker__nav" [attr.aria-label]="_labels().previousMonth" (click)="shiftMonth(-1)">‹</button>
+			</div>
+			<span class="hub-datepicker__title" aria-live="polite">{{ monthYearLabel() }}</span>
+			<div class="hub-datepicker__nav-group">
+				<button type="button" class="hub-datepicker__nav" [attr.aria-label]="_labels().nextMonth" (click)="shiftMonth(1)">›</button>
+				<button type="button" class="hub-datepicker__nav" [attr.aria-label]="_labels().nextYear" (click)="shiftMonth(12)">»</button>
+			</div>
+		</header>
+
+		<div class="hub-datepicker__weekdays" aria-hidden="true">
+			@for (wd of weekdays(); track $index) {
+				<span class="hub-datepicker__weekday">{{ wd }}</span>
+			}
+		</div>
+
+		<div class="hub-datepicker__grid" role="grid" (keydown)="onGridKeydown($event)">
+			@for (cell of grid(); track cell.date.getTime()) {
+				<button
+					type="button"
+					role="gridcell"
+					class="hub-datepicker__cell"
+					[class.hub-datepicker__cell--outside]="!cell.currentMonth"
+					[class.hub-datepicker__cell--today]="cell.today"
+					[class.hub-datepicker__cell--selected]="cell.selected || cell.rangeStart || cell.rangeEnd"
+					[class.hub-datepicker__cell--range-start]="cell.rangeStart"
+					[class.hub-datepicker__cell--range-end]="cell.rangeEnd"
+					[class.hub-datepicker__cell--in-range]="cell.inRange"
+					[attr.data-time]="cell.date.getTime()"
+					[attr.tabindex]="cell.focused ? 0 : -1"
+					[attr.aria-selected]="cell.selected || cell.rangeStart || cell.rangeEnd"
+					[disabled]="cell.disabled"
+					(click)="selectDay(cell)"
+				>
+					{{ cell.day }}
+				</button>
+			}
+		</div>
+
+		@if (showToday() || clearable()) {
+			<footer class="hub-datepicker__footer">
+				@if (showToday()) {
+					<button type="button" class="hub-datepicker__action" (click)="goToToday()">{{ _labels().today }}</button>
+				}
+				@if (clearable()) {
+					<button type="button" class="hub-datepicker__action" (click)="clear()">{{ _labels().clear }}</button>
+				}
+			</footer>
+		}
+	</div>
+</ng-template>

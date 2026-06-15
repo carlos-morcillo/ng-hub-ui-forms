@@ -1,0 +1,33 @@
+<fieldset class="hub-fieldset" [class.hub-fieldset--invalid]="isInvalid">
+	@if (legend() || legendTmp()) {
+		<legend class="hub-fieldset__legend">
+			@if (legendTmp()) {
+				<ng-container [ngTemplateOutlet]="legendTmp()!"></ng-container>
+			} @else {
+				{{ legend() }}
+			}
+		</legend>
+	}
+
+	<div class="hub-fieldset__content">
+		<ng-content></ng-content>
+	</div>
+
+	@if (isInvalid) {
+		<div class="hub-field__feedback" role="alert">
+			<ul>
+				@for (error of errors | keyvalue; track error.key) {
+					<li>
+						<ng-container
+							[ngTemplateOutlet]="_errorTemplates[error.key] ?? defaultErrorTpt"
+							[ngTemplateOutletContext]="{ $implicit: error.value, value: error.value }"
+						></ng-container>
+						<ng-template #defaultErrorTpt>
+							<span class="hub-field__feedback-text" [innerHTML]="getInvalidFeedbackTemplate(error.key, error.value)"></span>
+						</ng-template>
+					</li>
+				}
+			</ul>
+		</div>
+	}
+</fieldset>

@@ -1,0 +1,67 @@
+<div
+	class="hub-field hub-textarea"
+	[class.hub-field--horizontal]="labelType() === _labelTypes.Horizontal || (!label() && required())"
+	[class.hub-field--disabled]="disabled()"
+	[class.hub-field--invalid]="isInvalid"
+>
+	@if (label() || required()) {
+		<label [for]="id" class="hub-field__label">
+			{{ label() }}
+			@if (required()) {
+				<span class="hub-field__required" aria-hidden="true">*</span>
+			}
+		</label>
+	}
+
+	<div class="hub-field__body">
+		<textarea
+			class="hub-field__control hub-textarea__control"
+			[class.hub-field__control--invalid]="isInvalid"
+			[id]="id"
+			[hubAutoresize]="autoresize()"
+			[ngModel]="_value()"
+			(ngModelChange)="setValue($event)"
+			[attr.rows]="rows()"
+			[attr.cols]="cols()"
+			[attr.maxlength]="maxlength()"
+			[placeholder]="placeholder()"
+			[disabled]="disabled()"
+			[readonly]="readonly()"
+			[required]="!!required()"
+			[attr.aria-invalid]="isInvalid"
+			[style.width]="cols() ? 'auto' : '100%'"
+		></textarea>
+	</div>
+
+	@if (counter()) {
+		<div class="hub-textarea__counter" [class.hub-field__form-text--disabled]="disabled()">{{ counterText() }}</div>
+	}
+
+	@if (formText() || formTextTmp()) {
+		<div class="hub-field__form-text" [class.hub-field__form-text--disabled]="disabled()">
+			@if (formTextTmp()) {
+				<ng-container [ngTemplateOutlet]="formTextTmp()!"></ng-container>
+			} @else {
+				{{ formText() }}
+			}
+		</div>
+	}
+
+	@if (isInvalid) {
+		<div class="hub-field__feedback" role="alert">
+			<ul>
+				@for (error of errors | keyvalue; track error.key) {
+					<li>
+						<ng-container
+							[ngTemplateOutlet]="_errorTemplates[error.key] ?? defaultErrorTpt"
+							[ngTemplateOutletContext]="{ $implicit: error.value, value: error.value }"
+						></ng-container>
+						<ng-template #defaultErrorTpt>
+							<span class="hub-field__feedback-text" [innerHTML]="getInvalidFeedbackTemplate(error.key, error.value)"></span>
+						</ng-template>
+					</li>
+				}
+			</ul>
+		</div>
+	}
+</div>

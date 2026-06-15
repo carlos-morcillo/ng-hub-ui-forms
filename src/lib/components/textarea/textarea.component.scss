@@ -1,0 +1,26 @@
+// `<hub-textarea>` — component-specific structure only.
+// Shared chrome + tokens come from the global `styles/_field.scss` + `_tokens.scss`.
+
+hub-textarea {
+	display: block;
+}
+
+hub-textarea.hidden-control {
+	display: none !important;
+}
+
+.hub-textarea {
+	&__control {
+		min-height: var(--hub-textarea-min-height);
+		padding: var(--hub-textarea-padding-y) var(--hub-textarea-padding-x);
+		border-radius: var(--hub-textarea-border-radius);
+		resize: vertical;
+	}
+
+	&__counter {
+		margin-top: var(--hub-form-text-margin-top);
+		color: var(--hub-form-text-color);
+		font-size: var(--hub-form-text-font-size);
+		text-align: right;
+	}
+}

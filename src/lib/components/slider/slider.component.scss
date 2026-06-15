@@ -1,0 +1,154 @@
+// `<hub-slider>` — component-specific structure only.
+// `--hub-slider-percent` is set inline (0–100) and drives both the filled track
+// and the value bubble position.
+
+hub-slider {
+	display: block;
+}
+
+hub-slider.hidden-control {
+	display: none !important;
+}
+
+.hub-slider {
+	&__range {
+		position: relative;
+		padding-top: 1.75rem; // room for the value bubble
+	}
+
+	&__track {
+		width: var(--hub-slider-track-width);
+		height: var(--hub-slider-track-height);
+		margin: 0;
+		appearance: none;
+		-webkit-appearance: none;
+		background: linear-gradient(
+			to right,
+			var(--hub-slider-track-fill-bg) calc(var(--hub-slider-percent) * 1%),
+			var(--hub-slider-track-bg) calc(var(--hub-slider-percent) * 1%)
+		);
+		border-radius: var(--hub-slider-track-border-radius);
+		cursor: pointer;
+
+		&:disabled {
+			opacity: var(--hub-form-disabled-opacity);
+			cursor: not-allowed;
+		}
+
+		&::-webkit-slider-thumb {
+			appearance: none;
+			-webkit-appearance: none;
+			width: var(--hub-slider-thumb-width);
+			height: var(--hub-slider-thumb-height);
+			border-radius: var(--hub-slider-thumb-border-radius);
+			background: var(--hub-slider-thumb-bg);
+			border: var(--hub-slider-thumb-border);
+			box-shadow: var(--hub-slider-thumb-shadow);
+			cursor: pointer;
+		}
+
+		&::-moz-range-thumb {
+			width: var(--hub-slider-thumb-width);
+			height: var(--hub-slider-thumb-height);
+			border-radius: var(--hub-slider-thumb-border-radius);
+			background: var(--hub-slider-thumb-bg);
+			border: var(--hub-slider-thumb-border);
+			box-shadow: var(--hub-slider-thumb-shadow);
+			cursor: pointer;
+		}
+
+		&::-moz-range-track {
+			height: var(--hub-slider-track-height);
+			background: transparent;
+			border-radius: var(--hub-slider-track-border-radius);
+		}
+
+		&:focus-visible {
+			outline: 0;
+
+			&::-webkit-slider-thumb {
+				box-shadow: var(--hub-slider-thumb-shadow), var(--hub-input-focus-box-shadow);
+			}
+
+			&::-moz-range-thumb {
+				box-shadow: var(--hub-slider-thumb-shadow), var(--hub-input-focus-box-shadow);
+			}
+		}
+	}
+
+	&__bubble {
+		position: absolute;
+		top: 0;
+		left: calc(var(--hub-slider-percent) * 1%);
+		transform: translateX(-50%);
+		padding: 0.1rem 0.4rem;
+		color: var(--hub-slider-tooltip-color);
+		background: var(--hub-slider-tooltip-bg);
+		font-size: var(--hub-ref-font-size-sm, 0.875rem);
+		line-height: 1.4;
+		border-radius: var(--hub-slider-tooltip-border-radius);
+		white-space: nowrap;
+		pointer-events: none;
+
+		&--lower {
+			left: calc(var(--hub-slider-from) * 1%);
+		}
+
+		&--upper {
+			left: calc(var(--hub-slider-to) * 1%);
+		}
+	}
+
+	// ── Dual-thumb (range) ──────────────────────────────────────────────────────
+	&__range--dual {
+		min-height: calc(1.75rem + var(--hub-slider-thumb-height));
+
+		.hub-slider__rail,
+		.hub-slider__track--lower,
+		.hub-slider__track--upper {
+			position: absolute;
+			left: 0;
+			right: 0;
+			top: calc(1.75rem + var(--hub-slider-thumb-height) / 2);
+		}
+
+		.hub-slider__rail {
+			height: var(--hub-slider-track-height);
+			transform: translateY(-50%);
+			border-radius: var(--hub-slider-track-border-radius);
+			background: linear-gradient(
+				to right,
+				var(--hub-slider-track-bg) calc(var(--hub-slider-from) * 1%),
+				var(--hub-slider-track-fill-bg) calc(var(--hub-slider-from) * 1%),
+				var(--hub-slider-track-fill-bg) calc(var(--hub-slider-to) * 1%),
+				var(--hub-slider-track-bg) calc(var(--hub-slider-to) * 1%)
+			);
+			pointer-events: none;
+		}
+
+		// Both inputs overlap; only their thumbs receive pointer events.
+		.hub-slider__track--lower,
+		.hub-slider__track--upper {
+			width: 100%;
+			height: var(--hub-slider-thumb-height);
+			margin: 0;
+			transform: translateY(-50%);
+			background: transparent;
+			pointer-events: none;
+
+			&::-webkit-slider-thumb {
+				pointer-events: auto;
+				position: relative;
+				z-index: 2;
+			}
+
+			&::-moz-range-thumb {
+				pointer-events: auto;
+			}
+
+			&::-moz-range-track {
+				background: transparent;
+			}
+		}
+	}
+}

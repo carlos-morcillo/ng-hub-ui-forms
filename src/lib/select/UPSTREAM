@@ -1,0 +1,8 @@
+# Upstream tracking for the vendored ng-select fork.
+# Read/updated by .github/workflows/sync-ng-select.yml.
+
+repo=https://github.com/ng-select/ng-select.git
+subdir=src/ng-select
+tag=v23.0.1
+commit=6bbdbade47b8251611a44d9872321242ffd60257
+vendored_at=2026-06-13

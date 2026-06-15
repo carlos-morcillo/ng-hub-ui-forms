@@ -1,0 +1,13 @@
+// ─────────────────────────────────────────────────────────────────────────
+// ng-hub-ui-forms — global stylesheet
+// ─────────────────────────────────────────────────────────────────────────
+// Import this ONCE in your application styles. It provides the canonical design
+// tokens and the shared field chrome consumed by every ng-hub-ui-forms
+// component. Component-specific structure ships with each component.
+//
+//   // styles.scss
+//   @use 'ng-hub-ui-forms/styles';
+// ─────────────────────────────────────────────────────────────────────────
+
+@use 'tokens';
+@use 'field';

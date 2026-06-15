@@ -1,0 +1,289 @@
+// `<hub-select>` — in-place hub theme for the vendored ng-select DOM + the
+// alternative formats (buttons / checkbox / radio). Shared chrome + tokens come
+// from the global `styles/_field.scss` + `_tokens.scss`. No `::ng-deep`.
+
+hub-select {
+	display: block;
+}
+
+hub-select.hidden-control {
+	display: none !important;
+}
+
+// ── In-place theme of the ng-select engine ──────────────────────────────────
+.hub-select__control.ng-select {
+	font-size: var(--hub-select-font-size);
+	color: var(--hub-select-color);
+
+	.ng-select-container {
+		min-height: var(--hub-select-min-height);
+		align-items: center;
+		color: var(--hub-select-color);
+		background: var(--hub-select-bg);
+		border: var(--hub-select-border-width) solid var(--hub-select-border-color);
+		border-radius: var(--hub-select-border-radius);
+		transition: var(--hub-form-transition);
+	}
+
+	// Horizontal padding lives on the value container so the arrow/clear stay aligned.
+	.ng-value-container {
+		align-items: center;
+		padding-left: var(--hub-select-padding-x);
+	}
+
+	.ng-placeholder {
+		color: var(--hub-select-placeholder-color);
+	}
+
+	// Hide the placeholder once a value is selected (ng-select's own theme — which
+	// we don't import — owns this rule; without it the placeholder overlaps the value).
+	&.ng-has-value .ng-placeholder {
+		display: none;
+	}
+
+	// Single-select height + search-input alignment.
+	&.ng-select-single .ng-select-container {
+		height: var(--hub-select-min-height);
+
+		.ng-value-container .ng-input {
+			top: 50%;
+			transform: translateY(-50%);
+			padding-left: var(--hub-select-padding-x);
+			padding-right: 3rem;
+		}
+	}
+
+	.ng-value {
+		color: var(--hub-select-color);
+	}
+
+	&.ng-select-focused:not(.ng-select-opened) .ng-select-container,
+	&.ng-select-opened .ng-select-container {
+		border-color: var(--hub-select-focus-border-color);
+		box-shadow: var(--hub-select-focus-box-shadow);
+	}
+
+	// Multiple-selection chips.
+	&.ng-select-multiple {
+		.ng-value-container {
+			padding-top: 0;
+			padding-left: var(--hub-select-padding-x);
+			gap: 0.25rem;
+		}
+
+		.ng-placeholder {
+			top: 50%;
+			transform: translateY(-50%);
+			padding-bottom: 0;
+		}
+
+		.ng-value {
+			display: inline-flex;
+			align-items: center;
+			margin: 0 0 0.25rem 0;
+			background: var(--hub-select-value-bg);
+			color: var(--hub-select-value-color);
+			border-radius: var(--hub-select-value-border-radius);
+
+			.ng-value-label {
+				padding: 0.1rem 0.4rem;
+			}
+
+			.ng-value-icon {
+				padding: 0.1rem 0.4rem;
+				cursor: pointer;
+
+				&:hover {
+					opacity: 0.7;
+				}
+			}
+		}
+
+		.ng-input {
+			padding: 0 0 0.2rem 0.25rem;
+		}
+	}
+
+	// Arrow + clear.
+	.ng-arrow-wrapper .ng-arrow {
+		border-color: var(--hub-select-arrow-color) transparent transparent;
+	}
+
+	.ng-clear-wrapper {
+		color: var(--hub-select-clear-color);
+
+		&:hover .ng-clear {
+			color: var(--hub-select-clear-hover-color);
+		}
+	}
+
+	// Disabled / invalid.
+	&.ng-select-disabled .ng-select-container {
+		opacity: var(--hub-form-disabled-opacity);
+	}
+
+	&.hub-select__control--invalid .ng-select-container {
+		border-color: var(--hub-form-invalid-border-color);
+	}
+
+	&.hub-select__control--invalid.ng-select-focused .ng-select-container {
+		box-shadow: 0 0 0 var(--hub-form-focus-ring-width) var(--hub-form-invalid-focus-ring-color);
+	}
+}
+
+// Dropdown panel (appended to the control by default).
+.ng-dropdown-panel {
+	background: var(--hub-select-dropdown-bg);
+	border: var(--hub-select-border-width) solid var(--hub-select-dropdown-border-color);
+	border-radius: var(--hub-select-dropdown-border-radius);
+	box-shadow: var(--hub-select-dropdown-box-shadow);
+
+	.ng-dropdown-panel-items .ng-option {
+		padding: var(--hub-select-option-padding-y) var(--hub-select-option-padding-x);
+		color: var(--hub-select-option-color);
+		background: transparent;
+
+		&.ng-option-marked {
+			background: var(--hub-select-option-marked-bg);
+		}
+
+		&.ng-option-selected,
+		&.ng-option-selected.ng-option-marked {
+			color: var(--hub-select-option-selected-color);
+			background: var(--hub-select-option-selected-bg);
+		}
+
+		&.ng-option-disabled {
+			opacity: var(--hub-form-disabled-opacity);
+		}
+	}
+
+	.ng-dropdown-panel-items .ng-optgroup {
+		padding: var(--hub-select-option-padding-y) var(--hub-select-option-padding-x);
+		color: var(--hub-select-optgroup-color);
+		font-weight: var(--hub-ref-font-weight-medium, 500);
+	}
+}
+
+// ── buttons format ──────────────────────────────────────────────────────────
+.hub-select__buttons {
+	display: inline-flex;
+	flex-wrap: wrap;
+
+	&--vertical {
+		flex-direction: column;
+		align-items: stretch;
+	}
+}
+
+.hub-select__button {
+	position: relative;
+	padding: var(--hub-select-button-padding-y) var(--hub-select-button-padding-x);
+	color: var(--hub-select-button-color);
+	background: var(--hub-select-button-bg);
+	border: var(--hub-select-border-width) solid var(--hub-select-button-border-color);
+	border-radius: 0;
+	font-size: var(--hub-select-font-size);
+	cursor: pointer;
+	transition: var(--hub-form-transition);
+
+	// Joined group: collapse the shared border between adjacent buttons and round
+	// only the outer corners, so the buttons read as one connected control.
+	&:not(:first-child) {
+		margin-left: calc(-1 * var(--hub-select-border-width));
+	}
+
+	&:first-child {
+		border-top-left-radius: var(--hub-select-border-radius);
+		border-bottom-left-radius: var(--hub-select-border-radius);
+	}
+
+	&:last-child {
+		border-top-right-radius: var(--hub-select-border-radius);
+		border-bottom-right-radius: var(--hub-select-border-radius);
+	}
+
+	&:hover,
+	&:focus-visible,
+	&--selected {
+		z-index: 1;
+	}
+
+	&:focus-visible {
+		outline: 0;
+		box-shadow: var(--hub-input-focus-box-shadow);
+	}
+
+	&--selected {
+		color: var(--hub-select-button-selected-color);
+		background: var(--hub-select-button-selected-bg);
+		border-color: var(--hub-select-button-selected-border-color);
+	}
+
+	&:disabled {
+		opacity: var(--hub-form-disabled-opacity);
+		cursor: not-allowed;
+	}
+}
+
+// Vertical group: stack the buttons and collapse their shared horizontal borders.
+.hub-select__buttons--vertical .hub-select__button {
+	&:not(:first-child) {
+		margin-left: 0;
+		margin-top: calc(-1 * var(--hub-select-border-width));
+	}
+
+	&:first-child {
+		border-radius: var(--hub-select-border-radius) var(--hub-select-border-radius) 0 0;
+	}
+
+	&:last-child {
+		border-radius: 0 0 var(--hub-select-border-radius) var(--hub-select-border-radius);
+	}
+
+	&:not(:first-child):not(:last-child) {
+		border-radius: 0;
+	}
+}
+
+// ── checkbox / radio list format ────────────────────────────────────────────
+.hub-select__options {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--hub-select-button-gap) var(--hub-ref-space-4, 1.5rem);
+
+	&--vertical {
+		flex-direction: column;
+	}
+}
+
+.hub-select__option {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--hub-check-label-gap);
+	cursor: pointer;
+
+	&-input {
+		flex: 0 0 auto;
+		width: var(--hub-check-input-width);
+		height: var(--hub-check-input-height);
+		margin: 0;
+		accent-color: var(--hub-check-input-checked-bg);
+		cursor: pointer;
+
+		&:focus-visible {
+			outline: 0;
+			box-shadow: var(--hub-input-focus-box-shadow);
+		}
+
+		&:disabled {
+			opacity: var(--hub-form-disabled-opacity);
+			cursor: not-allowed;
+		}
+	}
+
+	&-label {
+		color: var(--hub-select-color);
+		font-size: var(--hub-select-font-size);
+	}
+}

@@ -1,0 +1,206 @@
+<div
+	class="hub-field hub-input"
+	[class.hub-field--horizontal]="!isCheckable() && (labelType() === _labelTypes.Horizontal || (!label() && required()))"
+	[class.hub-input--checkable]="isCheckable()"
+	[class.hub-field--disabled]="disabled()"
+	[class.hub-field--invalid]="isInvalid"
+>
+	@if (isCheckable()) {
+		<label class="hub-input__check" [class.hub-input__check--switch]="type() === _inputFormats.Switch">
+			<input
+				type="checkbox"
+				class="hub-input__check-input"
+				[class.hub-input__check-input--switch]="type() === _inputFormats.Switch"
+				[class.hub-input__check-input--invalid]="isInvalid"
+				[attr.role]="type() === _inputFormats.Switch ? 'switch' : null"
+				[id]="id"
+				[checked]="$any(_value())"
+				(change)="setValue($event)"
+				[disabled]="disabled() || readonly()"
+				[required]="!!required()"
+				[attr.aria-invalid]="isInvalid"
+			/>
+			@if (label() || required()) {
+				<span class="hub-input__check-label">
+					{{ label() }}
+					@if (required()) {
+						<span class="hub-field__required" aria-hidden="true">*</span>
+					}
+				</span>
+			}
+		</label>
+	} @else {
+		@if ((label() || required()) && labelType() !== _labelTypes.Floating) {
+			<label [for]="id" class="hub-field__label">
+				{{ label() }}
+				@if (required()) {
+					<span class="hub-field__required" aria-hidden="true">*</span>
+				}
+			</label>
+		}
+
+		<div class="hub-field__body hub-input__row">
+			@switch (type()) {
+				@case (_inputFormats.Counter) {
+					<div class="hub-input__group hub-input__counter">
+						<button
+							type="button"
+							class="hub-input__counter-btn"
+							[disabled]="disabled() || readonly() || (min() != null && $any(_value()) <= $any(min()))"
+							aria-label="Decrease"
+							(click)="subtract()"
+						>
+							&minus;
+						</button>
+						<input
+							type="number"
+							class="hub-field__control hub-input__control--counter"
+							[class.hub-field__control--invalid]="isInvalid"
+							[id]="id"
+							[ngModel]="_value()"
+							(ngModelChange)="setValue($event)"
+							[min]="min() ?? null"
+							[max]="max() ?? null"
+							[step]="step()"
+							[disabled]="disabled()"
+							[readonly]="readonly()"
+							[required]="!!required()"
+							[attr.aria-invalid]="isInvalid"
+						/>
+						<button
+							type="button"
+							class="hub-input__counter-btn"
+							[disabled]="disabled() || readonly() || (max() != null && $any(_value()) >= $any(max()))"
+							aria-label="Increase"
+							(click)="add()"
+						>
+							+
+						</button>
+					</div>
+				}
+				@case (_inputFormats.Color) {
+					<input
+						type="color"
+						class="hub-field__control hub-input__control--color"
+						[class.hub-field__control--invalid]="isInvalid"
+						[id]="id"
+						[ngModel]="_value()"
+						(ngModelChange)="setValue($event)"
+						[disabled]="disabled()"
+						[required]="!!required()"
+						(blur)="handleBlur($event)"
+						[attr.aria-invalid]="isInvalid"
+					/>
+				}
+				@case (_inputFormats.File) {
+					<div class="hub-input__file" [class.hub-input__file--invalid]="isInvalid">
+						<input
+							#fileInput
+							type="file"
+							class="hub-input__file-native"
+							[id]="id"
+							[accept]="accept()"
+							[multiple]="multiple()"
+							[disabled]="disabled()"
+							[required]="!!required()"
+							[attr.aria-invalid]="isInvalid"
+							(change)="setFileValue($event)"
+							(blur)="handleBlur($event)"
+						/>
+						<button
+							type="button"
+							class="hub-input__file-button"
+							[disabled]="disabled() || readonly()"
+							(click)="triggerFile()"
+						>
+							{{ buttonLabel() }}
+						</button>
+						<span class="hub-input__file-name">{{ fileLabel() || placeholder() }}</span>
+						@if (fileLabel() && !disabled() && !readonly()) {
+							<button type="button" class="hub-input__file-clear" aria-label="Clear" (click)="clearFile()">&times;</button>
+						}
+					</div>
+				}
+				@default {
+					<div class="hub-input__group" [class.hub-input__group--floating]="labelType() === _labelTypes.Floating">
+						@for (addon of _prepend(); track $index) {
+							<span class="hub-input__addon hub-input__addon--prepend">{{ addon }}</span>
+						}
+
+						<input
+							class="hub-field__control"
+							[class.hub-field__control--invalid]="isInvalid"
+							[id]="id"
+							[type]="resolvedType()"
+							[ngModel]="_value()"
+							(ngModelChange)="setValue($event)"
+							(keyup.enter)="enter.emit(_value())"
+							[placeholder]="labelType() === _labelTypes.Floating ? (placeholder() || ' ') : placeholder()"
+							[min]="min() ?? null"
+							[max]="max() ?? null"
+							[step]="step()"
+							[disabled]="disabled()"
+							[readonly]="readonly()"
+							[required]="!!required()"
+							[attr.aria-invalid]="isInvalid"
+						/>
+
+						@for (addon of _append(); track $index) {
+							<span class="hub-input__addon hub-input__addon--append">{{ addon }}</span>
+						}
+
+						@if (labelType() === _labelTypes.Floating && (label() || required())) {
+							<label [for]="id" class="hub-field__label hub-input__label--floating">
+								{{ label() }}
+								@if (required()) {
+									<span class="hub-field__required" aria-hidden="true">*</span>
+								}
+							</label>
+						}
+					</div>
+
+					@if (type() === _inputFormats.Password) {
+						<button
+							type="button"
+							class="hub-input__password-toggle"
+							[disabled]="disabled()"
+							[attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+							[attr.aria-pressed]="showPassword"
+							(click)="togglePassword()"
+						>
+							<span class="hub-input__password-icon" [class.hub-input__password-icon--visible]="showPassword"></span>
+						</button>
+					}
+				}
+			}
+		</div>
+	}
+
+	@if (formText() || formTextTmp()) {
+		<div class="hub-field__form-text" [class.hub-field__form-text--disabled]="disabled()">
+			@if (formTextTmp()) {
+				<ng-container [ngTemplateOutlet]="formTextTmp()!"></ng-container>
+			} @else {
+				{{ formText() }}
+			}
+		</div>
+	}
+
+	@if (isInvalid) {
+		<div class="hub-field__feedback" role="alert">
+			<ul>
+				@for (error of errors | keyvalue; track error.key) {
+					<li>
+						<ng-container
+							[ngTemplateOutlet]="_errorTemplates[error.key] ?? defaultErrorTpt"
+							[ngTemplateOutletContext]="{ $implicit: error.value, value: error.value }"
+						></ng-container>
+						<ng-template #defaultErrorTpt>
+							<span class="hub-field__feedback-text" [innerHTML]="getInvalidFeedbackTemplate(error.key, error.value)"></span>
+						</ng-template>
+					</li>
+				}
+			</ul>
+		</div>
+	}
+</div>

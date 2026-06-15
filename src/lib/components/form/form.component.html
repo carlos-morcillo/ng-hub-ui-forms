@@ -1,0 +1,19 @@
+<ng-content></ng-content>
+
+@if (isInvalid) {
+	<div class="hub-field__feedback" role="alert">
+		<ul>
+			@for (error of errors | keyvalue; track error.key) {
+				<li>
+					<ng-container
+						[ngTemplateOutlet]="_errorTemplates[error.key] ?? defaultErrorTpt"
+						[ngTemplateOutletContext]="{ $implicit: error.value, value: error.value }"
+					></ng-container>
+					<ng-template #defaultErrorTpt>
+						<span class="hub-field__feedback-text" [innerHTML]="getInvalidFeedbackTemplate(error.key, error.value)"></span>
+					</ng-template>
+				</li>
+			}
+		</ul>
+	</div>
+}

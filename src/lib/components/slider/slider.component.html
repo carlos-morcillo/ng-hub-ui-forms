@@ -1,0 +1,101 @@
+<div
+	class="hub-field hub-slider"
+	[class.hub-field--horizontal]="label() && labelType() === _labelTypes.Horizontal"
+	[class.hub-field--disabled]="disabled()"
+	[class.hub-field--invalid]="isInvalid"
+	[style.--hub-slider-percent]="percent()"
+	[style.--hub-slider-from]="lowerPercent()"
+	[style.--hub-slider-to]="upperPercent()"
+>
+	@if (label() || required()) {
+		<label [for]="id" class="hub-field__label">
+			{{ label() }}
+			@if (required()) {
+				<span class="hub-field__required" aria-hidden="true">*</span>
+			}
+		</label>
+	}
+
+	<div class="hub-field__body hub-slider__range" [class.hub-slider__range--dual]="range()">
+		@if (range()) {
+			<div class="hub-slider__rail" aria-hidden="true"></div>
+
+			<input
+				type="range"
+				class="hub-slider__track hub-slider__track--lower"
+				[id]="id"
+				[min]="min()"
+				[max]="max()"
+				[step]="step()"
+				[value]="lower()"
+				(input)="setLower($any($event.target).value)"
+				[disabled]="disabled()"
+				aria-label="Range start"
+				[attr.aria-valuetext]="lower()"
+			/>
+			<input
+				type="range"
+				class="hub-slider__track hub-slider__track--upper"
+				[min]="min()"
+				[max]="max()"
+				[step]="step()"
+				[value]="upper()"
+				(input)="setUpper($any($event.target).value)"
+				[disabled]="disabled()"
+				aria-label="Range end"
+				[attr.aria-valuetext]="upper()"
+			/>
+
+			@if (showValue()) {
+				<span class="hub-slider__bubble hub-slider__bubble--lower" aria-hidden="true">{{ lower() }}</span>
+				<span class="hub-slider__bubble hub-slider__bubble--upper" aria-hidden="true">{{ upper() }}</span>
+			}
+		} @else {
+			<input
+				type="range"
+				class="hub-slider__track"
+				[id]="id"
+				[min]="min()"
+				[max]="max()"
+				[step]="step()"
+				[value]="single()"
+				(input)="setValue($any($event.target).value)"
+				[disabled]="disabled()"
+				[required]="!!required()"
+				[attr.aria-valuetext]="single()"
+			/>
+
+			@if (showValue()) {
+				<span class="hub-slider__bubble" aria-hidden="true">{{ single() }}</span>
+			}
+		}
+	</div>
+
+	@if (formText() || formTextTmp()) {
+		<div class="hub-field__form-text" [class.hub-field__form-text--disabled]="disabled()">
+			@if (formTextTmp()) {
+				<ng-container [ngTemplateOutlet]="formTextTmp()!"></ng-container>
+			} @else {
+				{{ formText() }}
+			}
+		</div>
+	}
+
+	@if (isInvalid) {
+		<div class="hub-field__feedback" role="alert">
+			<ul>
+				@for (error of errors | keyvalue; track error.key) {
+					<li>
+						<ng-container
+							[ngTemplateOutlet]="_errorTemplates[error.key] ?? defaultErrorTpt"
+							[ngTemplateOutletContext]="{ $implicit: error.value, value: error.value }"
+						></ng-container>
+						<ng-template #defaultErrorTpt>
+							<span class="hub-field__feedback-text" [innerHTML]="getInvalidFeedbackTemplate(error.key, error.value)"></span>
+						</ng-template>
+					</li>
+				}
+			</ul>
+		</div>
+	}
+</div>

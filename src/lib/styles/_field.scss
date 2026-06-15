@@ -1,0 +1,132 @@
+// ─────────────────────────────────────────────────────────────────────────
+// ng-hub-ui-forms — shared field chrome
+// ─────────────────────────────────────────────────────────────────────────
+// Common structure shared by every field (input, textarea, select, slider…):
+// wrapper, label, required mark, helper text, error feedback, and the base
+// control skin. Defined ONCE; components reuse these `.hub-field__*` classes
+// and only add their component-specific bits.
+// ─────────────────────────────────────────────────────────────────────────
+
+.hub-field {
+	display: flex;
+	flex-direction: column;
+	gap: var(--hub-form-field-gap);
+
+	&--horizontal {
+		display: grid;
+		// Label column shrinks to its content but never grows past the max width;
+		// the control takes whatever space is left.
+		grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+		align-items: center;
+		column-gap: var(--hub-form-row-gap);
+		row-gap: var(--hub-form-field-gap);
+
+		// Label sits in the first column, aligned to the control row. It is capped
+		// at the max width and ellipsizes when its text is longer.
+		> .hub-field__label {
+			grid-column: 1;
+			display: block;
+			max-width: var(--hub-form-label-horizontal-max-width);
+			overflow: hidden;
+			white-space: nowrap;
+			text-overflow: ellipsis;
+		}
+
+		// Control, helper text and validation feedback all stack in the second
+		// column, so the form-text / errors stay BELOW the control even when the
+		// label is placed horizontally.
+		> .hub-field__body,
+		> .hub-field__form-text,
+		> .hub-field__feedback {
+			grid-column: 2;
+			min-width: 0;
+		}
+	}
+
+	&__label {
+		display: inline-flex;
+		align-items: baseline;
+		gap: 0.15rem;
+		margin-bottom: var(--hub-label-margin-bottom);
+		color: var(--hub-label-color);
+		font-size: var(--hub-label-font-size);
+		font-weight: var(--hub-label-font-weight);
+	}
+
+	&__required {
+		color: var(--hub-form-required-color);
+	}
+
+	&--disabled .hub-field__label {
+		opacity: var(--hub-form-disabled-opacity);
+	}
+}
+
+// Base control skin (input / textarea / counter input share it).
+.hub-field__control {
+	display: block;
+	width: 100%;
+	padding: var(--hub-input-padding-y) var(--hub-input-padding-x);
+	color: var(--hub-input-color);
+	background-color: var(--hub-input-bg);
+	font-family: inherit;
+	font-size: var(--hub-input-font-size);
+	line-height: var(--hub-input-line-height);
+	border: var(--hub-input-border-width) solid var(--hub-input-border-color);
+	border-radius: var(--hub-input-border-radius);
+	transition: var(--hub-input-transition);
+	appearance: none;
+
+	&::placeholder {
+		color: var(--hub-input-placeholder-color);
+		opacity: 1;
+	}
+
+	&:focus {
+		outline: 0;
+		border-color: var(--hub-input-focus-border-color);
+		box-shadow: var(--hub-input-focus-box-shadow);
+	}
+
+	&:disabled {
+		opacity: var(--hub-form-disabled-opacity);
+		cursor: not-allowed;
+	}
+
+	&--invalid {
+		border-color: var(--hub-form-invalid-border-color);
+
+		&:focus {
+			border-color: var(--hub-form-invalid-border-color);
+			box-shadow: 0 0 0 var(--hub-form-focus-ring-width) var(--hub-form-invalid-focus-ring-color);
+		}
+	}
+}
+
+// Helper text below the control.
+.hub-field__form-text {
+	margin-top: var(--hub-form-text-margin-top);
+	color: var(--hub-form-text-color);
+	font-size: var(--hub-form-text-font-size);
+
+	&--disabled {
+		opacity: var(--hub-form-disabled-opacity);
+	}
+}
+
+// Validation error feedback.
+.hub-field__feedback {
+	margin-top: var(--hub-form-feedback-margin-top);
+	color: var(--hub-form-feedback-color);
+	font-size: var(--hub-form-feedback-font-size);
+
+	ul {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	&-text {
+		display: block;
+	}
+}

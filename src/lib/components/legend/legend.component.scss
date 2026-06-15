@@ -1,0 +1,19 @@
+// `<hub-legend>` — uses the canonical `--hub-form-legend-*` tokens, matching
+// `<hub-fieldset>` legends.
+
+.hub-legend {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 0.15rem;
+	color: var(--hub-form-legend-color, var(--hub-sys-text-primary, #212529));
+	font-size: var(--hub-form-legend-font-size, var(--hub-ref-font-size-base, 1rem));
+	font-weight: var(--hub-form-legend-font-weight, var(--hub-ref-font-weight-medium, 500));
+
+	&--invalid {
+		color: var(--hub-form-invalid-color);
+	}
+
+	&__required {
+		color: var(--hub-form-required-color);
+	}
+}

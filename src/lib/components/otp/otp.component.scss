@@ -1,0 +1,39 @@
+// ─────────────────────────────────────────────────────────────────────────
+// hub-otp-input — segmented one-time-code field
+// ─────────────────────────────────────────────────────────────────────────
+// Reuses the shared `.hub-field` / `.hub-field__control` chrome; only the cell
+// row and per-cell sizing are component-specific. Themeable via `--hub-otp-*`.
+// ─────────────────────────────────────────────────────────────────────────
+
+:root {
+	--hub-otp-gap: var(--hub-ref-space-2, 0.5rem);
+	--hub-otp-cell-size: 2.75rem;
+	--hub-otp-cell-font-size: 1.25rem;
+	--hub-otp-cell-radius: var(--hub-input-border-radius);
+	--hub-otp-separator-color: var(--hub-sys-text-muted, #6c757d);
+}
+
+.hub-otp__cells {
+	display: flex;
+	align-items: center;
+	gap: var(--hub-otp-gap);
+	flex-wrap: wrap;
+}
+
+.hub-otp__cell {
+	width: var(--hub-otp-cell-size);
+	min-width: var(--hub-otp-cell-size);
+	height: var(--hub-otp-cell-size);
+	padding: 0;
+	text-align: center;
+	font-size: var(--hub-otp-cell-font-size);
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	border-radius: var(--hub-otp-cell-radius);
+}
+
+.hub-otp__separator {
+	color: var(--hub-otp-separator-color);
+	font-weight: 600;
+	user-select: none;
+}

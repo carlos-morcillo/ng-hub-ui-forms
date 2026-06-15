@@ -1,0 +1,161 @@
+<div
+	class="hub-field hub-select"
+	[class.hub-field--horizontal]="labelType() === _labelTypes.Horizontal || (!label() && required())"
+	[class.hub-field--disabled]="disabled()"
+	[class.hub-field--invalid]="isInvalid"
+>
+	@if (label() || required()) {
+		<label [for]="id" class="hub-field__label">
+			{{ label() }}
+			@if (required()) {
+				<span class="hub-field__required" aria-hidden="true">*</span>
+			}
+		</label>
+	}
+
+	<div class="hub-field__body">
+		@switch (format()) {
+			@case (_selectFormats.Dropdown) {
+				<ng-select
+					class="hub-select__control"
+					[class.hub-select__control--invalid]="isInvalid"
+					[labelForId]="$any(id)"
+					[items]="items()"
+					[bindLabel]="$any(bindLabel())"
+					[bindValue]="$any(bindValue())"
+					[groupBy]="$any(groupBy())"
+					[multiple]="multiple()"
+					[searchable]="searchable()"
+					[clearable]="clearable()"
+					[closeOnSelect]="closeOnSelect()"
+					[fixedPlaceholder]="fixedPlaceholder()"
+					[loading]="loading()"
+					[readonly]="readonly()"
+					[placeholder]="placeholder()"
+					[notFoundText]="notFoundText()"
+						[appendTo]="appendTo()"
+					[ngModel]="_value()"
+					(ngModelChange)="setValue($event)"
+					(focus)="onFocus.emit($event)"
+					(blur)="onBlur.emit($event)"
+					(open)="onOpen.emit()"
+					(close)="onClose.emit()"
+					(clear)="onClear.emit()"
+					(search)="onSearch.emit($event)"
+					(add)="onAdd.emit($event)"
+					(remove)="onRemove.emit($event)"
+					(scroll)="scroll.emit($event)"
+					(scrollToEnd)="scrollToEnd.emit($event)"
+				>
+					@if (_optionTpl(); as tpl) {
+							<ng-template ng-option-tmp let-item="item" let-item$="item$" let-index="index" let-searchTerm="searchTerm">
+								<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ item, item$, index, searchTerm }" />
+							</ng-template>
+						}
+						@if (_optgroupTpl(); as tpl) {
+							<ng-template ng-optgroup-tmp let-item="item" let-item$="item$" let-index="index" let-searchTerm="searchTerm">
+								<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ item, item$, index, searchTerm }" />
+							</ng-template>
+						}
+						@if (_labelTpl(); as tpl) {
+							<ng-template ng-label-tmp let-item="item" let-clear="clear" let-label="label">
+								<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ item, clear, label }" />
+							</ng-template>
+						}
+						@if (_multiLabelTpl(); as tpl) {
+							<ng-template ng-multi-label-tmp let-items="items" let-clear="clear">
+								<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ items, clear }" />
+							</ng-template>
+						}
+						@if (_headerTpl(); as tpl) {
+							<ng-template ng-header-tmp let-searchTerm="searchTerm">
+								<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ searchTerm }" />
+							</ng-template>
+						}
+						@if (_footerTpl(); as tpl) {
+							<ng-template ng-footer-tmp let-searchTerm="searchTerm">
+								<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ searchTerm }" />
+							</ng-template>
+						}
+						@if (_notFoundTpl(); as tpl) {
+							<ng-template ng-notfound-tmp let-searchTerm="searchTerm">
+								<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ searchTerm }" />
+							</ng-template>
+						}
+						<ng-content></ng-content>
+				</ng-select>
+			}
+			@case (_selectFormats.Buttons) {
+				<div
+					class="hub-select__buttons"
+					[class.hub-select__buttons--vertical]="vertical()"
+					role="group"
+					[attr.aria-label]="label() || null"
+				>
+					@for (item of items(); track $index) {
+						<button
+							type="button"
+							class="hub-select__button"
+							[class.hub-select__button--selected]="isSelected(item)"
+							[attr.aria-pressed]="isSelected(item)"
+							[disabled]="disabled() || readonly()"
+							(click)="toggleItem(item)"
+						>
+							{{ itemLabel(item) }}
+						</button>
+					}
+				</div>
+			}
+			@default {
+				<div
+					class="hub-select__options"
+					[class.hub-select__options--vertical]="vertical()"
+					[attr.role]="format() === _selectFormats.Radio ? 'radiogroup' : 'group'"
+					[attr.aria-label]="label() || null"
+				>
+					@for (item of items(); track $index) {
+						<label class="hub-select__option">
+							<input
+								class="hub-select__option-input"
+								[type]="format() === _selectFormats.Radio ? 'radio' : 'checkbox'"
+								[name]="id"
+								[checked]="isSelected(item)"
+								[disabled]="disabled() || readonly()"
+								(change)="toggleItem(item)"
+							/>
+							<span class="hub-select__option-label">{{ itemLabel(item) }}</span>
+						</label>
+					}
+				</div>
+			}
+		}
+	</div>
+
+	@if (formText() || formTextTmp()) {
+		<div class="hub-field__form-text" [class.hub-field__form-text--disabled]="disabled()">
+			@if (formTextTmp()) {
+				<ng-container [ngTemplateOutlet]="formTextTmp()!"></ng-container>
+			} @else {
+				{{ formText() }}
+			}
+		</div>
+	}
+
+	@if (isInvalid) {
+		<div class="hub-field__feedback" role="alert">
+			<ul>
+				@for (error of errors | keyvalue; track error.key) {
+					<li>
+						<ng-container
+							[ngTemplateOutlet]="_errorTemplates[error.key] ?? defaultErrorTpt"
+							[ngTemplateOutletContext]="{ $implicit: error.value, value: error.value }"
+						></ng-container>
+						<ng-template #defaultErrorTpt>
+							<span class="hub-field__feedback-text" [innerHTML]="getInvalidFeedbackTemplate(error.key, error.value)"></span>
+						</ng-template>
+					</li>
+				}
+			</ul>
+		</div>
+	}
+</div>

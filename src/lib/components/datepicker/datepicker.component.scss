@@ -1,0 +1,220 @@
+// `<hub-datepicker>` — component-specific structure only. Shared chrome + tokens
+// come from the global `styles/_field.scss` + `_tokens.scss`. The panel is
+// rendered in a CDK overlay (outside the component), so its rules are global.
+
+hub-datepicker {
+	display: block;
+}
+
+hub-datepicker.hidden-control {
+	display: none !important;
+}
+
+.hub-datepicker {
+	&__trigger {
+		position: relative;
+	}
+
+	&__input {
+		padding-right: var(--hub-datepicker-icon-width);
+		cursor: pointer;
+
+		&--clearable {
+			padding-right: calc(var(--hub-datepicker-icon-width) + 1.5rem);
+		}
+	}
+
+	&__clear {
+		position: absolute;
+		top: 0;
+		right: var(--hub-datepicker-icon-width);
+		height: 100%;
+		width: 1.5rem;
+		padding: 0;
+		color: var(--hub-daterangepicker-nav-arrow-color);
+		font-size: 1.1rem;
+		line-height: 1;
+		background: transparent;
+		border: 0;
+		cursor: pointer;
+
+		&:hover {
+			color: var(--hub-form-invalid-color);
+		}
+	}
+
+	&__icon {
+		position: absolute;
+		top: 0;
+		right: 0;
+		width: var(--hub-datepicker-icon-width);
+		height: 100%;
+		padding: 0;
+		background: transparent;
+		border: 0;
+		cursor: pointer;
+
+		&::after {
+			content: '';
+			display: block;
+			width: var(--hub-datepicker-icon-size);
+			height: var(--hub-datepicker-icon-size);
+			margin: 0 auto;
+			background: var(--hub-datepicker-icon) center / contain no-repeat;
+		}
+
+		&:disabled {
+			cursor: not-allowed;
+			opacity: var(--hub-form-disabled-opacity);
+		}
+	}
+}
+
+// ── Calendar panel (CDK overlay) ─────────────────────────────────────────────
+.hub-datepicker__panel {
+	width: max-content;
+	padding: var(--hub-daterangepicker-padding);
+	color: var(--hub-daterangepicker-color);
+	background: var(--hub-daterangepicker-bg);
+	border: var(--hub-input-border-width) solid var(--hub-daterangepicker-border-color);
+	border-radius: var(--hub-daterangepicker-border-radius);
+	box-shadow: var(--hub-daterangepicker-box-shadow);
+	font-family: var(--hub-input-font-family);
+
+	.hub-datepicker__header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: var(--hub-ref-space-2, 0.5rem);
+	}
+
+	.hub-datepicker__nav-group {
+		display: inline-flex;
+		gap: 0.125rem;
+	}
+
+	.hub-datepicker__nav {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: var(--hub-daterangepicker-cell-size);
+		height: var(--hub-daterangepicker-cell-size);
+		font-size: 1.25rem;
+		line-height: 1;
+		color: var(--hub-daterangepicker-nav-arrow-color);
+		background: transparent;
+		border: 0;
+		border-radius: var(--hub-daterangepicker-cell-border-radius);
+		cursor: pointer;
+
+		&:hover {
+			color: var(--hub-daterangepicker-nav-arrow-hover-color);
+			background: var(--hub-daterangepicker-cell-hover-bg);
+		}
+	}
+
+	.hub-datepicker__title {
+		font-weight: var(--hub-ref-font-weight-medium, 500);
+		text-transform: capitalize;
+	}
+
+	.hub-datepicker__weekdays,
+	.hub-datepicker__grid {
+		display: grid;
+		grid-template-columns: repeat(7, var(--hub-daterangepicker-cell-size));
+		gap: 0.125rem;
+	}
+
+	.hub-datepicker__weekday {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		height: 1.5rem;
+		font-size: var(--hub-ref-font-size-sm, 0.875rem);
+		color: var(--hub-daterangepicker-off-color);
+		text-transform: capitalize;
+	}
+
+	.hub-datepicker__cell {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: var(--hub-daterangepicker-cell-size);
+		height: var(--hub-daterangepicker-cell-size);
+		color: var(--hub-daterangepicker-cell-color);
+		background: transparent;
+		border: 0;
+		border-radius: var(--hub-daterangepicker-cell-border-radius);
+		font-size: var(--hub-input-font-size);
+		cursor: pointer;
+
+		&:hover {
+			background: var(--hub-daterangepicker-cell-hover-bg);
+		}
+
+		&--outside {
+			color: var(--hub-daterangepicker-off-color);
+		}
+
+		&--today {
+			font-weight: var(--hub-ref-font-weight-bold, 700);
+			box-shadow: inset 0 0 0 1px var(--hub-daterangepicker-border-color);
+		}
+
+		&--in-range {
+			background: var(--hub-daterangepicker-in-range-bg);
+			border-radius: 0;
+		}
+
+		&--range-start {
+			border-top-right-radius: 0;
+			border-bottom-right-radius: 0;
+		}
+
+		&--range-end {
+			border-top-left-radius: 0;
+			border-bottom-left-radius: 0;
+		}
+
+		&--selected,
+		&--selected:hover {
+			color: var(--hub-daterangepicker-active-color);
+			background: var(--hub-daterangepicker-active-bg);
+		}
+
+		&:disabled {
+			color: var(--hub-daterangepicker-off-color);
+			background: transparent;
+			cursor: not-allowed;
+			opacity: 0.6;
+		}
+
+		&:focus-visible {
+			outline: 0;
+			box-shadow: var(--hub-input-focus-box-shadow);
+		}
+	}
+
+	.hub-datepicker__footer {
+		display: flex;
+		justify-content: flex-end;
+		gap: var(--hub-ref-space-2, 0.5rem);
+		margin-top: var(--hub-ref-space-2, 0.5rem);
+		padding-top: var(--hub-ref-space-2, 0.5rem);
+		border-top: var(--hub-input-border-width) solid var(--hub-daterangepicker-border-color);
+	}
+
+	.hub-datepicker__action {
+		padding: 0.2rem 0.5rem;
+		color: var(--hub-sys-color-primary, #0d6efd);
+		font-size: var(--hub-ref-font-size-sm, 0.875rem);
+		background: transparent;
+		border: 0;
+		border-radius: var(--hub-daterangepicker-cell-border-radius);
+		cursor: pointer;
+
+		&:hover {
+			background: var(--hub-daterangepicker-cell-hover-bg);
+		}
+	}
+}
