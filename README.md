@@ -26,13 +26,16 @@ This library is part of the **ng-hub-ui** ecosystem:
 - [**ng-hub-ui-breadcrumbs**](https://www.npmjs.com/package/ng-hub-ui-breadcrumbs)
 - [**ng-hub-ui-calendar**](https://www.npmjs.com/package/ng-hub-ui-calendar)
 - [**ng-hub-ui-dropdown**](https://www.npmjs.com/package/ng-hub-ui-dropdown)
+- [**ng-hub-ui-ds**](https://www.npmjs.com/package/ng-hub-ui-ds)
 - [**ng-hub-ui-forms**](https://www.npmjs.com/package/ng-hub-ui-forms) ← You are here
 - [**ng-hub-ui-history**](https://www.npmjs.com/package/ng-hub-ui-history)
+- [**ng-hub-ui-milestones**](https://www.npmjs.com/package/ng-hub-ui-milestones)
 - [**ng-hub-ui-modal**](https://www.npmjs.com/package/ng-hub-ui-modal)
 - [**ng-hub-ui-nav**](https://www.npmjs.com/package/ng-hub-ui-nav)
 - [**ng-hub-ui-paginable**](https://www.npmjs.com/package/ng-hub-ui-paginable)
 - [**ng-hub-ui-panels**](https://www.npmjs.com/package/ng-hub-ui-panels)
 - [**ng-hub-ui-portal**](https://www.npmjs.com/package/ng-hub-ui-portal)
+- [**ng-hub-ui-skeleton**](https://www.npmjs.com/package/ng-hub-ui-skeleton)
 - [**ng-hub-ui-sortable**](https://www.npmjs.com/package/ng-hub-ui-sortable)
 - [**ng-hub-ui-stepper**](https://www.npmjs.com/package/ng-hub-ui-stepper)
 - [**ng-hub-ui-utils**](https://www.npmjs.com/package/ng-hub-ui-utils)
@@ -88,7 +91,7 @@ mode — no Bootstrap dependency.
 
 ## 🎯 Features
 
-- **Fields** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, with input-group addons & masks), `hub-otp`, `hub-textarea` (+ `hubAutoresize`), `hub-slider`, `hub-select` (dropdown / buttons / checkbox / radio formats, grouping, typeahead, custom templates), `hub-datepicker` (single & range, keyboard nav, i18n).
+- **Fields** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, with input-group addons & masks), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider`, `hub-select` (dropdown / buttons / checkbox / radio formats, grouping, typeahead, custom templates), `hub-datepicker` (single & range, keyboard nav, i18n).
 - **Automatic error display** — bind a field and its control errors render below it; `hub-fieldset`, `form[hubForm]` and `hub-legend` surface group- and form-level (cross-field) errors the same way, with zero wiring.
 - **Containers** — `hub-fieldset` / `form[hubForm]` group fields and show their group errors; `hub-legend` renders an accessible legend.
 - **Configurable** — `provideHubForms({ … })` sets the invalid-feedback templates, datepicker locale/labels and more, app-wide or per instance.
