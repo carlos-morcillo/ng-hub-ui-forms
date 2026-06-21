@@ -5,6 +5,16 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Declared `--hub-form-fieldset-padding-x` / `-y` (previously only consumed via fallback in the fieldset component), making fieldset padding a proper themeable token pair.
+
+### Changed
+
+- Replaced the `--hub-daterangepicker-padding` shorthand with the canonical directional `--hub-daterangepicker-padding-x` / `-y` tokens. No visual change. **BREAKING**: set the `-x`/`-y` tokens instead of the removed shorthand.
+
 ## [22.0.0] - 2026-06-17
 
 ### Changed

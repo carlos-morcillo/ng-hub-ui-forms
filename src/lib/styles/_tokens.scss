@@ -11,6 +11,8 @@
 	// ── Shared form contract (used by every field) ──────────────────────────
 	--hub-form-field-gap: var(--hub-ref-space-1, 0.25rem); // label ↔ control
 	--hub-form-row-gap: var(--hub-ref-space-3, 1rem); // horizontal label gutter
+	--hub-form-fieldset-padding-x: var(--hub-ref-space-3, 1rem);
+	--hub-form-fieldset-padding-y: var(--hub-ref-space-3, 1rem);
 	--hub-form-label-horizontal-max-width: 12rem; // horizontal label caps here, then ellipsizes
 
 	--hub-form-invalid-color: var(--hub-sys-color-danger, #dc3545);
@@ -152,7 +154,8 @@
 	--hub-daterangepicker-border-color: var(--hub-sys-border-color-default, #dee2e6);
 	--hub-daterangepicker-border-radius: var(--hub-ref-radius-md, 0.375rem);
 	--hub-daterangepicker-box-shadow: var(--hub-sys-shadow, 0 0.5rem 1rem rgba(0, 0, 0, 0.12));
-	--hub-daterangepicker-padding: var(--hub-ref-space-3, 1rem);
+	--hub-daterangepicker-padding-x: var(--hub-ref-space-3, 1rem);
+	--hub-daterangepicker-padding-y: var(--hub-ref-space-3, 1rem);
 	--hub-daterangepicker-cell-size: 2rem;
 	--hub-daterangepicker-cell-color: var(--hub-sys-text-primary, #212529);
 	--hub-daterangepicker-cell-border-radius: var(--hub-ref-radius-sm, 0.25rem);

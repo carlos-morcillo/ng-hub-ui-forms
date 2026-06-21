@@ -73,7 +73,7 @@ hub-datepicker.hidden-control {
 // ── Calendar panel (CDK overlay) ─────────────────────────────────────────────
 .hub-datepicker__panel {
 	width: max-content;
-	padding: var(--hub-daterangepicker-padding);
+	padding: var(--hub-daterangepicker-padding-y, var(--hub-ref-space-3, 1rem)) var(--hub-daterangepicker-padding-x, var(--hub-ref-space-3, 1rem));
 	color: var(--hub-daterangepicker-color);
 	background: var(--hub-daterangepicker-bg);
 	border: var(--hub-input-border-width) solid var(--hub-daterangepicker-border-color);
