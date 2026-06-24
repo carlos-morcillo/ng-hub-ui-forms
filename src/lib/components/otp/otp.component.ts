@@ -33,6 +33,7 @@ export type HubOtpMode = 'numeric' | 'alphanumeric' | 'alpha';
 			[class.hub-field--horizontal]="labelType() === _labelTypes.Horizontal"
 			[class.hub-field--disabled]="disabled()"
 			[class.hub-field--invalid]="isInvalid"
+			[class.hub-field--valid]="showsValid"
 		>
 			@if (label() || required()) {
 				<label class="hub-field__label">
@@ -53,6 +54,7 @@ export type HubOtpMode = 'numeric' | 'alphanumeric' | 'alpha';
 							#cell
 							class="hub-field__control hub-otp__cell"
 							[class.hub-field__control--invalid]="isInvalid"
+							[class.hub-field__control--valid]="showsValid"
 							[type]="secret() ? 'password' : 'text'"
 							[attr.inputmode]="mode() === 'numeric' ? 'numeric' : 'text'"
 							[attr.autocomplete]="index === 0 ? 'one-time-code' : 'off'"
@@ -81,6 +83,12 @@ export type HubOtpMode = 'numeric' | 'alphanumeric' | 'alpha';
 								</li>
 							}
 						</ul>
+					</div>
+				}
+
+				@if (showsValid && validFeedback()) {
+					<div class="hub-field__feedback hub-field__feedback--valid" role="status">
+						<span class="hub-field__feedback-text">{{ validFeedback() }}</span>
 					</div>
 				}
 			</div>

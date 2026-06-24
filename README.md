@@ -185,6 +185,22 @@ form = new FormGroup(
 On submit, each invalid field shows its error and the cross-field `hubAreEqual`
 error is surfaced by the fieldset/form — no manual error markup anywhere.
 
+### Validation states (invalid is automatic, valid is opt-in)
+
+The **invalid** state is always automatic: a touched, invalid field shows its
+error styling and message with no configuration. The **valid / success** state is
+strictly **opt-in** — success is *never* shown automatically. Enable it per field
+with the `showValid` input, and optionally add a `validFeedback` message that
+renders below the control once the field is touched and valid:
+
+```html
+<hub-input formControlName="username" label="Username" required [showValid]="true" validFeedback="Looks good!" />
+```
+
+To turn the success state on for every field at once, set it globally — see
+[Configuration](#-configuration). A per-field `showValid` always overrides the
+global default.
+
 ---
 
 ## 🛠️ Configuration
@@ -197,11 +213,17 @@ import { provideHubForms } from 'ng-hub-ui-forms';
 bootstrapApplication(AppComponent, {
 	providers: [
 		provideHubForms({
+			showValid: true,
 			datepicker: { firstDayOfWeek: 1, displayFormat: 'dd/MM/yyyy' }
 		})
 	]
 });
 ```
+
+`showValid` (default `false`) turns the opt-in valid/success state on for every
+field once it is touched and valid. The invalid state is unaffected — it is always
+automatic; only success is gated behind this flag. A per-field `showValid` input
+overrides the global default.
 
 ---
 
@@ -219,6 +241,18 @@ hub-input,
 hub-select {
 	--hub-field-border-color: #cbd5e1;
 	--hub-select-option-selected-bg: #e0e7ff;
+}
+```
+
+The opt-in valid/success state is themed through four tokens (chained to the
+`--hub-sys-color-success` family by default):
+
+```css
+hub-input {
+	--hub-form-valid-color: #198754;
+	--hub-form-valid-border-color: #198754;
+	--hub-form-valid-focus-ring-color: rgba(25, 135, 84, 0.25);
+	--hub-form-valid-feedback-color: #198754;
 }
 ```
 

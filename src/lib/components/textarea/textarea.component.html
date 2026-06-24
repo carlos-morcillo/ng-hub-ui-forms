@@ -3,6 +3,7 @@
 	[class.hub-field--horizontal]="labelType() === _labelTypes.Horizontal || (!label() && required())"
 	[class.hub-field--disabled]="disabled()"
 	[class.hub-field--invalid]="isInvalid"
+	[class.hub-field--valid]="showsValid"
 >
 	@if (label() || required()) {
 		<label [for]="id" class="hub-field__label">
@@ -17,6 +18,7 @@
 		<textarea
 			class="hub-field__control hub-textarea__control"
 			[class.hub-field__control--invalid]="isInvalid"
+			[class.hub-field__control--valid]="showsValid"
 			[id]="id"
 			[hubAutoresize]="autoresize()"
 			[ngModel]="_value()"
@@ -62,6 +64,12 @@
 					</li>
 				}
 			</ul>
+		</div>
+	}
+
+	@if (showsValid && validFeedback()) {
+		<div class="hub-field__feedback hub-field__feedback--valid" role="status">
+			<span class="hub-field__feedback-text">{{ validFeedback() }}</span>
 		</div>
 	}
 </div>

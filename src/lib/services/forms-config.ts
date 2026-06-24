@@ -15,6 +15,13 @@ export interface HubFormsConfig {
 	 */
 	invalidFeedbackTemplateFn: (key: string, value: any) => string;
 
+	/**
+	 * Whether fields render the opt-in valid/success state by default once they
+	 * are touched and valid. `false` keeps the success state off everywhere
+	 * (only invalid is automatic); a per-field `showValid` input overrides this.
+	 */
+	showValid: boolean;
+
 	/** Global datepicker defaults (locale labels, formats, first day of week…). */
 	datepicker: HubDatepickerConfig;
 }
@@ -24,6 +31,7 @@ export interface HubFormsConfig {
  */
 export const defaultHubFormsConfig: HubFormsConfig = {
 	invalidFeedbackTemplateFn: defaultInvalidFeedback,
+	showValid: false,
 	datepicker: defaultHubDatepickerConfig
 };
 

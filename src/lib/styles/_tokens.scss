@@ -19,6 +19,13 @@
 	--hub-form-invalid-border-color: var(--hub-sys-color-danger, #dc3545);
 	--hub-form-invalid-focus-ring-color: var(--hub-sys-color-danger-subtle, rgba(220, 53, 69, 0.25));
 
+	// Valid / success — mirror of the invalid contract, shown only when a field
+	// opts in via `showValid` (the success state is never automatic).
+	--hub-form-valid-color: var(--hub-sys-color-success, #198754);
+	--hub-form-valid-border-color: var(--hub-sys-color-success, #198754);
+	--hub-form-valid-focus-ring-color: var(--hub-sys-color-success-subtle, rgba(25, 135, 84, 0.25));
+	--hub-form-valid-feedback-color: var(--hub-form-valid-color);
+
 	--hub-form-feedback-color: var(--hub-form-invalid-color);
 	--hub-form-feedback-font-size: var(--hub-ref-font-size-sm, 0.875rem);
 	--hub-form-feedback-margin-top: var(--hub-ref-space-1, 0.25rem);

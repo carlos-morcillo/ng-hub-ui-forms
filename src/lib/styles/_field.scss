@@ -101,6 +101,17 @@
 			box-shadow: 0 0 0 var(--hub-form-focus-ring-width) var(--hub-form-invalid-focus-ring-color);
 		}
 	}
+
+	// Opt-in success state (mirror of `--invalid`); applied only when a field
+	// enables `showValid` and the control is touched + valid.
+	&--valid {
+		border-color: var(--hub-form-valid-border-color);
+
+		&:focus {
+			border-color: var(--hub-form-valid-border-color);
+			box-shadow: 0 0 0 var(--hub-form-focus-ring-width) var(--hub-form-valid-focus-ring-color);
+		}
+	}
 }
 
 // Helper text below the control.
@@ -128,5 +139,10 @@
 
 	&-text {
 		display: block;
+	}
+
+	// Success feedback (opt-in valid state).
+	&--valid {
+		color: var(--hub-form-valid-feedback-color);
 	}
 }

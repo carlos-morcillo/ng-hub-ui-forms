@@ -5,10 +5,12 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [22.1.0] - 2026-06-24
 
 ### Added
 
+- New **opt-in valid/success state**, mirroring the invalid contract. A field that opts in via the new `showValid` input (or globally through `provideHubForms({ showValid: true })`) renders a success border + focus ring once it is touched and valid; an optional `validFeedback` message shows below the control. The success state is **never automatic** — only invalid is. Wired into `hub-input`, `hub-textarea`, `hub-datepicker`, `hub-slider` and `hub-otp-input`. Exposes `isValid` / `showsValid` on the shared field control.
+- New tokens for the success state: `--hub-form-valid-color`, `--hub-form-valid-border-color`, `--hub-form-valid-focus-ring-color`, `--hub-form-valid-feedback-color` (chained to the `--hub-sys-color-success` family). New CSS hooks `.hub-field__control--valid` and `.hub-field__feedback--valid`.
 - Declared `--hub-form-fieldset-padding-x` / `-y` (previously only consumed via fallback in the fieldset component), making fieldset padding a proper themeable token pair.
 
 ### Changed

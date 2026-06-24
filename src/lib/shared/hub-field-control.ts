@@ -62,6 +62,17 @@ export abstract class HubFieldControl extends HubFormControl implements ControlV
 	/** Per-field override for the invalid-feedback message builder. */
 	readonly invalidFeedbackTemplateFn = input<((key: string, value: any) => string) | null>(null);
 
+	/**
+	 * Opt-in success state. When `true`, a touched + valid field renders the
+	 * `--valid` styling (success border + ring). Defaults to the global
+	 * {@link HubFormsConfig.showValid}; the success state is never automatic
+	 * unless enabled. Has no effect while the field is invalid.
+	 */
+	readonly showValid = input(this.#config.showValid);
+
+	/** Optional success message shown below the control while {@link showsValid}. */
+	readonly validFeedback = input<string | null>(null);
+
 	onChange: (value: any) => void = () => {};
 	onTouched: () => void = () => {};
 
@@ -83,6 +94,20 @@ export abstract class HubFieldControl extends HubFormControl implements ControlV
 		}
 
 		return this._nativeTouched() && !!this._nativeErrors();
+	}
+
+	/** Whether the field is touched and valid (independent of the opt-in). */
+	get isValid(): boolean {
+		if (this._control) {
+			return !!this._control.touched && !!this._control.valid;
+		}
+
+		return this._nativeTouched() && !this._nativeErrors();
+	}
+
+	/** Whether the opt-in success state should be displayed (touched + valid + `showValid`). */
+	get showsValid(): boolean {
+		return this.showValid() && this.isValid;
 	}
 
 	/** Current validation errors, from the reactive control or from native validity. */

@@ -186,6 +186,23 @@ form = new FormGroup(
 Al enviar, cada campo inválido muestra su error y el error cross-field de
 `hubAreEqual` lo muestra el fieldset/form — sin marcado de errores manual.
 
+### Estados de validación (el inválido es automático, el válido es opt-in)
+
+El estado **inválido** siempre es automático: un campo tocado e inválido muestra
+su estilo de error y su mensaje sin configuración. El estado **válido / de éxito**
+es estrictamente **opt-in** — el éxito *nunca* se muestra automáticamente. Actívalo
+por campo con el input `showValid` y, opcionalmente, añade un mensaje
+`validFeedback` que se renderiza debajo del control cuando el campo está tocado y es
+válido:
+
+```html
+<hub-input formControlName="username" label="Username" required [showValid]="true" validFeedback="Looks good!" />
+```
+
+Para activar el estado de éxito en todos los campos a la vez, configúralo de forma
+global — consulta [Configuración](#-configuración). Un `showValid` por campo
+siempre tiene prioridad sobre el valor por defecto global.
+
 ---
 
 ## 🛠️ Configuración
@@ -198,11 +215,17 @@ import { provideHubForms } from 'ng-hub-ui-forms';
 bootstrapApplication(AppComponent, {
 	providers: [
 		provideHubForms({
+			showValid: true,
 			datepicker: { firstDayOfWeek: 1, displayFormat: 'dd/MM/yyyy' }
 		})
 	]
 });
 ```
+
+`showValid` (por defecto `false`) activa el estado opt-in válido/de éxito en todos
+los campos cuando están tocados y son válidos. El estado inválido no se ve afectado
+— siempre es automático; solo el éxito queda detrás de este flag. Un input
+`showValid` por campo tiene prioridad sobre el valor por defecto global.
 
 ---
 
@@ -220,6 +243,18 @@ hub-input,
 hub-select {
 	--hub-field-border-color: #cbd5e1;
 	--hub-select-option-selected-bg: #e0e7ff;
+}
+```
+
+El estado opt-in válido/de éxito se tematiza con cuatro tokens (encadenados por
+defecto a la familia `--hub-sys-color-success`):
+
+```css
+hub-input {
+	--hub-form-valid-color: #198754;
+	--hub-form-valid-border-color: #198754;
+	--hub-form-valid-focus-ring-color: rgba(25, 135, 84, 0.25);
+	--hub-form-valid-feedback-color: #198754;
 }
 ```
 

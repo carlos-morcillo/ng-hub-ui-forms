@@ -4,6 +4,7 @@
 	[class.hub-input--checkable]="isCheckable()"
 	[class.hub-field--disabled]="disabled()"
 	[class.hub-field--invalid]="isInvalid"
+	[class.hub-field--valid]="showsValid"
 >
 	@if (isCheckable()) {
 		<label class="hub-input__check" [class.hub-input__check--switch]="type() === _inputFormats.Switch">
@@ -56,6 +57,7 @@
 							type="number"
 							class="hub-field__control hub-input__control--counter"
 							[class.hub-field__control--invalid]="isInvalid"
+							[class.hub-field__control--valid]="showsValid"
 							[id]="id"
 							[ngModel]="_value()"
 							(ngModelChange)="setValue($event)"
@@ -83,6 +85,7 @@
 						type="color"
 						class="hub-field__control hub-input__control--color"
 						[class.hub-field__control--invalid]="isInvalid"
+						[class.hub-field__control--valid]="showsValid"
 						[id]="id"
 						[ngModel]="_value()"
 						(ngModelChange)="setValue($event)"
@@ -130,6 +133,7 @@
 						<input
 							class="hub-field__control"
 							[class.hub-field__control--invalid]="isInvalid"
+							[class.hub-field__control--valid]="showsValid"
 							[id]="id"
 							[type]="resolvedType()"
 							[ngModel]="_value()"
@@ -201,6 +205,12 @@
 					</li>
 				}
 			</ul>
+		</div>
+	}
+
+	@if (showsValid && validFeedback()) {
+		<div class="hub-field__feedback hub-field__feedback--valid" role="status">
+			<span class="hub-field__feedback-text">{{ validFeedback() }}</span>
 		</div>
 	}
 </div>
