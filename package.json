@@ -6,7 +6,7 @@
   "author": "Carlos Morcillo <carlos.morcillo@me.com> (https://www.carlosmorcillo.com)",
   "repository": {
     "type": "git",
-    "url": "https://github.com/carlos-morcillo/ng-hub-ui-forms.git"
+    "url": "git+https://github.com/carlos-morcillo/ng-hub-ui-forms.git"
   },
   "homepage": "https://hubui.dev/",
   "keywords": [
