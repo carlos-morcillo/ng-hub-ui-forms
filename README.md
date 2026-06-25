@@ -84,7 +84,8 @@ The required `email` field reveals its error automatically on submit — no manu
 `ng-hub-ui-forms` unifies a set of accessible form fields behind one contract:
 bind them with **Reactive Forms** and the matching validation errors appear
 **automatically** at the control, group and form level. Fields are standalone,
-`OnPush` and signal-native; the select is a maintained fork of ng-select; the
+`OnPush` and signal-native; the select is a maintained fork of
+[ng-select](https://github.com/ng-select/ng-select) (see [Credits](#-credits)); the
 datepicker is built from scratch on native `Date` and the Angular CDK overlay.
 Everything is themed through canonical `--hub-*` CSS variables with runtime dark
 mode — no Bootstrap dependency.
@@ -281,6 +282,14 @@ import { HubSignalFieldControl, hubSignalErrorMessages } from 'ng-hub-ui-forms/s
 ## 📊 Changelog
 
 See [CHANGELOG.md](./CHANGELOG.md).
+
+---
+
+## 🙏 Credits
+
+`hub-select` is a maintained **fork of [ng-select](https://github.com/ng-select/ng-select)** by the ng-select contributors. The upstream `src/ng-select` sources are vendored in place and re-themed with `--hub-*` tokens — pinned to upstream **`v23.0.1`** (tracked in [`src/lib/select/UPSTREAM`](./src/lib/select/UPSTREAM); deviations documented in [`src/lib/select/PATCHES.md`](./src/lib/select/PATCHES.md)). ng-select is distributed under the [MIT License](https://github.com/ng-select/ng-select/blob/master/LICENSE.md), and the original copyright notices are retained in the vendored files.
+
+The datepicker, inputs and validation layer are original to `ng-hub-ui-forms`.
 
 ---
 

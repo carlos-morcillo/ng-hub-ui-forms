@@ -85,7 +85,8 @@ escribir a mano `@if (control.invalid && control.touched)`.
 `ng-hub-ui-forms` unifica un conjunto de campos accesibles bajo un único contrato:
 los vinculas con **Reactive Forms** y los errores de validación aparecen
 **automáticamente** a nivel de control, grupo y formulario. Los campos son
-standalone, `OnPush` y signal-native; el select es un fork mantenido de ng-select;
+standalone, `OnPush` y signal-native; el select es un fork mantenido de
+[ng-select](https://github.com/ng-select/ng-select) (ver [Créditos](#-créditos));
 el datepicker está construido desde cero sobre `Date` nativo y el overlay del CDK
 de Angular. Todo se tematiza con variables CSS canónicas `--hub-*` con modo oscuro
 en tiempo de ejecución — sin dependencia de Bootstrap.
@@ -283,6 +284,14 @@ import { HubSignalFieldControl, hubSignalErrorMessages } from 'ng-hub-ui-forms/s
 ## 📊 Changelog
 
 Consulta [CHANGELOG.md](./CHANGELOG.md).
+
+---
+
+## 🙏 Créditos
+
+`hub-select` es un **fork mantenido de [ng-select](https://github.com/ng-select/ng-select)**, obra de los contribuidores de ng-select. Las fuentes `src/ng-select` upstream se incluyen (vendored) en el propio paquete y se re-tematizan con tokens `--hub-*` — fijadas a la versión upstream **`v23.0.1`** (registrada en [`src/lib/select/UPSTREAM`](./src/lib/select/UPSTREAM); las desviaciones se documentan en [`src/lib/select/PATCHES.md`](./src/lib/select/PATCHES.md)). ng-select se distribuye bajo la [Licencia MIT](https://github.com/ng-select/ng-select/blob/master/LICENSE.md), y se conservan los avisos de copyright originales en los ficheros vendored.
+
+El datepicker, los inputs y la capa de validación son originales de `ng-hub-ui-forms`.
 
 ---
 
