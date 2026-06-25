@@ -27,13 +27,13 @@
 	padding: 0;
 	text-align: center;
 	font-size: var(--hub-otp-cell-font-size);
-	font-weight: 600;
+	font-weight: var(--hub-ref-font-weight-semibold, 600);
 	font-variant-numeric: tabular-nums;
 	border-radius: var(--hub-otp-cell-radius);
 }
 
 .hub-otp__separator {
 	color: var(--hub-otp-separator-color);
-	font-weight: 600;
+	font-weight: var(--hub-ref-font-weight-semibold, 600);
 	user-select: none;
 }

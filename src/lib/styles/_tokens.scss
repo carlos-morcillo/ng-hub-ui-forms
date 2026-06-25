@@ -53,7 +53,7 @@
 	--hub-input-font-family: var(--hub-ref-font-family-base, system-ui, sans-serif);
 	--hub-input-font-size: var(--hub-ref-font-size-base, 1rem);
 	--hub-input-font-weight: var(--hub-ref-font-weight-base, 400);
-	--hub-input-line-height: 1.5;
+	--hub-input-line-height: var(--hub-ref-line-height-base, 1.5);
 	--hub-input-padding-y: 0.375rem;
 	--hub-input-padding-x: 0.75rem;
 	--hub-input-border-width: var(--hub-ref-border-width, 1px);
@@ -136,11 +136,11 @@
 	--hub-select-clear-color: var(--hub-sys-text-muted, #6c757d);
 	--hub-select-clear-hover-color: var(--hub-sys-color-danger, #dc3545);
 	--hub-select-option-color: var(--hub-sys-text-primary, #212529);
-	--hub-select-option-padding-x: var(--hub-ref-space-3, 0.75rem);
+	--hub-select-option-padding-x: var(--hub-ref-space-3, 1rem);
 	--hub-select-option-padding-y: var(--hub-ref-space-2, 0.5rem);
-	--hub-select-option-marked-bg: var(--hub-sys-surface-elevated, #f1f3f5);
+	--hub-select-option-marked-bg: var(--hub-sys-surface-elevated, #f8f9fa);
 	--hub-select-option-selected-bg: var(--hub-sys-color-primary, #0d6efd);
-	--hub-select-option-selected-color: #fff;
+	--hub-select-option-selected-color: var(--hub-ref-color-white, #fff);
 	--hub-select-optgroup-color: var(--hub-sys-text-muted, #6c757d);
 	--hub-select-value-bg: var(--hub-sys-surface-elevated, #f8f9fa);
 	--hub-select-value-color: var(--hub-sys-text-primary, #212529);
@@ -166,13 +166,13 @@
 	--hub-daterangepicker-cell-size: 2rem;
 	--hub-daterangepicker-cell-color: var(--hub-sys-text-primary, #212529);
 	--hub-daterangepicker-cell-border-radius: var(--hub-ref-radius-sm, 0.25rem);
-	--hub-daterangepicker-cell-hover-bg: var(--hub-sys-surface-elevated, #f5f5f5);
+	--hub-daterangepicker-cell-hover-bg: var(--hub-sys-surface-elevated, #f8f9fa);
 	--hub-daterangepicker-active-bg: var(--hub-sys-color-primary, #0d6efd);
-	--hub-daterangepicker-active-color: #fff;
+	--hub-daterangepicker-active-color: var(--hub-ref-color-white, #fff);
 	// Light primary tint (theme-aware): `--hub-sys-color-primary-subtle` is a *dark* navy in
 	// this design system, so derive a soft tint from the primary instead.
 	--hub-daterangepicker-in-range-bg: color-mix(in srgb, var(--hub-sys-color-primary, #0d6efd) 14%, transparent);
-	--hub-daterangepicker-off-color: var(--hub-sys-text-muted, #adb5bd);
+	--hub-daterangepicker-off-color: var(--hub-sys-text-muted, #6c757d);
 	--hub-daterangepicker-nav-arrow-color: var(--hub-sys-text-muted, #6c757d);
 	--hub-daterangepicker-nav-arrow-hover-color: var(--hub-sys-text-primary, #212529);
 
@@ -180,10 +180,10 @@
 	--hub-select-button-bg: var(--hub-sys-surface-page, #fff);
 	--hub-select-button-color: var(--hub-sys-text-primary, #212529);
 	--hub-select-button-border-color: var(--hub-sys-border-color-default, #dee2e6);
-	--hub-select-button-padding-x: var(--hub-ref-space-3, 0.75rem);
+	--hub-select-button-padding-x: var(--hub-ref-space-3, 1rem);
 	--hub-select-button-padding-y: var(--hub-ref-space-2, 0.5rem);
 	--hub-select-button-gap: var(--hub-ref-space-2, 0.5rem);
 	--hub-select-button-selected-bg: var(--hub-sys-color-primary, #0d6efd);
-	--hub-select-button-selected-color: #fff;
+	--hub-select-button-selected-color: var(--hub-ref-color-white, #fff);
 	--hub-select-button-selected-border-color: var(--hub-sys-color-primary, #0d6efd);
 }
