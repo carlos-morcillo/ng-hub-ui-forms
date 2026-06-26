@@ -140,7 +140,9 @@
 	--hub-select-option-padding-y: var(--hub-ref-space-2, 0.5rem);
 	--hub-select-option-marked-bg: var(--hub-sys-surface-elevated, #f8f9fa);
 	--hub-select-option-selected-bg: var(--hub-sys-color-primary, #0d6efd);
-	--hub-select-option-selected-color: var(--hub-ref-color-white, #fff);
+	// Text on the selected option sits on the primary accent — read the derived
+	// contrast token so a light/custom primary keeps the label legible.
+	--hub-select-option-selected-color: var(--hub-sys-color-primary-on, var(--hub-ref-color-white, #fff));
 	--hub-select-optgroup-color: var(--hub-sys-text-muted, #6c757d);
 	--hub-select-value-bg: var(--hub-sys-surface-elevated, #f8f9fa);
 	--hub-select-value-color: var(--hub-sys-text-primary, #212529);
@@ -168,10 +170,12 @@
 	--hub-daterangepicker-cell-border-radius: var(--hub-ref-radius-sm, 0.25rem);
 	--hub-daterangepicker-cell-hover-bg: var(--hub-sys-surface-elevated, #f8f9fa);
 	--hub-daterangepicker-active-bg: var(--hub-sys-color-primary, #0d6efd);
-	--hub-daterangepicker-active-color: var(--hub-ref-color-white, #fff);
-	// Light primary tint (theme-aware): `--hub-sys-color-primary-subtle` is a *dark* navy in
-	// this design system, so derive a soft tint from the primary instead.
-	--hub-daterangepicker-in-range-bg: color-mix(in srgb, var(--hub-sys-color-primary, #0d6efd) 14%, transparent);
+	// Text on the active day sits on the primary accent — derived contrast token.
+	--hub-daterangepicker-active-color: var(--hub-sys-color-primary-on, var(--hub-ref-color-white, #fff));
+	// Soft primary tint for the in-range band. Mixed in OKLCH (perceptually even)
+	// rather than sRGB; kept independent of `-subtle` (which mixes over the page
+	// surface, not transparent) so the band reads as a translucent overlay.
+	--hub-daterangepicker-in-range-bg: color-mix(in oklch, var(--hub-sys-color-primary, #0d6efd) 14%, transparent);
 	--hub-daterangepicker-off-color: var(--hub-sys-text-muted, #6c757d);
 	--hub-daterangepicker-nav-arrow-color: var(--hub-sys-text-muted, #6c757d);
 	--hub-daterangepicker-nav-arrow-hover-color: var(--hub-sys-text-primary, #212529);
@@ -184,6 +188,7 @@
 	--hub-select-button-padding-y: var(--hub-ref-space-2, 0.5rem);
 	--hub-select-button-gap: var(--hub-ref-space-2, 0.5rem);
 	--hub-select-button-selected-bg: var(--hub-sys-color-primary, #0d6efd);
-	--hub-select-button-selected-color: var(--hub-ref-color-white, #fff);
+	// Text on the selected button sits on the primary accent — derived contrast token.
+	--hub-select-button-selected-color: var(--hub-sys-color-primary-on, var(--hub-ref-color-white, #fff));
 	--hub-select-button-selected-border-color: var(--hub-sys-color-primary, #0d6efd);
 }

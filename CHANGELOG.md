@@ -5,6 +5,13 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.1.2] - 2026-06-26
+
+### Changed
+
+- Adopted the new derived `-on` contrast token for text sitting on the primary accent: `--hub-select-option-selected-color`, `--hub-select-button-selected-color` and `--hub-daterangepicker-active-color` now resolve to `var(--hub-sys-color-primary-on, #fff)` instead of a hard-coded white, so a light or custom primary keeps the selected label/day legible. Validation states (invalid/valid) and field chrome are unchanged.
+- Migrated `--hub-daterangepicker-in-range-bg` from `color-mix(in srgb, …)` to `color-mix(in oklch, …)` for perceptually even mixing. No other visual change.
+
 ## [22.1.1] - 2026-06-25
 
 ### Fixed
