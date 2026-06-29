@@ -87,3 +87,12 @@ export {
 } from './lib/utils/utils';
 export { applyMask, isMaskActive } from './lib/utils/mask';
 export type { HubMaskResult } from './lib/utils/mask';
+
+// Integrations — agnostic adapter for hosting form controls in other libraries
+export { hubFormControlAdapter } from './lib/integrations/form-control-adapter';
+export type {
+	HubFormControlAdapter,
+	HubFormControlConfig,
+	HubFormControlHandle,
+	HubFormControlOption
+} from './lib/integrations/form-control-adapter';

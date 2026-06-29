@@ -99,6 +99,30 @@ mode — no Bootstrap dependency.
 - **Validators & helpers** — `hubAreEqual` cross-field validator, `hubValidationError` / `hubFormText` projection directives, and a set of utility pipes.
 - **Signal Forms ready** — an opt-in [`ng-hub-ui-forms/signals`](#-signal-forms-opt-in) secondary entry point integrates Angular Signal Forms; the core stays Reactive-Forms-based and Angular-21-safe.
 - **Theming** — every colour, border, radius and spacing is a `--hub-*` CSS custom property; ships shared SCSS tokens for consumers.
+- **Cross-library adapter** — `hubFormControlAdapter` lets other libraries render `hub-input` / `hub-select` on demand without hard-depending on this package (see below).
+
+---
+
+## 🔌 Cross-library adapter (`hubFormControlAdapter`)
+
+Other ng-hub-ui libraries can host the forms controls **without taking a hard
+dependency** on `ng-hub-ui-forms`. They expose an optional token; you wire the
+ready-made `hubFormControlAdapter` once and their primitive controls upgrade to
+`hub-input` / `hub-select`. For example, the `ng-hub-ui-paginable` table:
+
+```ts
+import { provideHubPaginableFormControls } from 'ng-hub-ui-paginable';
+import { hubFormControlAdapter } from 'ng-hub-ui-forms';
+
+export const appConfig: ApplicationConfig = {
+  providers: [provideHubPaginableFormControls(hubFormControlAdapter)]
+};
+```
+
+The adapter creates components dynamically and bridges value-in / change-out; it
+needs `provideHubForms()` or the default config in the environment. See the
+ecosystem-wide [Synergies & agnosticism](../../README.md#synergies--agnosticism)
+section.
 
 ---
 

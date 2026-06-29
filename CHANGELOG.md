@@ -5,6 +5,12 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.2.0] - 2026-06-29
+
+### Added
+
+- **`hubFormControlAdapter`** — a ready-made adapter that renders primitive controls (`hub-input` / `hub-select`) on demand through dynamic component creation, bridging value-in / change-out. It lets other ng-hub-ui libraries host forms controls without a hard dependency: wire it into their optional token, e.g. `provideHubPaginableFormControls(hubFormControlAdapter)` for the `ng-hub-ui-paginable` table. Exposed alongside the structural `HubFormControlAdapter` / `HubFormControlConfig` / `HubFormControlHandle` / `HubFormControlOption` types. Requires `provideHubForms()` or the default config in the environment.
+
 ## [22.1.2] - 2026-06-26
 
 ### Changed
