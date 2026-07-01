@@ -5,6 +5,18 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.3.0] - 2026-07-01
+
+### Added
+
+- **In-field affixes for `<hub-input>`.** Text-like inputs can render leading / trailing content via the new `hubInputPrefix` / `hubInputSuffix` marker directives — project a `<hub-icon>` (any pack, `pack:variant:name` shorthand), an inline SVG or a unit label. The control reserves inline padding so its text never overlaps the affix, and themes a projected `<hub-icon>` through `--hub-input-icon-color` / `--hub-input-icon-size`. Positioned with logical CSS properties (`inset-inline-*` / `padding-inline-*`), so start/end follow the writing direction and flip automatically under `dir="rtl"`. Tokens: `--hub-input-icon-color`, `--hub-input-icon-size`, `--hub-input-affix-inset`, `--hub-input-affix-gap`.
+- **Built-in `clearable` for `<hub-input>`.** Set `[clearable]="true"` and the field renders its own ✕ button once it holds a value; it resets the control and emits an empty `search` term — no manual suffix wiring. The glyph is the swappable `--hub-input-clear-icon` mask; colours via `--hub-input-clear-color` / `--hub-input-clear-hover-color` and size via `--hub-input-clear-size`.
+- **Debounced typeahead on `<hub-input>`.** A new `search` output emits the current term (stringified) after the user stops typing, debounced by the new `debounceTime` input (ms; `0` emits on every keystroke). Repeated identical terms are skipped. Text-like formats only; `valueChange` stays synchronous. Wire `(search)` to drive autocomplete / live filtering without rolling your own debounce.
+
+### Fixed
+
+- **`<hub-input type="file">` no longer stretches the page.** The visually-hidden native file input was `position: absolute` inside a non-positioned container, so it anchored to `<body>` and extended the document height — breaking the sticky app-shell layout with a phantom scroll. Its container is now `position: relative`.
+
 ## [22.2.0] - 2026-06-29
 
 ### Added

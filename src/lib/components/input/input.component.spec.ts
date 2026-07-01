@@ -2,8 +2,11 @@ import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { By } from '@angular/platform-browser';
+import { vi } from 'vitest';
 import { HubInputComponent } from './input.component';
 import { HubInputFormat } from '../../interfaces/input.interface';
+import { HubInputPrefixDirective } from '../../directives/input-prefix.directive';
+import { HubInputSuffixDirective } from '../../directives/input-suffix.directive';
 
 /**
  * Inline host that binds a reactive {@link FormControl} to `<hub-input>` so the
@@ -316,6 +319,170 @@ describe('HubInputComponent', () => {
             fixture.detectChanges();
 
             expect(host.ctrl.value).toBe('#ff0000');
+        });
+    });
+
+    describe('affixes & clearable', () => {
+        /** Host exercising the projected affix slots and the built-in clear button. */
+        @Component({
+            standalone: true,
+            imports: [HubInputComponent, HubInputPrefixDirective, HubInputSuffixDirective, ReactiveFormsModule],
+            template: `
+				<hub-input [formControl]="ctrl" [clearable]="clearable">
+					@if (projectPrefix) {
+						<i hubInputPrefix class="projected-prefix"></i>
+					}
+					@if (projectSuffix) {
+						<button hubInputSuffix class="projected-suffix"></button>
+					}
+				</hub-input>
+			`
+        })
+        class AffixHostComponent {
+            ctrl = new FormControl<unknown>('');
+            clearable = false;
+            projectPrefix = false;
+            projectSuffix = false;
+        }
+
+        let affixFixture: ComponentFixture<AffixHostComponent>;
+        let affixHost: AffixHostComponent;
+
+        const affixQuery = (selector: string): HTMLElement | null =>
+            affixFixture.nativeElement.querySelector('hub-input')!.querySelector(selector);
+
+        beforeEach(async () => {
+            // The outer `beforeEach` already instantiated the test module for InputHostComponent;
+            // reset it so this block can configure its own host.
+            TestBed.resetTestingModule();
+            await TestBed.configureTestingModule({
+                imports: [AffixHostComponent, ReactiveFormsModule]
+            }).compileComponents();
+
+            affixFixture = TestBed.createComponent(AffixHostComponent);
+            affixHost = affixFixture.componentInstance;
+            affixFixture.detectChanges();
+        });
+
+        it('renders the internal clear button only when clearable and the control has a value', () => {
+            affixHost.clearable = true;
+            affixFixture.detectChanges();
+            // no value yet → no clear button
+            expect(affixQuery('.hub-input__clear')).toBeNull();
+
+            affixHost.ctrl.setValue('hello');
+            affixFixture.detectChanges();
+            expect(affixQuery('.hub-input__clear')).toBeTruthy();
+            expect(affixQuery('.hub-input__group--has-suffix')).toBeTruthy();
+        });
+
+        it('clears the control when the clear button is activated', () => {
+            affixHost.clearable = true;
+            affixHost.ctrl.setValue('hello');
+            affixFixture.detectChanges();
+
+            (affixQuery('.hub-input__clear') as HTMLButtonElement).click();
+            affixFixture.detectChanges();
+
+            expect(affixHost.ctrl.value).toBe('');
+            expect(affixQuery('.hub-input__clear')).toBeNull();
+        });
+
+        it('projects [hubInputPrefix] content and flags the group via contentChild', () => {
+            affixHost.projectPrefix = true;
+            affixFixture.detectChanges();
+
+            expect(affixQuery('.hub-input__affix--prefix .projected-prefix')).toBeTruthy();
+            expect(affixQuery('.hub-input__group--has-prefix')).toBeTruthy();
+        });
+
+        it('projects [hubInputSuffix] content and flags the group via contentChild', () => {
+            affixHost.projectSuffix = true;
+            affixFixture.detectChanges();
+
+            expect(affixQuery('.hub-input__affix--suffix .projected-suffix')).toBeTruthy();
+            expect(affixQuery('.hub-input__group--has-suffix')).toBeTruthy();
+        });
+
+        it('does not flag any affix when there is no projection or clear button', () => {
+            expect(affixQuery('.hub-input__group--has-prefix')).toBeNull();
+            expect(affixQuery('.hub-input__group--has-suffix')).toBeNull();
+        });
+    });
+
+    describe('typeahead search', () => {
+        /** Host wiring the debounced `search` output so emitted terms can be collected. */
+        @Component({
+            standalone: true,
+            imports: [HubInputComponent, ReactiveFormsModule],
+            template: `<hub-input [formControl]="ctrl" [debounceTime]="debounceTime" (search)="onSearch($event)" />`
+        })
+        class SearchHostComponent {
+            ctrl = new FormControl<unknown>('');
+            debounceTime = 300;
+            terms: string[] = [];
+            onSearch(term: string): void {
+                this.terms.push(term);
+            }
+        }
+
+        let searchFixture: ComponentFixture<SearchHostComponent>;
+        let searchHost: SearchHostComponent;
+
+        const type = (value: string): void => {
+            const input = searchFixture.nativeElement.querySelector('input.hub-field__control') as HTMLInputElement;
+            input.value = value;
+            input.dispatchEvent(new Event('input'));
+            searchFixture.detectChanges();
+        };
+
+        beforeEach(async () => {
+            // The outer `beforeEach` already instantiated the test module for InputHostComponent;
+            // reset it so this block can configure its own host.
+            TestBed.resetTestingModule();
+            await TestBed.configureTestingModule({
+                imports: [SearchHostComponent, ReactiveFormsModule]
+            }).compileComponents();
+
+            searchFixture = TestBed.createComponent(SearchHostComponent);
+            searchHost = searchFixture.componentInstance;
+            searchFixture.detectChanges();
+            vi.useFakeTimers();
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it('coalesces rapid keystrokes into a single debounced emit', () => {
+            type('a');
+            type('ab');
+            type('abc');
+
+            expect(searchHost.terms).toEqual([]);
+
+            vi.advanceTimersByTime(300);
+
+            expect(searchHost.terms).toEqual(['abc']);
+        });
+
+        it('does not re-emit an unchanged term', () => {
+            type('abc');
+            vi.advanceTimersByTime(300);
+
+            type('abc');
+            vi.advanceTimersByTime(300);
+
+            expect(searchHost.terms).toEqual(['abc']);
+        });
+
+        it('emits each distinct term after its own debounce window', () => {
+            type('a');
+            vi.advanceTimersByTime(300);
+            type('ab');
+            vi.advanceTimersByTime(300);
+
+            expect(searchHost.terms).toEqual(['a', 'ab']);
         });
     });
 });

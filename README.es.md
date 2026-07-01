@@ -93,7 +93,7 @@ en tiempo de ejecución — sin dependencia de Bootstrap.
 
 ## 🎯 Características
 
-- **Campos** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, con addons de input-group y máscaras), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider`, `hub-select` (formatos dropdown / buttons / checkbox / radio, agrupación, typeahead, templates personalizados), `hub-datepicker` (simple y rango, navegación por teclado, i18n).
+- **Campos** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, con addons de input-group y máscaras, afijos de icono dentro del campo y `search` typeahead con debounce), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider`, `hub-select` (formatos dropdown / buttons / checkbox / radio, agrupación, typeahead, templates personalizados), `hub-datepicker` (simple y rango, navegación por teclado, i18n).
 - **Visualización automática de errores** — vinculas un campo y sus errores de control se renderizan debajo; `hub-fieldset`, `form[hubForm]` y `hub-legend` muestran los errores de grupo y de formulario (cross-field) igual, sin cableado.
 - **Contenedores** — `hub-fieldset` / `form[hubForm]` agrupan campos y muestran sus errores de grupo; `hub-legend` renderiza una leyenda accesible.
 - **Configurable** — `provideHubForms({ … })` define las plantillas de invalid-feedback, locale/labels del datepicker y más, a nivel de app o por instancia.
@@ -132,6 +132,33 @@ npm install ng-hub-ui-forms @angular/cdk
 <hub-input formControlName="amount" type="number" label="Amount" />
 <hub-input formControlName="darkMode" format="switch" label="Dark mode" />
 ```
+
+#### Afijo de icono y typeahead (buscadores)
+
+Proyecta un icono inicial o final **dentro** del campo, emite el término con _debounce_ en cada pulsación y deja que el campo pinte su propio botón de limpiar:
+
+```html
+<!-- Proyecta cualquier icono (cualquier pack con el atajo) + búsqueda con debounce + limpiar integrado -->
+<hub-input
+	label="Buscar frameworks"
+	[clearable]="true"
+	[debounceTime]="300"
+	(search)="onSearch($event)"
+>
+	<hub-icon hubInputPrefix name="fa:solid:magnifying-glass" />
+</hub-input>
+
+<!-- Afijos proyectados para cualquier contenido (una unidad, un SVG inline…) -->
+<hub-input label="Importe">
+	<span hubInputPrefix>€</span>
+</hub-input>
+```
+
+- Proyecta un `<hub-icon>` (o cualquier elemento) en `hubInputPrefix` / `hubInputSuffix`; el campo lo tematiza con sus tokens `--hub-input-icon-*`.
+- `[clearable]` pinta un botón ✕ interno cuando el campo tiene valor — limpia el control y emite un término de `search` vacío (sin cablear un suffix a mano). El glyph es el token intercambiable `--hub-input-clear-icon`.
+- El control reserva el _padding_ interior automáticamente para que su texto nunca quede bajo el afijo.
+- Los afijos usan propiedades lógicas de CSS, así que `start`/`end` siguen la dirección de escritura y **se voltean solos con `dir="rtl"`**.
+- `(search)` se dispara `debounceTime` ms después de dejar de escribir (`0` = cada pulsación); los términos consecutivos idénticos se omiten y `valueChange` sigue siendo síncrono.
 
 ### Select
 

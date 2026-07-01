@@ -58,6 +58,68 @@ hub-input.hidden-control {
 		border-bottom-right-radius: 0;
 	}
 
+	// Icon affix: a leading / trailing glyph rendered inside the field (e.g. a search
+	// icon). Positioned with logical properties, so `prefix` sits at the inline-start
+	// (left in LTR, right in RTL) and `suffix` at the inline-end — flips automatically.
+	&__affix {
+		position: absolute;
+		inset-block: 0;
+		display: flex;
+		align-items: center;
+		color: var(--hub-input-icon-color);
+		// A projected <hub-icon> inherits the field's icon tokens.
+		--hub-icon-color: var(--hub-input-icon-color);
+		--hub-icon-size: var(--hub-input-icon-size);
+		pointer-events: none; // decorative by default — clicks reach the control
+		z-index: 2;
+
+		&--prefix {
+			inset-inline-start: var(--hub-input-affix-inset);
+		}
+
+		&--suffix {
+			inset-inline-end: var(--hub-input-affix-inset);
+		}
+	}
+
+	// Projected affix content opts back into pointer events (e.g. a trailing clear button).
+	&__affix-content {
+		pointer-events: auto;
+	}
+
+	// Internal clear (✕) button rendered by [clearable]; glyph is a swappable mask.
+	&__clear {
+		position: absolute;
+		inset-block: 0;
+		inset-inline-end: var(--hub-input-affix-inset);
+		margin-block: auto;
+		display: inline-flex;
+		inline-size: var(--hub-input-clear-size);
+		block-size: var(--hub-input-clear-size);
+		padding: 0;
+		border: 0;
+		background-color: var(--hub-input-clear-color);
+		-webkit-mask: var(--hub-input-clear-icon) center / contain no-repeat;
+		mask: var(--hub-input-clear-icon) center / contain no-repeat;
+		cursor: pointer;
+		z-index: 3;
+		transition: background-color 0.15s ease;
+
+		&:hover,
+		&:focus-visible {
+			background-color: var(--hub-input-clear-hover-color);
+		}
+	}
+
+	// Reserve inline padding so the control text never sits under an affix.
+	&__group--has-prefix > .hub-field__control {
+		padding-inline-start: calc(var(--hub-input-affix-inset) + var(--hub-input-icon-size) + var(--hub-input-affix-gap));
+	}
+
+	&__group--has-suffix > .hub-field__control {
+		padding-inline-end: calc(var(--hub-input-affix-inset) + var(--hub-input-icon-size) + var(--hub-input-affix-gap));
+	}
+
 	// Floating label.
 	&__group--floating {
 		.hub-field__control {
@@ -142,6 +204,7 @@ hub-input.hidden-control {
 
 	// File picker.
 	&__file {
+		position: relative;
 		display: flex;
 		align-items: stretch;
 		width: 100%;

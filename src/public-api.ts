@@ -49,6 +49,8 @@ export { HubFormTextDirective } from './lib/directives/form-text.directive';
 export { HubValidationErrorDirective } from './lib/directives/validation-error.directive';
 export { HubLegendDirective } from './lib/directives/legend.directive';
 export { HubAutoresizeDirective } from './lib/directives/autoresize.directive';
+export { HubInputPrefixDirective } from './lib/directives/input-prefix.directive';
+export { HubInputSuffixDirective } from './lib/directives/input-suffix.directive';
 
 // Pipes
 export { HubInvertColorPipe } from './lib/pipes/invert-color.pipe';

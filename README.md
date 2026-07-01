@@ -92,7 +92,7 @@ mode — no Bootstrap dependency.
 
 ## 🎯 Features
 
-- **Fields** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, with input-group addons & masks), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider`, `hub-select` (dropdown / buttons / checkbox / radio formats, grouping, typeahead, custom templates), `hub-datepicker` (single & range, keyboard nav, i18n).
+- **Fields** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, with input-group addons & masks, projected in-field affixes, a built-in `clearable` button and debounced typeahead `search`), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider`, `hub-select` (dropdown / buttons / checkbox / radio formats, grouping, typeahead, custom templates), `hub-datepicker` (single & range, keyboard nav, i18n).
 - **Automatic error display** — bind a field and its control errors render below it; `hub-fieldset`, `form[hubForm]` and `hub-legend` surface group- and form-level (cross-field) errors the same way, with zero wiring.
 - **Containers** — `hub-fieldset` / `form[hubForm]` group fields and show their group errors; `hub-legend` renders an accessible legend.
 - **Configurable** — `provideHubForms({ … })` sets the invalid-feedback templates, datepicker locale/labels and more, app-wide or per instance.
@@ -155,6 +155,33 @@ npm install ng-hub-ui-forms @angular/cdk
 <hub-input formControlName="amount" type="number" label="Amount" />
 <hub-input formControlName="darkMode" format="switch" label="Dark mode" />
 ```
+
+#### Icon affix & typeahead (search boxes)
+
+Project a leading / trailing icon **inside** the field, emit a debounced term on every keystroke, and let the field render its own clear button:
+
+```html
+<!-- Project any icon (any pack via the shorthand) + debounced search + built-in clear -->
+<hub-input
+	label="Search frameworks"
+	[clearable]="true"
+	[debounceTime]="300"
+	(search)="onSearch($event)"
+>
+	<hub-icon hubInputPrefix name="fa:solid:magnifying-glass" />
+</hub-input>
+
+<!-- Projected affixes for any content (a unit label, an inline SVG…) -->
+<hub-input label="Amount">
+	<span hubInputPrefix>€</span>
+</hub-input>
+```
+
+- Project a `<hub-icon>` (or any element) into `hubInputPrefix` / `hubInputSuffix`; the field themes it with its `--hub-input-icon-*` tokens.
+- `[clearable]` renders an internal ✕ button once the field holds a value — it resets the control and emits an empty `search` term (no manual suffix wiring). The glyph is the swappable `--hub-input-clear-icon` token.
+- The control reserves inline padding automatically so its text never sits under the affix.
+- Affixes use logical CSS properties, so `start`/`end` follow the writing direction and **flip automatically under `dir="rtl"`**.
+- `(search)` fires `debounceTime` ms after typing stops (`0` = every keystroke); identical consecutive terms are skipped, and `valueChange` stays synchronous.
 
 ### Select
 

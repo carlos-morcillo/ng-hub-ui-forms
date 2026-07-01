@@ -125,10 +125,19 @@
 					</div>
 				}
 				@default {
-					<div class="hub-input__group" [class.hub-input__group--floating]="labelType() === _labelTypes.Floating">
+					<div
+						class="hub-input__group"
+						[class.hub-input__group--floating]="labelType() === _labelTypes.Floating"
+						[class.hub-input__group--has-prefix]="hasPrefix()"
+						[class.hub-input__group--has-suffix]="hasSuffix()"
+					>
 						@for (addon of _prepend(); track $index) {
 							<span class="hub-input__addon hub-input__addon--prepend">{{ addon }}</span>
 						}
+
+						<span class="hub-input__affix hub-input__affix--prefix" aria-hidden="true">
+							<ng-content select="[hubInputPrefix]"></ng-content>
+						</span>
 
 						<input
 							class="hub-field__control"
@@ -148,6 +157,13 @@
 							[required]="!!required()"
 							[attr.aria-invalid]="isInvalid"
 						/>
+
+						@if (showClear()) {
+							<button type="button" class="hub-input__clear" aria-label="Clear" (click)="clear()"></button>
+						}
+						<span class="hub-input__affix hub-input__affix--suffix" aria-hidden="true">
+							<ng-content select="[hubInputSuffix]"></ng-content>
+						</span>
 
 						@for (addon of _append(); track $index) {
 							<span class="hub-input__addon hub-input__addon--append">{{ addon }}</span>

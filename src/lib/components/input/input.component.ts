@@ -4,7 +4,10 @@ import {
 	ChangeDetectionStrategy,
 	Component,
 	computed,
+	contentChild,
+	DestroyRef,
 	ElementRef,
+	inject,
 	input,
 	model,
 	numberAttribute,
@@ -16,6 +19,8 @@ import {
 import { FormsModule, Validators } from '@angular/forms';
 import { FormTextType, FormTextTypes, HubLabelType, HubLabelTypes } from '../../interfaces/common.interface';
 import { HubInputFormat, HubInputFormats } from '../../interfaces/input.interface';
+import { HubInputPrefixDirective } from '../../directives/input-prefix.directive';
+import { HubInputSuffixDirective } from '../../directives/input-suffix.directive';
 import { HubFieldControl } from '../../shared/hub-field-control';
 import { controlHasMinOrMaxValidator, isDefined } from '../../utils/utils';
 import { applyMask, isMaskActive } from '../../utils/mask';
@@ -100,6 +105,31 @@ export class HubInputComponent extends HubFieldControl {
 	/** Text shown after the control as an input-group addon (text-like formats). */
 	readonly append = input<string | string[]>('');
 
+	/** Projected inline-start affix (`[hubInputPrefix]`) — e.g. a `<hub-icon>`, when present. */
+	protected readonly prefixDir = contentChild(HubInputPrefixDirective);
+
+	/** Projected inline-end affix (`[hubInputSuffix]`) — e.g. a `<hub-icon>`, when present. */
+	protected readonly suffixDir = contentChild(HubInputSuffixDirective);
+
+	/**
+	 * When true, a clear (✕) button is rendered inside the field once it holds a
+	 * value; activating it resets the control. The glyph comes from the
+	 * `--hub-input-clear-icon` CSS token, so it can be restyled without touching
+	 * the template.
+	 */
+	readonly clearable = input(false, { transform: booleanAttribute });
+
+	/** Whether the internal clear button should be shown right now. */
+	protected readonly showClear = computed<boolean>(
+		() => this.clearable() && !this.disabled() && !this.readonly() && this._value() != null && this._value() !== ''
+	);
+
+	/** Whether an inline-start affix (projected prefix) is present. */
+	protected readonly hasPrefix = computed<boolean>(() => !!this.prefixDir());
+
+	/** Whether an inline-end affix (projected suffix or the clear button) is present. */
+	protected readonly hasSuffix = computed<boolean>(() => !!this.suffixDir() || this.showClear());
+
 	/** Extra CSS classes applied to the host element. */
 	readonly classlist = input<string>('');
 
@@ -123,6 +153,25 @@ export class HubInputComponent extends HubFieldControl {
 	/** Emits the current value when Enter is pressed. */
 	readonly enter = output<HubInputValue>();
 
+	/** Debounce in milliseconds before {@link search} fires. `0` emits on every keystroke. */
+	readonly debounceTime = input(0, { transform: numberAttribute });
+
+	/**
+	 * Debounced typeahead event: emits the current term (stringified) `debounceTime`
+	 * ms after the user stops typing. Wire it to drive search / autocomplete without
+	 * rolling your own debounce. Text-like formats only; `valueChange` stays synchronous.
+	 */
+	readonly search = output<string>();
+
+	/** Pending typeahead-debounce timer. */
+	#searchTimer?: ReturnType<typeof setTimeout>;
+
+	/** Last term emitted via {@link search}, used to skip duplicate emits. */
+	#lastSearchTerm: string | null = null;
+
+	/** Clears any pending debounce timer when the component is destroyed. */
+	private readonly _searchCleanup = inject(DestroyRef).onDestroy(() => clearTimeout(this.#searchTimer));
+
 	/** Accepted file types (file format), e.g. `image/*,.pdf`. */
 	readonly accept = input<string>('*');
 
@@ -139,6 +188,18 @@ export class HubInputComponent extends HubFieldControl {
 	protected readonly isCheckable = computed<boolean>(
 		() => this.type() === this._inputFormats.Checkbox || this.type() === this._inputFormats.Switch
 	);
+
+	/** Whether the current format renders a typeable text-like control (drives the `search` event). */
+	protected readonly isTextLike = computed<boolean>(() => {
+		const t = this.type();
+		return (
+			t !== this._inputFormats.Checkbox &&
+			t !== this._inputFormats.Switch &&
+			t !== this._inputFormats.Counter &&
+			t !== this._inputFormats.Color &&
+			t !== this._inputFormats.File
+		);
+	});
 
 	/** Display label for the selected file(s). */
 	protected readonly fileLabel = computed<string>(() => {
@@ -237,6 +298,7 @@ export class HubInputComponent extends HubFieldControl {
 			this.updateNativeErrors(event?.target ?? null);
 			this.onChange?.(formValue);
 			this.valueChange.emit(formValue);
+			this.#scheduleSearch(masked);
 			return;
 		}
 
@@ -244,6 +306,29 @@ export class HubInputComponent extends HubFieldControl {
 		this.updateNativeErrors(event?.target ?? null);
 		this.onChange?.(newValue);
 		this.valueChange.emit(newValue);
+		this.#scheduleSearch(newValue);
+	}
+
+	/**
+	 * Schedules a debounced {@link search} emit for text-like formats. Coalesces rapid
+	 * keystrokes into a single emit after {@link debounceTime} ms and skips no-op repeats.
+	 *
+	 * @param value - The latest control value.
+	 */
+	#scheduleSearch(value: HubInputValue): void {
+		if (!this.isTextLike()) {
+			return;
+		}
+
+		const term = value == null ? '' : String(value);
+		clearTimeout(this.#searchTimer);
+		this.#searchTimer = setTimeout(() => {
+			if (term === this.#lastSearchTerm) {
+				return;
+			}
+			this.#lastSearchTerm = term;
+			this.search.emit(term);
+		}, this.debounceTime());
 	}
 
 	/** Increments the counter value, clamped to `max`. */
@@ -290,6 +375,15 @@ export class HubInputComponent extends HubFieldControl {
 		this._value.set(value);
 		this.onChange?.(value);
 		this.valueChange.emit(value);
+	}
+
+	/** Resets a text-like control to empty via the internal clear button. */
+	protected clear(): void {
+		clearTimeout(this.#searchTimer);
+		this._value.set('');
+		this.onChange?.('');
+		this.valueChange.emit('');
+		this.search.emit('');
 	}
 
 	/** Clears the selected file(s). */
