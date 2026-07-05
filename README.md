@@ -92,7 +92,7 @@ mode — no Bootstrap dependency.
 
 ## 🎯 Features
 
-- **Fields** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, with input-group addons & masks, projected in-field affixes, a built-in `clearable` button and debounced typeahead `search`), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider`, `hub-select` (dropdown / buttons / checkbox / radio formats, grouping, typeahead, custom templates), `hub-datepicker` (single & range, keyboard nav, i18n).
+- **Fields** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, with input-group addons & masks, projected in-field affixes, a built-in `clearable` button and debounced typeahead `search`), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider` (single / dual thumb, gradient fill), `hub-segmented` (segmented control field — single & multiple selection, horizontal & vertical, with label + validation), `hub-select` (dropdown format, grouping, typeahead, custom templates; the `buttons` / `checkbox` / `radio` formats are **deprecated** → use `hub-segmented`), `hub-datepicker` (single & range, keyboard nav, i18n).
 - **Automatic error display** — bind a field and its control errors render below it; `hub-fieldset`, `form[hubForm]` and `hub-legend` surface group- and form-level (cross-field) errors the same way, with zero wiring.
 - **Containers** — `hub-fieldset` / `form[hubForm]` group fields and show their group errors; `hub-legend` renders an accessible legend.
 - **Configurable** — `provideHubForms({ … })` sets the invalid-feedback templates, datepicker locale/labels and more, app-wide or per instance.
@@ -291,7 +291,7 @@ shared SCSS tokens; import them once at the app root:
 ```css
 hub-input,
 hub-select {
-	--hub-field-border-color: #cbd5e1;
+	--hub-input-border-color: #cbd5e1;
 	--hub-select-option-selected-bg: #e0e7ff;
 }
 ```
@@ -307,6 +307,28 @@ hub-input {
 	--hub-form-valid-feedback-color: #198754;
 }
 ```
+
+**`hub-slider`** — `--hub-slider-track-fill` takes a full `<image>` (e.g. a `linear-gradient(to right, …)`) for the filled part of the track, which renders intact clipped to the current percentage; `--hub-slider-value-space` is the value-bubble headroom and collapses to `0` on a `[showValue]="false"` (flush) slider:
+
+```css
+.gradient-slider {
+	--hub-slider-track-fill: linear-gradient(to right, #22c55e, #eab308, #ef4444);
+}
+```
+
+**`hub-select` inside a modal** — the dropdown panel stacks through `--hub-select-dropdown-z-index` (default `calc(var(--hub-sys-zindex-modal, 1055) + 5)`), so a select opened inside a `HubModal` renders above the dialog instead of being clipped underneath it.
+
+**`hub-segmented` variants & theming** — the `color` input tints the selected segment from the semantic families (`<hub-segmented color="primary">`); any of the `--hub-segmented-*` slots can be set directly, or in one call with the SCSS mixin:
+
+```scss
+@use 'ng-hub-ui-forms/styles' as *;
+
+.brand-toggle {
+	@include hub-segmented-theme($selected-bg: gold, $selected-color: #111, $radius: 999px);
+}
+```
+
+In single-select mode the selected pill slides between options (`--hub-segmented-indicator-transition`, default `0.2s ease`; disabled under `prefers-reduced-motion`).
 
 ---
 

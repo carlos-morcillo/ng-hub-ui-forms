@@ -20,6 +20,8 @@ export type { HubOtpMode } from './lib/components/otp/otp.component';
 export { HubTextareaComponent } from './lib/components/textarea/textarea.component';
 export { HubSliderComponent } from './lib/components/slider/slider.component';
 export type { HubSliderValue } from './lib/components/slider/slider.component';
+export { HubSegmentedComponent } from './lib/components/segmented/segmented.component';
+export type { HubSegmentedOption, HubSegmentedSize } from './lib/components/segmented/segmented.component';
 export { HubFieldsetComponent } from './lib/components/fieldset/fieldset.component';
 export { HubFormComponent } from './lib/components/form/form.component';
 export { HubLegendComponent } from './lib/components/legend/legend.component';

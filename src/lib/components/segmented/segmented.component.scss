@@ -1,0 +1,135 @@
+// `<hub-segmented>` — component-specific structure only. The field chrome (label, helper text,
+// validation feedback, layout) is inherited from the shared `.hub-field` styles; here we only style
+// the segmented bar. Colours, radii and spacing come from the `--hub-segmented-*` tokens declared
+// in `styles/_tokens.scss`.
+
+hub-segmented {
+	display: block;
+}
+
+hub-segmented.hidden-control {
+	display: none !important;
+}
+
+.hub-segmented {
+	position: relative; // positioning context for the sliding indicator
+	display: inline-flex;
+	gap: var(--hub-segmented-gap);
+	padding: var(--hub-segmented-gap);
+	background: var(--hub-segmented-bg);
+	border-radius: var(--hub-segmented-radius);
+
+	// Sliding indicator (single mode): the moving pill behind the options. Its position and size
+	// are written as px custom properties by the component; the options render above it (z-index 1).
+	&__indicator {
+		position: absolute;
+		z-index: 0;
+		left: var(--hub-segmented-indicator-x, 0);
+		top: var(--hub-segmented-indicator-y, 0);
+		width: var(--hub-segmented-indicator-width, 0);
+		height: var(--hub-segmented-indicator-height, 0);
+		background: var(--hub-segmented-selected-bg);
+		border-radius: calc(var(--hub-segmented-radius) - var(--hub-segmented-gap));
+		box-shadow: var(--hub-sys-shadow-sm, 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075));
+		pointer-events: none;
+		transition: left var(--hub-segmented-indicator-transition), top var(--hub-segmented-indicator-transition),
+			width var(--hub-segmented-indicator-transition), height var(--hub-segmented-indicator-transition);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.hub-segmented__indicator {
+			transition: none;
+		}
+	}
+
+	&--disabled {
+		opacity: var(--hub-form-disabled-opacity);
+		cursor: not-allowed;
+	}
+
+	// Vertical stack: segments flow top-to-bottom and stretch to a common width.
+	&--vertical {
+		flex-direction: column;
+
+		.hub-segmented__option {
+			width: 100%;
+		}
+	}
+
+	// Multiple mode has no sliding indicator (toggles can be pressed independently), so each pressed
+	// option paints its own pill background.
+	&--multiple .hub-segmented__option--selected {
+		background: var(--hub-segmented-selected-bg);
+		box-shadow: var(--hub-sys-shadow-sm, 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075));
+	}
+
+	&__option {
+		appearance: none;
+		border: 0;
+		margin: 0;
+		position: relative; // sit above the sliding indicator
+		z-index: 1;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: var(--hub-segmented-padding-y) var(--hub-segmented-padding-x);
+		color: var(--hub-sys-text-muted, #6c757d);
+		background: transparent;
+		font: inherit;
+		line-height: 1.2;
+		white-space: nowrap;
+		border-radius: calc(var(--hub-segmented-radius) - var(--hub-segmented-gap));
+		cursor: pointer;
+		transition: var(--hub-form-transition), color 0.15s ease-in-out, background-color 0.15s ease-in-out;
+
+		&:focus-visible {
+			outline: 0;
+			box-shadow: 0 0 0 var(--hub-form-focus-ring-width) var(--hub-form-focus-ring-color);
+		}
+
+		// Selected (single: aria-checked) and pressed (multiple: aria-pressed) share the text colour.
+		// In single mode the sliding indicator IS the pill, so the option background stays
+		// transparent; the per-option background is only painted in multiple mode (see below).
+		&--selected {
+			color: var(--hub-segmented-selected-color);
+		}
+
+		&:disabled {
+			cursor: not-allowed;
+			opacity: var(--hub-form-disabled-opacity);
+		}
+	}
+
+	// Size variants.
+	&--sm .hub-segmented__option {
+		padding: calc(var(--hub-segmented-padding-y) * 0.5) calc(var(--hub-segmented-padding-x) * 0.65);
+		font-size: var(--hub-ref-font-size-sm, 0.875rem);
+	}
+
+	&--lg .hub-segmented__option {
+		padding: calc(var(--hub-segmented-padding-y) * 1.35) calc(var(--hub-segmented-padding-x) * 1.35);
+		font-size: var(--hub-ref-font-size-lg, 1.125rem);
+	}
+}
+
+// Semantic variants — `[color]` adds `data-variant` to the bar, which re-bases the selected pill's
+// tokens to the matching `--hub-sys-color-*` accent (both the sliding indicator and, in multiple
+// mode, the pressed option follow, since both read `--hub-segmented-selected-bg`).
+//
+// The set is OPEN: the loop below is only the convenience binding for the ds palette. Any custom
+// `[color]="'brand'"` works at pure runtime WITHOUT recompiling this library — the consumer just
+// declares the pair for that variant, e.g.
+//   .hub-segmented[data-variant='brand'] {
+//     --hub-segmented-selected-bg: var(--hub-sys-color-brand);
+//     --hub-segmented-selected-color: var(--hub-sys-color-brand-on, #fff);
+//   }
+// or re-bases the single `--hub-segmented-accent` slot. The `:where()` wrapper keeps these rules at
+// zero specificity so any consumer override still wins.
+$hub-segmented-variants: primary, secondary, success, danger, warning, info, neutral;
+
+@each $variant in $hub-segmented-variants {
+	:where(.hub-segmented[data-variant='#{$variant}']) {
+		--hub-segmented-selected-bg: var(--hub-sys-color-#{$variant});
+		--hub-segmented-selected-color: var(--hub-sys-color-#{$variant}-on, #fff);
+	}
+}

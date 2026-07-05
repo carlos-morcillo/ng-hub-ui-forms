@@ -87,10 +87,23 @@ export class HubSelectComponent extends HubFieldControl {
 	protected readonly _footerTpl = contentChild(NgFooterTemplateDirective, { read: TemplateRef });
 	protected readonly _notFoundTpl = contentChild(NgNotFoundTemplateDirective, { read: TemplateRef });
 
-	/** Rendering format (`dropdown`, `buttons`, `checkbox`, `radio`). */
+	/**
+	 * Rendering format (`dropdown`, `buttons`, `checkbox`, `radio`).
+	 *
+	 * @deprecated The non-dropdown values (`buttons` / `checkbox` / `radio`) are deprecated and
+	 * will be removed in the next major — use `<hub-segmented>` instead, which is the dedicated,
+	 * lightweight control for inline options as segments/buttons (single **and** multiple selection,
+	 * horizontal **and** vertical, with label / helper text). Migration: `format="buttons"` →
+	 * `<hub-segmented>`; `format="checkbox"` → `<hub-segmented [multiple]="true">`; `format="radio"`
+	 * → `<hub-segmented [vertical]="true">`. Only `dropdown` (the default) will remain on `hub-select`.
+	 */
 	readonly format = input<HubSelectFormat>(this._selectFormats.Dropdown);
 
-	/** Lay out the `buttons`/`checkbox`/`radio` options vertically. */
+	/**
+	 * Lay out the `buttons`/`checkbox`/`radio` options vertically.
+	 *
+	 * @deprecated Tied to the deprecated non-dropdown `format` values — use `<hub-segmented [vertical]="true">` instead.
+	 */
 	readonly vertical = input(false, { transform: booleanAttribute });
 
 	/** Items to choose from. */

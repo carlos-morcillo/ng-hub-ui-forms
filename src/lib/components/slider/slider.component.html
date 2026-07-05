@@ -17,7 +17,11 @@
 		</label>
 	}
 
-	<div class="hub-field__body hub-slider__range" [class.hub-slider__range--dual]="range()">
+	<div
+		class="hub-field__body hub-slider__range"
+		[class.hub-slider__range--dual]="range()"
+		[class.hub-slider__range--flush]="!showValue()"
+	>
 		@if (range()) {
 			<div class="hub-slider__rail" aria-hidden="true"></div>
 

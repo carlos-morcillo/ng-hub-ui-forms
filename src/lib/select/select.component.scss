@@ -165,6 +165,18 @@ hub-select.hidden-control {
 	}
 }
 
+// Panel stacking — must beat the vendored `.ng-dropdown-panel { z-index: 1050 }`.
+// The vendored ng-select is a child component with `ViewEncapsulation.None`, so its
+// stylesheet is injected AFTER this theme; an equal-specificity rule here would lose
+// on source order. These higher-specificity selectors win regardless of load order and
+// cover both placements: the inline panel (descendant of the control) and the
+// body-appended panel (ng-select forwards its host classes, incl. `hub-select__control`,
+// onto the panel when `appendTo` is set).
+.hub-select__control .ng-dropdown-panel,
+.ng-dropdown-panel.hub-select__control {
+	z-index: var(--hub-select-dropdown-z-index);
+}
+
 // ── buttons format ──────────────────────────────────────────────────────────
 .hub-select__buttons {
 	display: inline-flex;

@@ -1,0 +1,88 @@
+<div
+	class="hub-field hub-segmented-field"
+	[class.hub-field--horizontal]="label() && labelType() === _labelTypes.Horizontal"
+	[class.hub-field--disabled]="disabled()"
+	[class.hub-field--invalid]="isInvalid"
+	[class.hub-field--valid]="showsValid"
+>
+	@if (label() || required()) {
+		<label [for]="id" class="hub-field__label">
+			{{ label() }}
+			@if (required()) {
+				<span class="hub-field__required" aria-hidden="true">*</span>
+			}
+		</label>
+	}
+
+	<div class="hub-field__body">
+		<div
+			#segmentedBar
+			[id]="id"
+			class="hub-segmented"
+			[class.hub-segmented--sm]="size() === 'sm'"
+			[class.hub-segmented--lg]="size() === 'lg'"
+			[class.hub-segmented--vertical]="vertical()"
+			[class.hub-segmented--multiple]="multiple()"
+			[class.hub-segmented--disabled]="disabled()"
+			[attr.data-variant]="color() || null"
+			[attr.role]="multiple() ? 'group' : 'radiogroup'"
+			[attr.aria-disabled]="disabled() ? 'true' : null"
+			(keydown)="onKeydown($event)"
+		>
+			@if (!multiple()) {
+				<span class="hub-segmented__indicator" aria-hidden="true"></span>
+			}
+
+			@for (option of options(); track option.value; let index = $index) {
+				<button
+					#optionButton
+					type="button"
+					class="hub-segmented__option"
+					[class.hub-segmented__option--selected]="isSelected(option)"
+					[attr.role]="multiple() ? null : 'radio'"
+					[attr.aria-checked]="multiple() ? null : isSelected(option)"
+					[attr.aria-pressed]="multiple() ? isSelected(option) : null"
+					[disabled]="disabled() || !!option.disabled"
+					[tabindex]="rovingIndex() === index ? 0 : -1"
+					(click)="select(option)"
+				>
+					{{ option.label }}
+				</button>
+			}
+		</div>
+	</div>
+
+	@if (formText() || formTextTmp()) {
+		<div class="hub-field__form-text" [class.hub-field__form-text--disabled]="disabled()">
+			@if (formTextTmp()) {
+				<ng-container [ngTemplateOutlet]="formTextTmp()!"></ng-container>
+			} @else {
+				{{ formText() }}
+			}
+		</div>
+	}
+
+	@if (isInvalid) {
+		<div class="hub-field__feedback" role="alert">
+			<ul>
+				@for (error of errors | keyvalue; track error.key) {
+					<li>
+						<ng-container
+							[ngTemplateOutlet]="_errorTemplates[error.key] ?? defaultErrorTpt"
+							[ngTemplateOutletContext]="{ $implicit: error.value, value: error.value }"
+						></ng-container>
+						<ng-template #defaultErrorTpt>
+							<span class="hub-field__feedback-text" [innerHTML]="getInvalidFeedbackTemplate(error.key, error.value)"></span>
+						</ng-template>
+					</li>
+				}
+			</ul>
+		</div>
+	}
+
+	@if (showsValid && validFeedback()) {
+		<div class="hub-field__feedback hub-field__feedback--valid" role="status">
+			<span class="hub-field__feedback-text">{{ validFeedback() }}</span>
+		</div>
+	}
+</div>

@@ -1,0 +1,66 @@
+// ─────────────────────────────────────────────────────────────────────────
+// hub-segmented-theme — one-call theming for `<hub-segmented>`
+// ─────────────────────────────────────────────────────────────────────────
+//
+// Override any of the `--hub-segmented-*` design tokens in a single include.
+// Every parameter is OPTIONAL and defaults to `null`: only the parameters you
+// pass are emitted, so the rest keep the component's defaults. Token-based and
+// self-contained (no Bootstrap dependencies).
+//
+// Apply it inside any selector that wraps the control — the host element, a
+// container, a route, or `:root` for a global theme.
+//
+// @example — a compact, brand-accented bar with a rounded frame:
+//
+//   @use 'ng-hub-ui-forms/styles/mixins/segmented-theme' as *;
+//
+//   .view-switch {
+//     @include hub-segmented-theme(
+//       $selected-bg: var(--hub-sys-color-brand),
+//       $selected-color: var(--hub-sys-color-brand-on, #fff),
+//       $radius: 0.75rem,
+//       $padding-y: 0.375rem
+//     );
+//   }
+//
+// scss-docs-start hub-segmented-theme
+@mixin hub-segmented-theme(
+	// ── Colour ──
+	$bg: null,                // the bar (track) surface
+	$selected-bg: null,       // selected pill / sliding-indicator fill
+	$selected-color: null,    // selected option text colour
+	// ── Shape ──
+	$radius: null,            // bar corner radius (pill radius derives from it)
+	// ── Density / spacing ──
+	$gap: null,               // padding around, and gutter between, the options
+	$padding-x: null,         // option horizontal padding
+	$padding-y: null          // option vertical padding
+) {
+	// Colour
+	@if $bg != null {
+		--hub-segmented-bg: #{$bg};
+	}
+	@if $selected-bg != null {
+		--hub-segmented-selected-bg: #{$selected-bg};
+	}
+	@if $selected-color != null {
+		--hub-segmented-selected-color: #{$selected-color};
+	}
+
+	// Shape
+	@if $radius != null {
+		--hub-segmented-radius: #{$radius};
+	}
+
+	// Density / spacing
+	@if $gap != null {
+		--hub-segmented-gap: #{$gap};
+	}
+	@if $padding-x != null {
+		--hub-segmented-padding-x: #{$padding-x};
+	}
+	@if $padding-y != null {
+		--hub-segmented-padding-y: #{$padding-y};
+	}
+}
+// scss-docs-end hub-segmented-theme

@@ -5,6 +5,28 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.4.0] - 2026-07-05
+
+### Added
+
+- **`<hub-segmented>` — segmented control field.** A compact group of 2..n options rendered as an inline segmented button bar. It is a full `ng-hub-ui-forms` field (extends `HubFieldControl`, binds with `formControlName` / `ngModel`), so it carries the shared `label` / `labelType` / `formText` chrome and the automatic validation feedback. Selection modes: **single** (default — WAI-ARIA `radiogroup` of `role="radio"` buttons, arrow keys move + select, scalar value) and **multiple** (`[multiple]="true"` — `role="group"` of `aria-pressed` toggle buttons, arrow keys move focus while Space/Enter toggle, **array** value). Layout is horizontal by default or vertical with `[vertical]="true"`. Inputs: `options` (`HubSegmentedOption[]` — `{ value, label, disabled? }`), `size` (`'sm' | 'md' | 'lg'`), `label`, `labelType`, `formText`, `multiple`, `vertical`; `value` is a two-way `model`; `disabled` / validation come from the field base. **Semantic variants**: a `color` input (`primary` / `secondary` / `success` / `danger` / `warning` / `info` / `neutral`, or any custom accent) re-tints the selected segment — emitted as `data-variant` and resolved from the `--hub-sys-color-*` families. **Sliding indicator**: in single mode the selected pill is a shared indicator that **animates** from the previous option to the new one (measured to each segment; `--hub-segmented-indicator-transition`, honours `prefers-reduced-motion`); multiple mode keeps per-option backgrounds. **One-call theming**: a new `hub-segmented-theme(...)` SCSS mixin (`@use 'ng-hub-ui-forms/styles' as *`) sets any of the `--hub-segmented-*` slots in a single include. Themed through the `--hub-segmented-*` tokens (`-bg`, `-selected-bg`, `-selected-color`, `-radius`, `-gap`, `-padding-x`, `-padding-y`, `-accent`, `-indicator-transition`). Exposed alongside the `HubSegmentedOption` / `HubSegmentedSize` types.
+- **Gradient fill for `<hub-slider>`.** New `--hub-slider-track-fill` token accepts a full background `<image>` (e.g. a `linear-gradient(to right, …)`) for the filled portion of the track. The track now layers this sized background over `--hub-slider-track-bg`, so a gradient renders intact clipped to the current percentage — for both the single-thumb track and the dual-thumb rail (offset across the `from` → `to` band). The default wraps the existing solid `--hub-slider-track-fill-bg` (kept for back-compat) so the previous solid look is preserved.
+- **Labelless (flush) `<hub-slider>`.** The value-bubble headroom is now the `--hub-slider-value-space` token (default `1.75rem`). When `showValue` is `false` the rail adds a `--flush` modifier that collapses the space to `0`, so a slider with no value bubble sits flush.
+
+### Fixed
+
+- **`<hub-select>` dropdown no longer hides behind a modal.** The vendored ng-select hard-codes `z-index: 1050` on `.ng-dropdown-panel` — one below `HubModal` (`--hub-sys-zindex-modal`, `1055`) — so a select opened inside a modal was clipped underneath it. The hub theme now sets the panel's stacking through the new `--hub-select-dropdown-z-index` token (`calc(var(--hub-sys-zindex-modal, 1055) + 5)`) with a higher-specificity selector that wins regardless of stylesheet load order and covers both the inline and body-appended panel placements.
+
+### Deprecated
+
+- **`<hub-select>` non-dropdown formats.** `format="buttons" | "checkbox" | "radio"` (and the `vertical` input that goes with them) are deprecated in favour of the now full-featured `<hub-segmented>`, and will be **removed in the next major**. Migration: `format="buttons"` → `<hub-segmented>`; `format="checkbox"` → `<hub-segmented [multiple]="true">`; `format="radio"` → `<hub-segmented [vertical]="true">`. `hub-select` keeps its default `dropdown` format.
+
+## [22.3.1] - 2026-07-02
+
+### Fixed
+
+- CSS variable fallbacks realigned to the ds light defaults (`--hub-ref-font-family-base`: `system-ui, sans-serif` → `system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif`; `--hub-sys-shadow`: `0 0.5rem 1rem rgba(0, 0, 0, 0.12)` → `0 0.5rem 1rem rgba(0, 0, 0, 0.15)`); fallbacks only apply when ng-hub-ui-ds is not loaded.
+
 ## [22.3.0] - 2026-07-01
 
 ### Added

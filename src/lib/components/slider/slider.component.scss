@@ -13,7 +13,12 @@ hub-slider.hidden-control {
 .hub-slider {
 	&__range {
 		position: relative;
-		padding-top: 1.75rem; // room for the value bubble
+		padding-top: var(--hub-slider-value-space); // room for the value bubble
+	}
+
+	// Labelless slider — no value bubble, so no reserved space above the rail.
+	&__range--flush {
+		--hub-slider-value-space: 0;
 	}
 
 	&__track {
@@ -22,11 +27,11 @@ hub-slider.hidden-control {
 		margin: 0;
 		appearance: none;
 		-webkit-appearance: none;
-		background: linear-gradient(
-			to right,
-			var(--hub-slider-track-fill-bg) calc(var(--hub-slider-percent) * 1%),
-			var(--hub-slider-track-bg) calc(var(--hub-slider-percent) * 1%)
-		);
+		// Layer the fill <image> (sized to the current percentage) over the base track
+		// colour, so `--hub-slider-track-fill` can be a gradient that renders intact
+		// clipped to the filled width — instead of a single colour-stop in a gradient.
+		background: var(--hub-slider-track-fill) no-repeat, var(--hub-slider-track-bg);
+		background-size: calc(var(--hub-slider-percent) * 1%) 100%, 100% 100%;
 		border-radius: var(--hub-slider-track-border-radius);
 		cursor: pointer;
 
@@ -101,7 +106,7 @@ hub-slider.hidden-control {
 
 	// ── Dual-thumb (range) ──────────────────────────────────────────────────────
 	&__range--dual {
-		min-height: calc(1.75rem + var(--hub-slider-thumb-height));
+		min-height: calc(var(--hub-slider-value-space) + var(--hub-slider-thumb-height));
 
 		.hub-slider__rail,
 		.hub-slider__track--lower,
@@ -109,20 +114,26 @@ hub-slider.hidden-control {
 			position: absolute;
 			left: 0;
 			right: 0;
-			top: calc(1.75rem + var(--hub-slider-thumb-height) / 2);
+			top: calc(var(--hub-slider-value-space) + var(--hub-slider-thumb-height) / 2);
 		}
 
 		.hub-slider__rail {
 			height: var(--hub-slider-track-height);
 			transform: translateY(-50%);
 			border-radius: var(--hub-slider-track-border-radius);
-			background: linear-gradient(
-				to right,
-				var(--hub-slider-track-bg) calc(var(--hub-slider-from) * 1%),
-				var(--hub-slider-track-fill-bg) calc(var(--hub-slider-from) * 1%),
-				var(--hub-slider-track-fill-bg) calc(var(--hub-slider-to) * 1%),
-				var(--hub-slider-track-bg) calc(var(--hub-slider-to) * 1%)
-			);
+			// Same layered technique as the single track: the fill <image> is sized to the
+			// selected band width `(to - from)%` and offset to start at `from%`, so a gradient
+			// renders intact across the band. Background-position percentages resolve against
+			// the free space (container − image), so `from%` is divided by that free fraction;
+			// `max(…, 1)` guards the full-range case (from 0 → to 100) where the band fills the
+			// whole track and any position collapses to the left edge anyway.
+			background: var(--hub-slider-track-fill) no-repeat, var(--hub-slider-track-bg);
+			background-size: calc((var(--hub-slider-to) - var(--hub-slider-from)) * 1%) 100%, 100% 100%;
+			background-position: calc(
+					var(--hub-slider-from) / max(100 - var(--hub-slider-to) + var(--hub-slider-from), 1) * 100%
+				)
+				center,
+				0 0;
 			pointer-events: none;
 		}
 

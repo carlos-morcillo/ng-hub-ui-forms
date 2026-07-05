@@ -93,7 +93,7 @@ en tiempo de ejecución — sin dependencia de Bootstrap.
 
 ## 🎯 Características
 
-- **Campos** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, con addons de input-group y máscaras, afijos de icono dentro del campo y `search` typeahead con debounce), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider`, `hub-select` (formatos dropdown / buttons / checkbox / radio, agrupación, typeahead, templates personalizados), `hub-datepicker` (simple y rango, navegación por teclado, i18n).
+- **Campos** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, con addons de input-group y máscaras, afijos de icono dentro del campo y `search` typeahead con debounce), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider` (uno / dos thumbs, relleno con degradado), `hub-segmented` (campo de control segmentado — selección simple y múltiple, horizontal y vertical, con label + validación), `hub-select` (formato dropdown, agrupación, typeahead, templates personalizados; los formatos `buttons` / `checkbox` / `radio` están **deprecados** → usa `hub-segmented`), `hub-datepicker` (simple y rango, navegación por teclado, i18n).
 - **Visualización automática de errores** — vinculas un campo y sus errores de control se renderizan debajo; `hub-fieldset`, `form[hubForm]` y `hub-legend` muestran los errores de grupo y de formulario (cross-field) igual, sin cableado.
 - **Contenedores** — `hub-fieldset` / `form[hubForm]` agrupan campos y muestran sus errores de grupo; `hub-legend` renderiza una leyenda accesible.
 - **Configurable** — `provideHubForms({ … })` define las plantillas de invalid-feedback, locale/labels del datepicker y más, a nivel de app o por instancia.
@@ -269,7 +269,7 @@ compartidos; impórtalos una vez en la raíz de la app:
 ```css
 hub-input,
 hub-select {
-	--hub-field-border-color: #cbd5e1;
+	--hub-input-border-color: #cbd5e1;
 	--hub-select-option-selected-bg: #e0e7ff;
 }
 ```
@@ -285,6 +285,28 @@ hub-input {
 	--hub-form-valid-feedback-color: #198754;
 }
 ```
+
+**`hub-slider`** — `--hub-slider-track-fill` acepta un `<image>` completo (p. ej. un `linear-gradient(to right, …)`) para la parte rellena de la pista, que se renderiza intacto recortado al porcentaje actual; `--hub-slider-value-space` es el hueco de la burbuja de valor y colapsa a `0` en un slider `[showValue]="false"` (flush):
+
+```css
+.gradient-slider {
+	--hub-slider-track-fill: linear-gradient(to right, #22c55e, #eab308, #ef4444);
+}
+```
+
+**`hub-select` dentro de un modal** — el panel del desplegable se apila con `--hub-select-dropdown-z-index` (por defecto `calc(var(--hub-sys-zindex-modal, 1055) + 5)`), así que un select abierto dentro de un `HubModal` se renderiza por encima del diálogo en vez de quedar recortado debajo.
+
+**Variantes y theming de `hub-segmented`** — el input `color` tiñe el segmento seleccionado desde las familias semánticas (`<hub-segmented color="primary">`); puedes fijar cualquier slot `--hub-segmented-*` directamente, o en una llamada con el mixin SCSS:
+
+```scss
+@use 'ng-hub-ui-forms/styles' as *;
+
+.brand-toggle {
+	@include hub-segmented-theme($selected-bg: gold, $selected-color: #111, $radius: 999px);
+}
+```
+
+En modo single, la píldora seleccionada se desliza entre opciones (`--hub-segmented-indicator-transition`, por defecto `0.2s ease`; desactivado con `prefers-reduced-motion`).
 
 ---
 

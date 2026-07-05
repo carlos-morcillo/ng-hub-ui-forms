@@ -11,3 +11,6 @@
 
 @use 'tokens';
 @use 'field';
+
+// One-call theming mixins (opt-in; forwarded so consumers can `@use` them from the package root).
+@forward 'mixins/segmented-theme';
