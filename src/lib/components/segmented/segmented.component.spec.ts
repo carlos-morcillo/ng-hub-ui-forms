@@ -191,4 +191,37 @@ describe('HubSegmentedComponent', () => {
 			expect(document.activeElement).toBe(buttons()[1]);
 		});
 	});
+
+	// Accent colour accepts the accent list + a free string + a literal colour.
+	describe('accent colour', () => {
+		let fixture: ComponentFixture<SegmentedHostComponent>;
+		let host: SegmentedHostComponent;
+		const bar = (): HTMLElement => fixture.nativeElement.querySelector('.hub-segmented');
+
+		beforeEach(() => {
+			TestBed.configureTestingModule({ imports: [SegmentedHostComponent] });
+			fixture = TestBed.createComponent(SegmentedHostComponent);
+			host = fixture.componentInstance;
+			fixture.detectChanges();
+		});
+
+		it('leaves the accent unset with no colour (neutral pill)', () => {
+			expect(bar().getAttribute('data-variant')).toBeNull();
+			expect(bar().style.getPropertyValue('--hub-segmented-accent')).toBe('');
+		});
+
+		it('resolves a semantic name to its ds token with a raw fallback', () => {
+			host.color.set('primary');
+			fixture.detectChanges();
+			expect(bar().getAttribute('data-variant')).toBe('primary');
+			expect(bar().style.getPropertyValue('--hub-segmented-accent')).toBe('var(--hub-sys-color-primary, primary)');
+		});
+
+		it('passes a literal colour through unchanged', () => {
+			host.color.set('#ff0000');
+			fixture.detectChanges();
+			expect(bar().getAttribute('data-variant')).toBe('#ff0000');
+			expect(bar().style.getPropertyValue('--hub-segmented-accent')).toBe('#ff0000');
+		});
+	});
 });

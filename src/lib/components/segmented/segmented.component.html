@@ -25,6 +25,7 @@
 			[class.hub-segmented--multiple]="multiple()"
 			[class.hub-segmented--disabled]="disabled()"
 			[attr.data-variant]="color() || null"
+			[style.--hub-segmented-accent]="accentVar()"
 			[attr.role]="multiple() ? 'group' : 'radiogroup'"
 			[attr.aria-disabled]="disabled() ? 'true' : null"
 			(keydown)="onKeydown($event)"

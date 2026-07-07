@@ -1,4 +1,4 @@
-import { booleanAttribute, Directive, ElementRef, HostListener, inject, input, OnInit } from '@angular/core';
+import { booleanAttribute, Directive, ElementRef, inject, input, OnInit } from '@angular/core';
 
 /**
  * Auto-resizes a `<textarea>` to fit its content height.
@@ -9,7 +9,12 @@ import { booleanAttribute, Directive, ElementRef, HostListener, inject, input, O
  * ```
  */
 @Directive({
-	selector: 'textarea[hubAutoresize]'
+	selector: 'textarea[hubAutoresize]',
+	host: {
+		'(:focusin)': 'onChange()',
+		'(:focusout)': 'onChange()',
+		'(:input)': 'onChange()'
+	}
 })
 export class HubAutoresizeDirective implements OnInit {
 	readonly #elementRef = inject<ElementRef<HTMLTextAreaElement>>(ElementRef);
@@ -17,9 +22,6 @@ export class HubAutoresizeDirective implements OnInit {
 	/** Whether auto-resizing is enabled. */
 	readonly hubAutoresize = input(true, { transform: booleanAttribute });
 
-	@HostListener(':focusin')
-	@HostListener(':focusout')
-	@HostListener(':input')
 	onChange(): void {
 		this.resize();
 	}

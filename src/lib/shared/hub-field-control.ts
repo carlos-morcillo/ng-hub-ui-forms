@@ -5,7 +5,6 @@ import {
 	contentChildren,
 	Directive,
 	ElementRef,
-	HostListener,
 	inject,
 	input,
 	model,
@@ -35,7 +34,11 @@ import { isDefined, uuid } from '../utils/utils';
  * Subclasses only implement the value-specific bits: the `_value` signal, `writeValue`, the change
  * handler and their own template/inputs.
  */
-@Directive()
+@Directive({
+	host: {
+		'(focusout)': 'handleBlur($event)'
+	}
+})
 export abstract class HubFieldControl extends HubFormControl implements ControlValueAccessor, AfterContentInit {
 	protected readonly _elementRef = inject(ElementRef);
 	readonly #config = inject(HUB_FORMS_CONFIG);
@@ -137,7 +140,6 @@ export abstract class HubFieldControl extends HubFormControl implements ControlV
 	 *
 	 * @param event - The originating focus event.
 	 */
-	@HostListener('focusout', ['$event'])
 	handleBlur(event?: FocusEvent): void {
 		if (!this._control) {
 			this._nativeTouched.set(true);

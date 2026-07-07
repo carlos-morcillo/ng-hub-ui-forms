@@ -18,6 +18,7 @@ import {
 import { isPlatformBrowser, KeyValuePipe, NgTemplateOutlet } from '@angular/common';
 import { HubLabelType, HubLabelTypes } from '../../interfaces/common.interface';
 import { HubFieldControl } from '../../shared/hub-field-control';
+import { resolveHubAccent } from '../../shared/resolve-hub-accent';
 
 /** A single choice rendered by {@link HubSegmentedComponent}. */
 export interface HubSegmentedOption {
@@ -77,14 +78,21 @@ export class HubSegmentedComponent extends HubFieldControl {
 	readonly size = input<HubSegmentedSize>('md');
 
 	/**
-	 * Semantic accent for the selected pill. Drives `data-variant` on the bar, which re-bases the
-	 * `--hub-segmented-selected-*` tokens. Built-in values map to the design-system palette
-	 * (`primary`, `secondary`, `success`, `danger`, `warning`, `info`, `neutral`), but the set is
-	 * OPEN — any custom string works as long as the consumer supplies the matching
-	 * `--hub-segmented-selected-bg` / `--hub-segmented-selected-color` (or `--hub-segmented-accent`)
-	 * for that `data-variant`. Empty string (default) keeps the neutral white-pill look.
+	 * Accent for the selected pill. Accepts ANY colour value:
+	 * - a built-in semantic name (`primary`, `success`, …) or any registered accent → resolves to
+	 *   the matching `--hub-sys-color-*` design-system token;
+	 * - a literal colour (`#ff0000`, `rgb(...)`, `oklch(...)`, `rebeccapurple`) → used as-is.
+	 * Both the sliding indicator and the multiple-mode pill follow it, and the selected label gets a
+	 * derived contrast colour automatically. Empty string (default) keeps the neutral white-pill look.
 	 */
 	readonly color = input<string>('');
+
+	/**
+	 * Resolves {@link color} to a paintable accent for the `--hub-segmented-accent` slot: a bareword
+	 * becomes a `--hub-sys-color-*` token with the word as raw fallback (so named CSS colours work
+	 * too), while a literal `#hex` / `rgb()` / `oklch()` / `var()` is passed through unchanged.
+	 */
+	protected readonly accentVar = computed<string | null>(() => resolveHubAccent(this.color()));
 
 	/** Label text. */
 	readonly label = input<string>('');

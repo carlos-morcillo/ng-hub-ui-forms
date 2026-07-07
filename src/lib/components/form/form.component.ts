@@ -1,5 +1,5 @@
 import { KeyValuePipe, NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, HostListener, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/core';
 import { HubGroupControl } from '../../shared/hub-group-control';
 
 /**
@@ -29,7 +29,8 @@ import { HubGroupControl } from '../../shared/hub-group-control';
 	encapsulation: ViewEncapsulation.None,
 	host: {
 		'[class.hub-form-host]': 'true',
-		'[class.hub-form--invalid]': 'isInvalid'
+		'[class.hub-form--invalid]': 'isInvalid',
+		'(submit)': 'handleSubmit($event)'
 	}
 })
 export class HubFormComponent extends HubGroupControl {
@@ -40,7 +41,6 @@ export class HubFormComponent extends HubGroupControl {
 	 *
 	 * @param event - The native submit event.
 	 */
-	@HostListener('submit', ['$event'])
 	protected handleSubmit(event: Event): void {
 		event.preventDefault();
 		this._control()?.markAllAsTouched();

@@ -1,4 +1,4 @@
-import { AfterContentInit, Directive, HostBinding, input, model, OnDestroy, OnInit } from '@angular/core';
+import { AfterContentInit, Directive, input, model, OnDestroy, OnInit } from '@angular/core';
 import { ControlContainer, FormControlStatus, NgControl, Validators } from '@angular/forms';
 import { Subject, takeUntil, tap } from 'rxjs';
 import { isDefined } from '../utils/utils';
@@ -12,7 +12,11 @@ import { isDefined } from '../utils/utils';
  *
  * Subclasses must provide the injected `NgControl` and `ControlContainer` instances.
  */
-@Directive()
+@Directive({
+	host: {
+		'[class.hidden-control]': 'hidden'
+	}
+})
 export abstract class HubFormControl implements OnInit, AfterContentInit, OnDestroy {
 	/**
 	 * Name of the form control when used within a form group/array.
@@ -27,7 +31,7 @@ export abstract class HubFormControl implements OnInit, AfterContentInit, OnDest
 	/**
 	 * Whether the control is hidden.
 	 */
-	@HostBinding('class.hidden-control') hidden: boolean = false;
+	hidden: boolean = false;
 
 	protected _destroy$ = new Subject();
 	protected _isFormControl: boolean = false;

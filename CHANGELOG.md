@@ -5,6 +5,18 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.5.0] - 2026-07-07
+
+### Added
+
+- **`<hub-segmented>` `[color]` accepts ANY colour.** On top of the semantic accent names, the input now also accepts a **registered custom accent** and a **literal colour** (`#ff0000`, `rgb(...)`, `oklch(...)`, or a CSS named colour). The value feeds a single `--hub-segmented-accent` slot; the selected pill takes it as its surface and **derives a legible contrast text automatically** (the same `oklch()` lightness flip the rest of the family uses). Empty (default) keeps the neutral white pill.
+- **`hub-forms-theme(...)` mixin** — one-call theming for the shared field chrome (`--hub-form-*`): `focus-ring-color/-width`, `invalid-color`, `valid-color`, `disabled-opacity`, `transition`. Null-defaulted and additive; layer a component mixin (e.g. `hub-segmented-theme`) on top. `@use 'ng-hub-ui-forms/styles' as *;`.
+
+### Changed
+
+- **BREAKING (packaging) — SCSS ships at `ng-hub-ui-forms/styles`.** The style bundle and mixins now build to `dist/forms/styles/...` (was `dist/forms/src/lib/styles/...`), so the documented `@use 'ng-hub-ui-forms/styles'` (and `.../styles/mixins/*`) resolves. Update any `@use` that reached into `src/lib/styles`.
+- **BREAKING (segmented variants) — accent derives from `--hub-segmented-accent`.** The per-`data-variant` `@each` that hard-set `--hub-segmented-selected-bg/-color` is replaced by a single `:where(.hub-segmented[data-variant])` rule that reads the `--hub-segmented-accent` slot (set from `[color]`). Normal `[color]` usage is unchanged; a **manually** set `data-variant` with no `[color]`/accent now shows the default accent instead of that variant's colour.
+
 ## [22.4.0] - 2026-07-05
 
 ### Added

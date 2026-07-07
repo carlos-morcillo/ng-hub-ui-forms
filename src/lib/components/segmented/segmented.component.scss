@@ -112,24 +112,14 @@ hub-segmented.hidden-control {
 	}
 }
 
-// Semantic variants — `[color]` adds `data-variant` to the bar, which re-bases the selected pill's
-// tokens to the matching `--hub-sys-color-*` accent (both the sliding indicator and, in multiple
-// mode, the pressed option follow, since both read `--hub-segmented-selected-bg`).
-//
-// The set is OPEN: the loop below is only the convenience binding for the ds palette. Any custom
-// `[color]="'brand'"` works at pure runtime WITHOUT recompiling this library — the consumer just
-// declares the pair for that variant, e.g.
-//   .hub-segmented[data-variant='brand'] {
-//     --hub-segmented-selected-bg: var(--hub-sys-color-brand);
-//     --hub-segmented-selected-color: var(--hub-sys-color-brand-on, #fff);
-//   }
-// or re-bases the single `--hub-segmented-accent` slot. The `:where()` wrapper keeps these rules at
-// zero specificity so any consumer override still wins.
-$hub-segmented-variants: primary, secondary, success, danger, warning, info, neutral;
-
-@each $variant in $hub-segmented-variants {
-	:where(.hub-segmented[data-variant='#{$variant}']) {
-		--hub-segmented-selected-bg: var(--hub-sys-color-#{$variant});
-		--hub-segmented-selected-color: var(--hub-sys-color-#{$variant}-on, #fff);
-	}
+// Accent tint — applying a `[color]` puts `data-variant` on the bar and sets the single
+// `--hub-segmented-accent` slot inline (a ds token for a name, or a literal colour). The selected
+// pill then takes that accent as its surface and derives a legible contrast text from it with the
+// same `oklch()` lightness flip the rest of the family uses. Both the sliding indicator and the
+// multiple-mode pressed pill follow, since both read `--hub-segmented-selected-bg`. The `:where()`
+// wrapper keeps zero specificity so any consumer override still wins. Any value works — a built-in
+// name, a registered custom accent, or a literal `#hex` / `rgb()` / `oklch()`.
+:where(.hub-segmented[data-variant]) {
+	--hub-segmented-selected-bg: var(--hub-segmented-accent);
+	--hub-segmented-selected-color: oklch(from var(--hub-segmented-accent) clamp(0, (0.62 - l) * 1000, 1) 0 h);
 }

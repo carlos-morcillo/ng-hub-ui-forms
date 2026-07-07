@@ -1,0 +1,67 @@
+// ─────────────────────────────────────────────────────────────────────────
+// hub-forms-theme — one-call theming for the shared `ng-hub-ui-forms` chrome
+// ─────────────────────────────────────────────────────────────────────────
+//
+// Sets the cross-cutting `--hub-form-*` tokens that EVERY form control reads
+// (focus ring, validation accents, disabled state, motion) in a single include.
+// Every parameter is OPTIONAL and defaults to `null`: only the parameters you
+// pass are emitted, so the rest keep the library defaults. Token-based and
+// self-contained (no Bootstrap dependencies). For a specific control, layer the
+// matching component mixin on top (e.g. `hub-segmented-theme`).
+//
+// Apply it inside any selector that wraps the fields — a form, a container, a
+// route, or `:root` for a global theme.
+//
+// @example — brand focus ring + softer disabled state, globally:
+//
+//   @use 'ng-hub-ui-forms/styles' as *;
+//
+//   :root {
+//     @include hub-forms-theme(
+//       $focus-ring-color: var(--hub-sys-color-info-subtle),
+//       $disabled-opacity: 0.5
+//     );
+//   }
+//
+// scss-docs-start hub-forms-theme
+@mixin hub-forms-theme(
+	// ── Focus ring (shared by every control) ──
+	$focus-ring-color: null,   // focus-ring colour
+	$focus-ring-width: null,   // focus-ring width
+	// ── Validation accents ──
+	$invalid-color: null,      // invalid text + border colour
+	$valid-color: null,        // valid text + border colour
+	// ── State ──
+	$disabled-opacity: null,   // opacity applied to a disabled control
+	// ── Motion ──
+	$transition: null          // border/box-shadow transition shared by inputs
+) {
+	// Focus ring
+	@if $focus-ring-color != null {
+		--hub-form-focus-ring-color: #{$focus-ring-color};
+	}
+	@if $focus-ring-width != null {
+		--hub-form-focus-ring-width: #{$focus-ring-width};
+	}
+
+	// Validation accents (text + border move together)
+	@if $invalid-color != null {
+		--hub-form-invalid-color: #{$invalid-color};
+		--hub-form-invalid-border-color: #{$invalid-color};
+	}
+	@if $valid-color != null {
+		--hub-form-valid-color: #{$valid-color};
+		--hub-form-valid-border-color: #{$valid-color};
+	}
+
+	// State
+	@if $disabled-opacity != null {
+		--hub-form-disabled-opacity: #{$disabled-opacity};
+	}
+
+	// Motion
+	@if $transition != null {
+		--hub-form-transition: #{$transition};
+	}
+}
+// scss-docs-end hub-forms-theme
