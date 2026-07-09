@@ -1,0 +1,319 @@
+// ─────────────────────────────────────────────────────────────────────────
+// <hub-file-input> — structure
+// ─────────────────────────────────────────────────────────────────────────
+// Every colour, size and glyph reads a `--hub-file-input-*` token declared in
+// `styles/_tokens.scss`; nothing is hard-coded here. Icons are CSS masks, so a
+// consumer swaps the drawing by overriding the token — no template fork.
+// ─────────────────────────────────────────────────────────────────────────
+
+.hub-file-input {
+	// ── Dropzone ───────────────────────────────────────────────────────────
+	&__dropzone {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: var(--hub-file-input-gap);
+		min-height: var(--hub-file-input-min-height);
+		padding: var(--hub-file-input-padding-y) var(--hub-file-input-padding-x);
+		color: var(--hub-file-input-color);
+		background-color: var(--hub-file-input-bg);
+		border: var(--hub-file-input-border-width) var(--hub-file-input-border-style) var(--hub-file-input-border-color);
+		border-radius: var(--hub-file-input-border-radius);
+		text-align: center;
+		cursor: pointer;
+		transition: var(--hub-file-input-transition);
+
+		&:hover {
+			background-color: var(--hub-file-input-hover-bg);
+			border-color: var(--hub-file-input-hover-border-color);
+		}
+
+		// Keyboard focus lands on the visually hidden native input; the ring belongs on the
+		// dropzone. `:focus-visible` (not `:focus-within`) keeps it off a plain mouse click.
+		&:has(.hub-file-input__native:focus-visible) {
+			border-color: var(--hub-file-input-focus-border-color);
+			box-shadow: var(--hub-file-input-focus-box-shadow);
+			outline: none;
+		}
+
+		&--dragover,
+		&--dragover:hover {
+			background-color: var(--hub-file-input-dragover-bg);
+			border-color: var(--hub-file-input-dragover-border-color);
+		}
+
+		&--invalid {
+			border-color: var(--hub-form-invalid-border-color);
+		}
+
+		&:has(.hub-file-input__native:disabled) {
+			cursor: not-allowed;
+
+			&:hover {
+				background-color: var(--hub-file-input-bg);
+				border-color: var(--hub-file-input-border-color);
+			}
+		}
+	}
+
+	// Hidden, but focusable and reachable by the label — never `display: none`.
+	&__native {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+		border: 0;
+	}
+
+	&__icon {
+		display: block;
+		width: var(--hub-file-input-icon-size);
+		height: var(--hub-file-input-icon-size);
+		background-color: var(--hub-file-input-icon-color);
+		mask: var(--hub-file-input-icon) center / contain no-repeat;
+	}
+
+	&__prompt {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		justify-content: center;
+		gap: 0.25em;
+		color: var(--hub-file-input-prompt-color);
+		font-size: var(--hub-file-input-prompt-font-size);
+	}
+
+	&__browse {
+		color: var(--hub-file-input-browse-color);
+		font-weight: var(--hub-file-input-browse-font-weight);
+		text-decoration: underline;
+	}
+
+	&__hint {
+		color: var(--hub-file-input-hint-color);
+		font-size: var(--hub-file-input-hint-font-size);
+	}
+
+	// ── File list ──────────────────────────────────────────────────────────
+	&__list {
+		display: flex;
+		flex-direction: column;
+		gap: var(--hub-file-input-list-gap);
+		margin: var(--hub-file-input-list-margin-top) 0 0;
+		padding: 0;
+		list-style: none;
+
+		&--grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(var(--hub-file-input-grid-min-width), 1fr));
+			gap: var(--hub-file-input-grid-gap);
+		}
+	}
+
+	&__item {
+		display: flex;
+		align-items: center;
+		gap: var(--hub-file-input-item-gap);
+		padding: var(--hub-file-input-item-padding-y) var(--hub-file-input-item-padding-x);
+		color: var(--hub-file-input-item-color);
+		background-color: var(--hub-file-input-item-bg);
+		border: var(--hub-file-input-border-width) solid var(--hub-file-input-item-border-color);
+		border-radius: var(--hub-file-input-item-border-radius);
+		min-width: 0;
+
+		&[data-status='error'] {
+			border-color: var(--hub-file-input-error-color);
+		}
+
+		&[data-status='done'] {
+			border-color: var(--hub-file-input-done-color);
+		}
+	}
+
+	&__thumb {
+		display: flex;
+		flex: none;
+		align-items: center;
+		justify-content: center;
+		width: var(--hub-file-input-thumb-size);
+		height: var(--hub-file-input-thumb-size);
+		overflow: hidden;
+		background-color: var(--hub-file-input-thumb-bg);
+		border-radius: var(--hub-file-input-thumb-radius);
+	}
+
+	&__image {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	&__file-icon {
+		display: block;
+		width: var(--hub-file-input-file-icon-size);
+		height: var(--hub-file-input-file-icon-size);
+		background-color: var(--hub-file-input-file-icon-color);
+		mask: var(--hub-file-input-file-icon) center / contain no-repeat;
+	}
+
+	&__meta {
+		display: flex;
+		flex: 1 1 auto;
+		flex-direction: column;
+		gap: 0.125rem;
+		min-width: 0;
+	}
+
+	&__name {
+		overflow: hidden;
+		font-size: var(--hub-file-input-name-font-size);
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	&__size {
+		color: var(--hub-file-input-size-color);
+		font-size: var(--hub-file-input-size-font-size);
+	}
+
+	&__error {
+		color: var(--hub-file-input-error-color);
+		font-size: var(--hub-file-input-error-font-size);
+	}
+
+	// ── Progress ───────────────────────────────────────────────────────────
+	&__progress {
+		display: block;
+		width: 100%;
+		height: var(--hub-file-input-progress-height);
+		overflow: hidden;
+		background-color: var(--hub-file-input-progress-track-bg);
+		border-radius: var(--hub-file-input-progress-radius);
+	}
+
+	&__progress-bar {
+		display: block;
+		width: calc(var(--hub-file-input-progress-value, 0) * 1%);
+		height: 100%;
+		background-color: var(--hub-file-input-progress-bar-bg);
+		border-radius: inherit;
+		transition: width 0.15s linear;
+	}
+
+	// A transport that reports no total leaves the value null: sweep the bar rather than
+	// freezing it at 0%, which reads as a stalled upload.
+	&__progress--indeterminate &__progress-bar {
+		width: 33%;
+		animation: hub-file-input-indeterminate var(--hub-file-input-progress-indeterminate-duration) ease-in-out infinite;
+	}
+
+	// ── Actions ────────────────────────────────────────────────────────────
+	&__actions {
+		display: flex;
+		flex: none;
+		align-items: center;
+		gap: 0.25rem;
+	}
+
+	&__action {
+		display: block;
+		width: var(--hub-file-input-action-size);
+		height: var(--hub-file-input-action-size);
+		padding: 0;
+		background-color: var(--hub-file-input-action-color);
+		border: 0;
+		cursor: pointer;
+		transition: var(--hub-file-input-transition);
+
+		&:hover {
+			background-color: var(--hub-file-input-action-hover-color);
+		}
+
+		&--remove {
+			mask: var(--hub-file-input-remove-icon) center / contain no-repeat;
+
+			&:hover {
+				background-color: var(--hub-file-input-remove-hover-color);
+			}
+		}
+
+		&--cancel {
+			mask: var(--hub-file-input-cancel-icon) center / contain no-repeat;
+		}
+
+		&--retry {
+			mask: var(--hub-file-input-retry-icon) center / contain no-repeat;
+		}
+	}
+
+	&__clear {
+		align-self: flex-start;
+		margin-top: var(--hub-file-input-list-margin-top);
+		padding: 0;
+		color: var(--hub-file-input-clear-color);
+		font-size: var(--hub-file-input-clear-font-size);
+		background: none;
+		border: 0;
+		text-decoration: underline;
+		cursor: pointer;
+	}
+
+	// Success tick, drawn after the size of a finished upload.
+	&__item[data-status='done'] &__size::after {
+		display: inline-block;
+		width: 0.75em;
+		height: 0.75em;
+		margin-inline-start: 0.375em;
+		background-color: var(--hub-file-input-done-color);
+		mask: var(--hub-file-input-done-icon) center / contain no-repeat;
+		content: '';
+	}
+
+	// Screen-reader-only live region announcing additions and rejections.
+	&__live {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+
+	// ── Grid preview ───────────────────────────────────────────────────────
+	&__list--grid &__item {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	&__list--grid &__thumb {
+		width: 100%;
+		height: var(--hub-file-input-grid-thumb-height);
+	}
+
+	&__list--grid &__actions {
+		justify-content: flex-end;
+	}
+}
+
+@keyframes hub-file-input-indeterminate {
+	0% {
+		transform: translateX(-100%);
+	}
+	100% {
+		transform: translateX(300%);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.hub-file-input__progress--indeterminate .hub-file-input__progress-bar {
+		animation: none;
+		width: 100%;
+		opacity: 0.5;
+	}
+}

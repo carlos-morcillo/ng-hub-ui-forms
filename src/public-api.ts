@@ -12,6 +12,7 @@ export { defaultInvalidFeedback } from './lib/shared/hub-error-display';
 // Configuration
 export { HUB_FORMS_CONFIG, defaultHubFormsConfig, provideHubForms } from './lib/services/forms-config';
 export type { HubFormsConfig } from './lib/services/forms-config';
+export { HUB_FILE_UPLOADER, provideHubFileUploader } from './lib/services/file-uploader';
 
 // Components
 export { HubInputComponent } from './lib/components/input/input.component';
@@ -27,6 +28,7 @@ export { HubFormComponent } from './lib/components/form/form.component';
 export { HubLegendComponent } from './lib/components/legend/legend.component';
 export { HubSelectComponent } from './lib/select/select.component';
 export { HubDatepickerComponent } from './lib/components/datepicker/datepicker.component';
+export { HubFileInputComponent } from './lib/components/file-input/file-input.component';
 
 // Select — dropdown customization passthrough (vendored ng-select template directives)
 export { NgOptionComponent } from './lib/select/vendor/lib/ng-option.component';
@@ -53,6 +55,10 @@ export { HubLegendDirective } from './lib/directives/legend.directive';
 export { HubAutoresizeDirective } from './lib/directives/autoresize.directive';
 export { HubInputPrefixDirective } from './lib/directives/input-prefix.directive';
 export { HubInputSuffixDirective } from './lib/directives/input-suffix.directive';
+export { HubFileIconDirective } from './lib/directives/file-icon.directive';
+export type { HubFileIconContext } from './lib/directives/file-icon.directive';
+export { HubFilePreviewDirective } from './lib/directives/file-preview.directive';
+export type { HubFilePreviewContext } from './lib/directives/file-preview.directive';
 
 // Pipes
 export { HubInvertColorPipe } from './lib/pipes/invert-color.pipe';
@@ -64,6 +70,12 @@ export { HubUcfirstPipe } from './lib/pipes/ucfirst.pipe';
 
 // Validators
 export { hubAreEqual } from './lib/validators/are-equal.validator';
+export { hubAcceptedFiles } from './lib/validators/accepted-files.validator';
+export { hubMaxFileSize } from './lib/validators/max-file-size.validator';
+export { hubMinFileSize } from './lib/validators/min-file-size.validator';
+export { hubMaxTotalSize } from './lib/validators/max-total-size.validator';
+export { hubMaxFiles } from './lib/validators/max-files.validator';
+export { hubMinFiles } from './lib/validators/min-files.validator';
 
 // Interfaces & types
 export type { FormTextType, HubLabelType } from './lib/interfaces/common.interface';
@@ -74,8 +86,24 @@ export type { HubSelectFormat } from './lib/interfaces/select.interface';
 export { HubSelectFormats } from './lib/interfaces/select.interface';
 export type { HubDatepickerMode, HubDateRange, HubDateValue, HubDatepickerLabels, HubDatepickerConfig } from './lib/interfaces/datepicker.interface';
 export { defaultHubDatepickerConfig, defaultHubDatepickerLabels } from './lib/interfaces/datepicker.interface';
+export type {
+	HubFileConstraints,
+	HubFileInputLabels,
+	HubFileItem,
+	HubFilePreview,
+	HubFileRejection,
+	HubFileRejectionReason,
+	HubFileStatus
+} from './lib/interfaces/file-input.interface';
+export { defaultHubFileInputLabels } from './lib/interfaces/file-input.interface';
+export type { HubFileUploader, HubFileUploadEvent } from './lib/interfaces/file-uploader.interface';
 
 // Utilities
+export { formatFileSize } from './lib/utils/file-size';
+export { matchesAccept } from './lib/utils/file-accept';
+export { fileKey } from './lib/utils/file-key';
+export { toFileArray } from './lib/utils/file-value';
+export type { HubFileValue } from './lib/utils/file-value';
 export {
 	areEqual,
 	camelToSnakeUpper,

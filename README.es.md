@@ -93,11 +93,11 @@ en tiempo de ejecución — sin dependencia de Bootstrap.
 
 ## 🎯 Características
 
-- **Campos** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, con addons de input-group y máscaras, afijos de icono dentro del campo y `search` typeahead con debounce), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider` (uno / dos thumbs, relleno con degradado), `hub-segmented` (campo de control segmentado — selección simple y múltiple, horizontal y vertical, con label + validación), `hub-select` (formato dropdown, agrupación, typeahead, templates personalizados; los formatos `buttons` / `checkbox` / `radio` están **deprecados** → usa `hub-segmented`), `hub-datepicker` (simple y rango, navegación por teclado, i18n).
+- **Campos** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, con addons de input-group y máscaras, afijos de icono dentro del campo y `search` typeahead con debounce; el formato `file` está **deprecado** → usa `hub-file-input`), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider` (uno / dos thumbs, relleno con degradado), `hub-segmented` (campo de control segmentado — selección simple y múltiple, horizontal y vertical, con label + validación), `hub-select` (formato dropdown, agrupación, typeahead, templates personalizados; los formatos `buttons` / `checkbox` / `radio` están **deprecados** → usa `hub-segmented`), `hub-datepicker` (simple y rango, navegación por teclado, i18n), `hub-file-input` (arrastrar y soltar, pegado desde el portapapeles, límites de tipo y tamaño, previsualización, progreso de subida opcional).
 - **Visualización automática de errores** — vinculas un campo y sus errores de control se renderizan debajo; `hub-fieldset`, `form[hubForm]` y `hub-legend` muestran los errores de grupo y de formulario (cross-field) igual, sin cableado.
 - **Contenedores** — `hub-fieldset` / `form[hubForm]` agrupan campos y muestran sus errores de grupo; `hub-legend` renderiza una leyenda accesible.
-- **Configurable** — `provideHubForms({ … })` define las plantillas de invalid-feedback, locale/labels del datepicker y más, a nivel de app o por instancia.
-- **Validadores y helpers** — validador cross-field `hubAreEqual`, directivas de proyección `hubValidationError` / `hubFormText`, y un conjunto de pipes de utilidad.
+- **Configurable** — `provideHubForms({ … })` define las plantillas de invalid-feedback, locale/labels del datepicker, los textos del file input y más, a nivel de app o por instancia.
+- **Validadores y helpers** — validador cross-field `hubAreEqual`, los validadores de ficheros (`hubAcceptedFiles`, `hubMaxFileSize`, `hubMinFileSize`, `hubMaxTotalSize`, `hubMaxFiles`, `hubMinFiles`), directivas de proyección `hubValidationError` / `hubFormText`, y un conjunto de pipes de utilidad.
 - **Listo para Signal Forms** — un entry point secundario opt-in [`ng-hub-ui-forms/signals`](#-signal-forms-opt-in) integra Angular Signal Forms; el núcleo sigue basado en Reactive Forms y compatible con Angular 21.
 - **Theming** — cada color, borde, radio y espaciado es una variable CSS `--hub-*`; incluye tokens SCSS compartidos para los consumidores.
 
@@ -190,6 +190,74 @@ Los templates de opción/etiqueta se proyectan directamente al motor:
 ```html
 <hub-datepicker formControlName="date" label="Date" />
 <hub-datepicker formControlName="range" mode="range" label="Stay" />
+```
+
+### File input
+
+Arrastrar y soltar, pegado desde el portapapeles, restricciones y previsualización. El valor del control es nativo — un `File`, un `File[]` o `null` — así que va directo a un `FormData`.
+
+```html
+<hub-file-input
+	formControlName="attachments"
+	label="Attachments"
+	[multiple]="true"
+	accept="image/*,.pdf"
+	[maxSize]="5 * 1024 * 1024"
+	[maxFiles]="3"
+	preview="grid"
+	(rejected)="notify($event)"
+/>
+```
+
+`accept`, `maxSize`, `maxFiles` y compañía **filtran**: un fichero que incumple no llega nunca al valor y aparece en `(rejected)` con un motivo tipado. Se aplican a mano, porque el atributo `accept` nativo solo filtra el diálogo del sistema operativo — soltar o pegar lo esquiva. Para que además el *control* quede inválido (conviene cuando el valor también puede llegar por `patchValue`), añade los validadores correspondientes:
+
+```ts
+new FormControl<File[]>([], [hubMaxFiles(3), hubMaxFileSize(5 * 1024 * 1024), hubAcceptedFiles('image/*,.pdf')]);
+```
+
+La subida es opcional y agnóstica del transporte. Implementa el contrato en tu aplicación — la librería nunca trae un endpoint — y el campo pinta progreso, cancelar y reintentar por fichero:
+
+```ts
+@Injectable({ providedIn: 'root' })
+export class ApiFileUploader implements HubFileUploader {
+	readonly #http = inject(HttpClient);
+
+	upload(file: File): Observable<HubFileUploadEvent> {
+		const body = new FormData();
+		body.append('file', file);
+
+		return this.#http.post('/api/files', body, { reportProgress: true, observe: 'events' }).pipe(
+			map((event) => {
+				if (event.type === HttpEventType.UploadProgress) {
+					// `total` es undefined cuando no se conoce el tamaño: pasa null, no 0, para que la
+					// barra se pinte indeterminada en vez de parecer atascada.
+					return { status: 'progress', loaded: event.loaded, total: event.total ?? null } as const;
+				}
+				if (event.type === HttpEventType.Response) {
+					return { status: 'done', response: event.body } as const;
+				}
+				return null;
+			}),
+			filter((event) => event !== null),
+			catchError((error) => of({ status: 'error', error } as const))
+		);
+	}
+}
+
+bootstrapApplication(App, { providers: [provideHttpClient(), provideHubFileUploader(ApiFileUploader)] });
+```
+
+> El observable **debe ser frío**: una suscripción es una petición. `cancel()` se desuscribe, y eso es lo que aborta el `XMLHttpRequest` subyacente. Un observable caliente o compartido rompe la cancelación en silencio.
+> Si necesitas esperar a que terminen las subidas, engancha el botón de envío a `uploading()`: el control sigue siendo válido mientras se suben, por diseño.
+
+Se personaliza sin tocar la plantilla: 66 tokens `--hub-file-input-*` (cada icono es una máscara CSS intercambiable), el mixin `hub-file-input-theme(...)` y dos slots de proyección.
+
+```html
+<hub-file-input formControlName="attachments" [multiple]="true">
+	<ng-template hubFileIcon let-item>
+		<hub-icon [name]="item.file.type === 'application/pdf' ? 'fa:solid:file-pdf' : 'fa:solid:file'" />
+	</ng-template>
+</hub-file-input>
 ```
 
 ### Errores automáticos en todos los niveles

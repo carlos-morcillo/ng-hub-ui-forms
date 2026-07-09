@@ -2,6 +2,23 @@
 
 This document tracks all breaking changes in the `ng-hub-ui-forms` library.
 
+## Version 22.6.0
+
+### `<hub-input type="file">` is deprecated (removal scheduled for the next major)
+
+- **Change**: the `file` format of `<hub-input>`, together with its `accept`, `multiple` and `buttonLabel` inputs, is deprecated in favour of the new `<hub-file-input>`. Nothing breaks in 22.6.0: the format still works, and now logs a warning in development mode.
+- **Impact**: none yet. In the next major the format and its three inputs are removed, and `<hub-input>` stops accepting `type="file"`.
+- **Why**: the old format is a bare picker — no drag & drop, no size limits, no preview, no per-file removal — and its `accept` is not enforced on a drop, because the native attribute only filters the operating-system dialog.
+- **Migration**: swap the element. The control value is unchanged in single mode (a `File`); in multiple mode it becomes a `File[]` instead of a `FileList`.
+
+```html
+<!-- Before -->
+<hub-input formControlName="resume" type="file" label="Résumé" accept=".pdf" buttonLabel="Browse…" />
+
+<!-- After -->
+<hub-file-input formControlName="resume" label="Résumé" accept=".pdf" buttonLabel="Browse…" />
+```
+
 ## Version 22.5.0
 
 ### SCSS ships at `ng-hub-ui-forms/styles` (packaging path)

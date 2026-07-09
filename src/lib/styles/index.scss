@@ -13,6 +13,7 @@
 @use 'field';
 
 // One-call theming mixins (opt-in; forwarded so consumers can `@use` them from the package root).
-// `hub-forms-theme` themes the shared field chrome; `hub-segmented-theme` tunes `<hub-segmented>`.
+// `hub-forms-theme` themes the shared field chrome; the others tune a single control.
 @forward 'mixins/forms-theme';
 @forward 'mixins/segmented-theme';
+@forward 'mixins/file-input-theme';

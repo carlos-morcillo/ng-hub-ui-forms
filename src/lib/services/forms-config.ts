@@ -1,5 +1,6 @@
 import { EnvironmentProviders, InjectionToken, makeEnvironmentProviders } from '@angular/core';
 import { defaultHubDatepickerConfig, HubDatepickerConfig } from '../interfaces/datepicker.interface';
+import { defaultHubFileInputLabels, HubFileInputLabels } from '../interfaces/file-input.interface';
 import { defaultInvalidFeedback } from '../shared/hub-error-display';
 
 /**
@@ -24,6 +25,9 @@ export interface HubFormsConfig {
 
 	/** Global datepicker defaults (locale labels, formats, first day of week…). */
 	datepicker: HubDatepickerConfig;
+
+	/** Global file-input labels (button text, accessible names, size and rejection formatting). */
+	fileInput: HubFileInputLabels;
 }
 
 /**
@@ -32,7 +36,8 @@ export interface HubFormsConfig {
 export const defaultHubFormsConfig: HubFormsConfig = {
 	invalidFeedbackTemplateFn: defaultInvalidFeedback,
 	showValid: false,
-	datepicker: defaultHubDatepickerConfig
+	datepicker: defaultHubDatepickerConfig,
+	fileInput: defaultHubFileInputLabels
 };
 
 /**
@@ -70,10 +75,15 @@ export function provideHubForms(config?: DeepPartial<HubFormsConfig>): Environme
 		labels: { ...defaultHubFormsConfig.datepicker.labels, ...config?.datepicker?.labels }
 	};
 
+	const fileInput: HubFileInputLabels = {
+		...defaultHubFormsConfig.fileInput,
+		...(config?.fileInput as Partial<HubFileInputLabels> | undefined)
+	};
+
 	return makeEnvironmentProviders([
 		{
 			provide: HUB_FORMS_CONFIG,
-			useValue: { ...defaultHubFormsConfig, ...config, datepicker } as HubFormsConfig
+			useValue: { ...defaultHubFormsConfig, ...config, datepicker, fileInput } as HubFormsConfig
 		}
 	]);
 }

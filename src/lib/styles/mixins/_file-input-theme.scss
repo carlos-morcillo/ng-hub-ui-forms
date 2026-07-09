@@ -1,0 +1,199 @@
+// ─────────────────────────────────────────────────────────────────────────
+// hub-file-input-theme — one-call theming for `<hub-file-input>`
+// ─────────────────────────────────────────────────────────────────────────
+//
+// Override any of the `--hub-file-input-*` design tokens in a single include.
+// Every parameter is OPTIONAL and defaults to `null`: only the parameters you
+// pass are emitted, so the rest keep the component's defaults. Token-based and
+// self-contained (no Bootstrap dependencies).
+//
+// The glyph parameters take a CSS `<image>` — typically a `url("data:image/svg+xml,…")`
+// — used as a MASK, so the drawing is tinted by its matching colour token and needs
+// no fill of its own. To render a real icon component instead, project an
+// `<ng-template hubFileIcon>` into the field.
+//
+// Apply it inside any selector that wraps the field — the host element, a
+// container, a route, or `:root` for a global theme.
+//
+// @example — a brand-accented dropzone with a solid border and a custom upload glyph:
+//
+//   @use 'ng-hub-ui-forms/styles' as *;
+//
+//   .attachments {
+//     @include hub-file-input-theme(
+//       $border-style: solid,
+//       $border-radius: 0.75rem,
+//       $dragover-border-color: var(--hub-sys-color-brand),
+//       $browse-color: var(--hub-sys-color-brand),
+//       $icon: url('/assets/upload.svg'),
+//       $icon-color: var(--hub-sys-color-brand),
+//       $progress-bar-bg: var(--hub-sys-color-brand)
+//     );
+//   }
+//
+// scss-docs-start hub-file-input-theme
+@mixin hub-file-input-theme(
+	// ── Dropzone surface ──
+	$bg: null,                        // dropzone background
+	$color: null,                     // dropzone text colour
+	$border-width: null,              // dropzone border width
+	$border-style: null,              // dropzone border style (defaults to `dashed`)
+	$border-color: null,              // dropzone border colour at rest
+	$border-radius: null,             // dropzone corner radius
+	$padding-x: null,                 // dropzone horizontal padding
+	$padding-y: null,                 // dropzone vertical padding
+	$min-height: null,                // dropzone minimum height
+	$gap: null,                       // gutter between icon, prompt and hint
+	// ── States ──
+	$hover-bg: null,                  // background on hover
+	$hover-border-color: null,        // border colour on hover
+	$dragover-bg: null,               // background while a drag hovers the zone
+	$dragover-border-color: null,     // border colour while a drag hovers the zone
+	// ── Copy ──
+	$prompt-color: null,              // "drag files here" colour
+	$browse-color: null,              // "browse files" colour
+	$hint-color: null,                // constraints-hint colour
+	// ── Glyphs (CSS masks) ──
+	$icon: null,                      // upload glyph shown in the dropzone
+	$icon-size: null,                 // upload glyph size
+	$icon-color: null,                // upload glyph tint
+	$file-icon: null,                 // per-file glyph, for files with no thumbnail
+	$file-icon-color: null,           // per-file glyph tint
+	$remove-icon: null,               // remove-button glyph
+	$cancel-icon: null,               // cancel-upload glyph
+	$retry-icon: null,                // retry-upload glyph
+	$done-icon: null,                 // finished-upload tick
+	$done-color: null,                // finished-upload tick + item border colour
+	// ── File list ──
+	$item-bg: null,                   // background of a file row / tile
+	$item-border-color: null,         // border of a file row / tile
+	$item-border-radius: null,        // corner radius of a file row / tile
+	$thumb-size: null,                // thumbnail size in list preview
+	$grid-min-width: null,            // minimum tile width in grid preview
+	$grid-thumb-height: null,         // thumbnail height in grid preview
+	// ── Upload progress ──
+	$progress-height: null,           // progress-bar thickness
+	$progress-track-bg: null,         // progress-bar track colour
+	$progress-bar-bg: null            // progress-bar fill colour
+) {
+	// Dropzone surface
+	@if $bg != null {
+		--hub-file-input-bg: #{$bg};
+	}
+	@if $color != null {
+		--hub-file-input-color: #{$color};
+	}
+	@if $border-width != null {
+		--hub-file-input-border-width: #{$border-width};
+	}
+	@if $border-style != null {
+		--hub-file-input-border-style: #{$border-style};
+	}
+	@if $border-color != null {
+		--hub-file-input-border-color: #{$border-color};
+	}
+	@if $border-radius != null {
+		--hub-file-input-border-radius: #{$border-radius};
+	}
+	@if $padding-x != null {
+		--hub-file-input-padding-x: #{$padding-x};
+	}
+	@if $padding-y != null {
+		--hub-file-input-padding-y: #{$padding-y};
+	}
+	@if $min-height != null {
+		--hub-file-input-min-height: #{$min-height};
+	}
+	@if $gap != null {
+		--hub-file-input-gap: #{$gap};
+	}
+
+	// States
+	@if $hover-bg != null {
+		--hub-file-input-hover-bg: #{$hover-bg};
+	}
+	@if $hover-border-color != null {
+		--hub-file-input-hover-border-color: #{$hover-border-color};
+	}
+	@if $dragover-bg != null {
+		--hub-file-input-dragover-bg: #{$dragover-bg};
+	}
+	@if $dragover-border-color != null {
+		--hub-file-input-dragover-border-color: #{$dragover-border-color};
+	}
+
+	// Copy
+	@if $prompt-color != null {
+		--hub-file-input-prompt-color: #{$prompt-color};
+	}
+	@if $browse-color != null {
+		--hub-file-input-browse-color: #{$browse-color};
+	}
+	@if $hint-color != null {
+		--hub-file-input-hint-color: #{$hint-color};
+	}
+
+	// Glyphs
+	@if $icon != null {
+		--hub-file-input-icon: #{$icon};
+	}
+	@if $icon-size != null {
+		--hub-file-input-icon-size: #{$icon-size};
+	}
+	@if $icon-color != null {
+		--hub-file-input-icon-color: #{$icon-color};
+	}
+	@if $file-icon != null {
+		--hub-file-input-file-icon: #{$file-icon};
+	}
+	@if $file-icon-color != null {
+		--hub-file-input-file-icon-color: #{$file-icon-color};
+	}
+	@if $remove-icon != null {
+		--hub-file-input-remove-icon: #{$remove-icon};
+	}
+	@if $cancel-icon != null {
+		--hub-file-input-cancel-icon: #{$cancel-icon};
+	}
+	@if $retry-icon != null {
+		--hub-file-input-retry-icon: #{$retry-icon};
+	}
+	@if $done-icon != null {
+		--hub-file-input-done-icon: #{$done-icon};
+	}
+	@if $done-color != null {
+		--hub-file-input-done-color: #{$done-color};
+	}
+
+	// File list
+	@if $item-bg != null {
+		--hub-file-input-item-bg: #{$item-bg};
+	}
+	@if $item-border-color != null {
+		--hub-file-input-item-border-color: #{$item-border-color};
+	}
+	@if $item-border-radius != null {
+		--hub-file-input-item-border-radius: #{$item-border-radius};
+	}
+	@if $thumb-size != null {
+		--hub-file-input-thumb-size: #{$thumb-size};
+	}
+	@if $grid-min-width != null {
+		--hub-file-input-grid-min-width: #{$grid-min-width};
+	}
+	@if $grid-thumb-height != null {
+		--hub-file-input-grid-thumb-height: #{$grid-thumb-height};
+	}
+
+	// Upload progress
+	@if $progress-height != null {
+		--hub-file-input-progress-height: #{$progress-height};
+	}
+	@if $progress-track-bg != null {
+		--hub-file-input-progress-track-bg: #{$progress-track-bg};
+	}
+	@if $progress-bar-bg != null {
+		--hub-file-input-progress-bar-bg: #{$progress-bar-bg};
+	}
+}
+// scss-docs-end hub-file-input-theme

@@ -1,3 +1,5 @@
+import { formatFileSize } from '../utils/file-size';
+
 /**
  * Default, human-readable messages for the most common Angular validation errors.
  *
@@ -11,6 +13,18 @@
  */
 export function defaultInvalidFeedback(key: string, value: any): string {
 	switch (key) {
+		case 'fileAccept':
+			return `Only ${value?.accept ?? 'certain'} files are allowed.`;
+		case 'fileMaxSize':
+			return `Each file must be at most ${formatFileSize(value?.max)}.`;
+		case 'fileMinSize':
+			return `Each file must be at least ${formatFileSize(value?.min)}.`;
+		case 'fileMaxTotalSize':
+			return `The files must add up to at most ${formatFileSize(value?.max)}.`;
+		case 'fileMaxFiles':
+			return `Select at most ${value?.max ?? ''} files.`;
+		case 'fileMinFiles':
+			return `Select at least ${value?.min ?? ''} files.`;
 		case 'required':
 			return 'This field is required.';
 		case 'email':

@@ -5,6 +5,19 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.6.0] - 2026-07-09
+
+### Added
+
+- **New `<hub-file-input>` control.** A full field (extends `HubFieldControl`, so it carries `label` / `formText` / validation chrome and binds with `formControlName`) for picking files: single or `[multiple]`, **drag & drop**, **clipboard paste**, `accept` / `maxSize` / `minSize` / `maxTotalSize` / `maxFiles` constraints, duplicate detection, `capture` for the device camera, and `preview="none | list | grid"` with image thumbnails. The **form value stays native** — `File`, `File[]` or `null` — so it goes straight into a `FormData`; the rich per-file state (id, preview URL, status, progress, error) lives in the `files()` signal instead of contaminating the control. The declared constraints are enforced **by hand**, because the native `accept` attribute only filters the operating-system dialog and is bypassed entirely by a drop or a paste.
+- **Optional upload support.** Register a `HubFileUploader` with `provideHubFileUploader()` and the field drives per-file **progress, cancel and retry**; without one it stays a pure picker. `HubFileUploadEvent` carries the raw `loaded` / `total` byte counts rather than a percentage, so a transport that cannot know the total (`HttpClient` emits `total: undefined`) yields `progress: null` and renders an **indeterminate** bar instead of one frozen at 0%. `cancel()` unsubscribes, which aborts the underlying request — the contract therefore requires a **cold** observable. The library ships the contract, never the transport.
+- **Six exportable validators** — `hubAcceptedFiles`, `hubMaxFileSize`, `hubMinFileSize`, `hubMaxTotalSize`, `hubMaxFiles`, `hubMinFiles` — with default messages wired into `invalidFeedbackTemplateFn`. The component inputs **filter** (an offending file never reaches the value and surfaces through `(rejected)`); the validators **invalidate**, which also catches a value patched in programmatically.
+- **Customization.** 66 `--hub-file-input-*` tokens (every icon — upload, per-file, remove, cancel, retry, done — is a swappable CSS mask), the `hub-file-input-theme(...)` one-call mixin, the projected `<ng-template hubFileIcon>` and `<ng-template hubFilePreview>` templates, and localizable labels through `provideHubForms({ fileInput: … })`. Icons are projected, never imported: the library still has no dependency on `ng-hub-ui-icons`.
+
+### Deprecated
+
+- **`<hub-input type="file">`** (and its `accept`, `multiple` and `buttonLabel` inputs) in favour of `<hub-file-input>`. It keeps working — with a development-mode warning — and will be removed in the next major. It is a bare picker: no drag & drop, no size limits, no preview, no per-file removal, and its `accept` is not enforced on a drop.
+
 ## [22.5.0] - 2026-07-07
 
 ### Added

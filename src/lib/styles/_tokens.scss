@@ -90,6 +90,90 @@
 	// Input · color format
 	--hub-input-color-size: 2.5rem;
 
+	// ── File input ────────────────────────────────────────────────────────────
+	// Dropzone surface
+	--hub-file-input-bg: var(--hub-sys-surface-page, #fff);
+	--hub-file-input-color: var(--hub-sys-text-primary, #212529);
+	--hub-file-input-border-width: var(--hub-ref-border-width, 1px);
+	--hub-file-input-border-style: dashed;
+	--hub-file-input-border-color: var(--hub-sys-border-color-default, #dee2e6);
+	--hub-file-input-border-radius: var(--hub-input-border-radius);
+	--hub-file-input-padding-x: var(--hub-ref-space-3, 1rem);
+	--hub-file-input-padding-y: var(--hub-ref-space-4, 1.5rem);
+	--hub-file-input-min-height: 7rem;
+	--hub-file-input-gap: var(--hub-ref-space-2, 0.5rem);
+	--hub-file-input-transition: var(--hub-form-transition);
+	--hub-file-input-hover-border-color: var(--hub-sys-color-primary, #0d6efd);
+	--hub-file-input-hover-bg: var(--hub-sys-surface-elevated, #f8f9fa);
+	--hub-file-input-dragover-bg: color-mix(in oklch, var(--hub-sys-color-primary, #0d6efd) 8%, transparent);
+	--hub-file-input-dragover-border-color: var(--hub-sys-color-primary, #0d6efd);
+	--hub-file-input-focus-border-color: var(--hub-input-focus-border-color);
+	--hub-file-input-focus-box-shadow: var(--hub-input-focus-box-shadow);
+
+	// Dropzone copy
+	--hub-file-input-prompt-color: var(--hub-sys-text-muted, #6c757d);
+	--hub-file-input-prompt-font-size: var(--hub-ref-font-size-base, 1rem);
+	--hub-file-input-browse-color: var(--hub-sys-color-primary, #0d6efd);
+	--hub-file-input-browse-font-weight: var(--hub-ref-font-weight-medium, 500);
+	--hub-file-input-hint-color: var(--hub-sys-text-muted, #6c757d);
+	--hub-file-input-hint-font-size: var(--hub-ref-font-size-sm, 0.875rem);
+
+	// Glyphs — every icon is a swappable mask, tinted by its `-color` token. Replace the
+	// `url(…)` to change the drawing without touching the template; project an
+	// `<ng-template hubFileIcon>` to replace the per-file glyph with a component.
+	--hub-file-input-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='black' d='M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5'/%3E%3Cpath fill='black' d='M7.646.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 1.707V10.5a.5.5 0 0 1-1 0V1.707L5.354 3.854a.5.5 0 1 1-.708-.708z'/%3E%3C/svg%3E");
+	--hub-file-input-icon-size: 2rem;
+	--hub-file-input-icon-color: var(--hub-sys-text-muted, #6c757d);
+	--hub-file-input-file-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='black' d='M4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.414A1.5 1.5 0 0 0 13.56 3.35L10.65.44A1.5 1.5 0 0 0 9.586 0zm5.5 1.5v2a1 1 0 0 0 1 1h2z'/%3E%3C/svg%3E");
+	--hub-file-input-file-icon-size: 1.5rem;
+	--hub-file-input-file-icon-color: var(--hub-sys-text-muted, #6c757d);
+	--hub-file-input-remove-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='black' d='M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708'/%3E%3C/svg%3E");
+	--hub-file-input-cancel-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='black' d='M5 3.5h6a1.5 1.5 0 0 1 1.5 1.5v6a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 11V5A1.5 1.5 0 0 1 5 3.5'/%3E%3C/svg%3E");
+	--hub-file-input-retry-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='black' d='M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z'/%3E%3Cpath fill='black' d='M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466'/%3E%3C/svg%3E");
+	--hub-file-input-done-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='black' stroke-width='2' d='M3 8.5 6.5 12 13 4.5'/%3E%3C/svg%3E");
+	--hub-file-input-done-color: var(--hub-sys-color-success, #198754);
+
+	// Per-file action buttons
+	--hub-file-input-action-size: 1rem;
+	--hub-file-input-action-color: var(--hub-sys-text-muted, #6c757d);
+	--hub-file-input-action-hover-color: var(--hub-sys-text-primary, #212529);
+	--hub-file-input-remove-hover-color: var(--hub-sys-color-danger, #dc3545);
+
+	// File list
+	--hub-file-input-list-gap: var(--hub-ref-space-2, 0.5rem);
+	--hub-file-input-list-margin-top: var(--hub-ref-space-2, 0.5rem);
+	--hub-file-input-item-bg: var(--hub-sys-surface-elevated, #f8f9fa);
+	--hub-file-input-item-color: var(--hub-sys-text-primary, #212529);
+	--hub-file-input-item-border-color: var(--hub-sys-border-color-default, #dee2e6);
+	--hub-file-input-item-border-radius: var(--hub-ref-radius-sm, 0.25rem);
+	--hub-file-input-item-padding-x: var(--hub-ref-space-2, 0.5rem);
+	--hub-file-input-item-padding-y: var(--hub-ref-space-2, 0.5rem);
+	--hub-file-input-item-gap: var(--hub-ref-space-2, 0.5rem);
+	--hub-file-input-name-font-size: var(--hub-ref-font-size-sm, 0.875rem);
+	--hub-file-input-size-color: var(--hub-sys-text-muted, #6c757d);
+	--hub-file-input-size-font-size: var(--hub-ref-font-size-sm, 0.875rem);
+	--hub-file-input-error-color: var(--hub-sys-color-danger, #dc3545);
+	--hub-file-input-error-font-size: var(--hub-ref-font-size-sm, 0.875rem);
+	--hub-file-input-clear-color: var(--hub-sys-text-muted, #6c757d);
+	--hub-file-input-clear-font-size: var(--hub-ref-font-size-sm, 0.875rem);
+
+	// Thumbnail
+	--hub-file-input-thumb-size: 2.5rem;
+	--hub-file-input-thumb-radius: var(--hub-ref-radius-sm, 0.25rem);
+	--hub-file-input-thumb-bg: var(--hub-sys-surface-page, #fff);
+
+	// Grid preview
+	--hub-file-input-grid-min-width: 8rem;
+	--hub-file-input-grid-gap: var(--hub-ref-space-2, 0.5rem);
+	--hub-file-input-grid-thumb-height: 6rem;
+
+	// Upload progress
+	--hub-file-input-progress-height: 0.25rem;
+	--hub-file-input-progress-radius: var(--hub-ref-radius-pill, 50rem);
+	--hub-file-input-progress-track-bg: var(--hub-sys-border-color-default, #dee2e6);
+	--hub-file-input-progress-bar-bg: var(--hub-sys-color-primary, #0d6efd);
+	--hub-file-input-progress-indeterminate-duration: 1.2s;
+
 	// ── Textarea (inherits input) ──────────────────────────────────────────────
 	--hub-textarea-padding-x: var(--hub-input-padding-x);
 	--hub-textarea-padding-y: var(--hub-input-padding-y);

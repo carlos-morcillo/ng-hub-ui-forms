@@ -1,0 +1,186 @@
+<div
+	class="hub-field hub-file-input"
+	[class.hub-field--disabled]="disabled()"
+	[class.hub-field--invalid]="isInvalid"
+	[class.hub-field--valid]="showsValid"
+>
+	@if (label() || required()) {
+		<label [for]="id" class="hub-field__label">
+			{{ label() }}
+			@if (required()) {
+				<span class="hub-field__required" aria-hidden="true">*</span>
+			}
+		</label>
+	}
+
+	<div class="hub-field__body">
+		<!--
+			The dropzone is a <label> bound to the hidden native input: clicking or activating it with
+			the keyboard opens the file dialog through the platform, so no role, tabindex or key
+			handler is needed. The "browse" affordance is a <span>, not a <button>, because a button
+			inside a label would open the dialog twice.
+		-->
+		<label
+			class="hub-file-input__dropzone"
+			[for]="id"
+			[class.hub-file-input__dropzone--dragover]="isDragging()"
+			[class.hub-file-input__dropzone--no-drop]="!dragDrop()"
+			[class.hub-file-input__dropzone--invalid]="isInvalid"
+			(dragenter)="handleDragEnter($event)"
+			(dragover)="handleDragOver($event)"
+			(dragleave)="handleDragLeave($event)"
+			(drop)="handleDrop($event)"
+		>
+			<input
+				#nativeInput
+				type="file"
+				class="hub-file-input__native"
+				[id]="id"
+				[accept]="accept()"
+				[multiple]="multiple()"
+				[disabled]="disabled()"
+				[attr.capture]="capture()"
+				[attr.aria-required]="required() ? 'true' : null"
+				[attr.aria-invalid]="isInvalid"
+				[attr.aria-describedby]="constraintsHint() ? id + '-hint' : null"
+				(change)="handleNativeChange($event)"
+				(blur)="handleBlur($event)"
+			/>
+
+			<span class="hub-file-input__icon" aria-hidden="true"></span>
+
+			<span class="hub-file-input__prompt">
+				@if (dragDrop()) {
+					<span class="hub-file-input__drop-text">{{ labels().dropHere }}</span>
+				}
+				<span class="hub-file-input__browse">{{ browseLabel() }}</span>
+			</span>
+
+			@if (constraintsHint()) {
+				<span class="hub-file-input__hint" [id]="id + '-hint'">{{ constraintsHint() }}</span>
+			}
+		</label>
+
+		@if (preview() !== 'none' && _items().length > 0) {
+			<ul class="hub-file-input__list" [class.hub-file-input__list--grid]="preview() === 'grid'">
+				@for (item of _items(); track item.id) {
+					<li class="hub-file-input__item" [attr.data-status]="item.status">
+						@if (previewTpt(); as tpt) {
+							<ng-container
+								[ngTemplateOutlet]="tpt.template"
+								[ngTemplateOutletContext]="previewContext(item)"
+							></ng-container>
+						} @else {
+							<span class="hub-file-input__thumb" aria-hidden="true">
+								@if (item.previewUrl) {
+									<img class="hub-file-input__image" [src]="item.previewUrl" alt="" />
+								} @else if (iconTpt(); as icon) {
+									<ng-container
+										[ngTemplateOutlet]="icon.template"
+										[ngTemplateOutletContext]="{ $implicit: item }"
+									></ng-container>
+								} @else {
+									<span class="hub-file-input__file-icon"></span>
+								}
+							</span>
+
+							<span class="hub-file-input__meta">
+								<span class="hub-file-input__name" [title]="item.file.name">{{ item.file.name }}</span>
+								<span class="hub-file-input__size">{{ labels().formatSize(item.file.size) }}</span>
+
+								@if (item.status === 'uploading') {
+									<span
+										class="hub-file-input__progress"
+										[class.hub-file-input__progress--indeterminate]="item.progress === null"
+										role="progressbar"
+										aria-valuemin="0"
+										aria-valuemax="100"
+										[attr.aria-valuenow]="item.progress"
+									>
+										<span
+											class="hub-file-input__progress-bar"
+											[style.--hub-file-input-progress-value]="item.progress ?? 0"
+										></span>
+									</span>
+								}
+
+								@if (item.status === 'error') {
+									<span class="hub-file-input__error">{{ errorText(item) }}</span>
+								}
+							</span>
+
+							<span class="hub-file-input__actions">
+								@if (item.status === 'uploading') {
+									<button
+										type="button"
+										class="hub-file-input__action hub-file-input__action--cancel"
+										[attr.aria-label]="labels().cancel"
+										(click)="cancel(item.id)"
+									></button>
+								}
+
+								@if (item.status === 'error') {
+									<button
+										type="button"
+										class="hub-file-input__action hub-file-input__action--retry"
+										[attr.aria-label]="labels().retry"
+										(click)="retry(item.id)"
+									></button>
+								}
+
+								@if (!disabled() && item.status !== 'uploading') {
+									<button
+										type="button"
+										class="hub-file-input__action hub-file-input__action--remove"
+										[attr.aria-label]="labels().remove"
+										(click)="remove(item.id)"
+									></button>
+								}
+							</span>
+						}
+					</li>
+				}
+			</ul>
+
+			@if (_items().length > 1 && !disabled()) {
+				<button type="button" class="hub-file-input__clear" (click)="clear()">{{ labels().clear }}</button>
+			}
+		}
+	</div>
+
+	@if (formText() || formTextTmp()) {
+		<div class="hub-field__form-text" [class.hub-field__form-text--disabled]="disabled()">
+			@if (formTextTmp()) {
+				<ng-container [ngTemplateOutlet]="formTextTmp()!"></ng-container>
+			} @else {
+				{{ formText() }}
+			}
+		</div>
+	}
+
+	@if (isInvalid) {
+		<div class="hub-field__feedback" role="alert">
+			<ul>
+				@for (error of errors | keyvalue; track error.key) {
+					<li>
+						<ng-container
+							[ngTemplateOutlet]="_errorTemplates[error.key] ?? defaultErrorTpt"
+							[ngTemplateOutletContext]="{ $implicit: error.value, value: error.value }"
+						></ng-container>
+						<ng-template #defaultErrorTpt>
+							<span class="hub-field__feedback-text" [innerHTML]="getInvalidFeedbackTemplate(error.key, error.value)"></span>
+						</ng-template>
+					</li>
+				}
+			</ul>
+		</div>
+	}
+
+	@if (showsValid && validFeedback()) {
+		<div class="hub-field__feedback hub-field__feedback--valid" role="status">
+			<span class="hub-field__feedback-text">{{ validFeedback() }}</span>
+		</div>
+	}
+
+	<span class="hub-file-input__live" aria-live="polite">{{ announcement() }}</span>
+</div>

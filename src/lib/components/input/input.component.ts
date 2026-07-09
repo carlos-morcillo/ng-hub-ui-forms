@@ -9,6 +9,7 @@ import {
 	ElementRef,
 	inject,
 	input,
+	isDevMode,
 	model,
 	numberAttribute,
 	output,
@@ -37,9 +38,13 @@ type HubInputValue = number | string | boolean | File | FileList | null;
  * `invalidFeedbackTemplateFn` input, or projected `hubValidationError` templates.
  *
  * Formats: `text`, `number`, `password`, `email`, `tel`, `url`, `color`, `checkbox`, `switch`,
- * `counter`. Label types: `stacked`, `floating`, `horizontal`. Text-like formats support prepend /
- * append addons (input groups). Numeric formats auto-attach `min`/`max` validators when bound to a
- * reactive control.
+ * `counter` and `file`. Label types: `stacked`, `floating`, `horizontal`. Text-like formats support
+ * prepend / append addons (input groups). Numeric formats auto-attach `min`/`max` validators when
+ * bound to a reactive control.
+ *
+ * The `file` format is **deprecated since 22.6.0** in favour of `<hub-file-input>`: it is a bare
+ * picker that cannot enforce `accept` on a drop, and has no size limits, no preview and no per-file
+ * removal. It keeps working until the next major.
  *
  * @example
  * ```html
@@ -172,13 +177,26 @@ export class HubInputComponent extends HubFieldControl {
 	/** Clears any pending debounce timer when the component is destroyed. */
 	private readonly _searchCleanup = inject(DestroyRef).onDestroy(() => clearTimeout(this.#searchTimer));
 
-	/** Accepted file types (file format), e.g. `image/*,.pdf`. */
+	/**
+	 * Accepted file types (file format), e.g. `image/*,.pdf`.
+	 *
+	 * @deprecated Since 22.6.0. Use `<hub-file-input>`, which enforces `accept` on drops and pastes
+	 * too. Removed in the next major.
+	 */
 	readonly accept = input<string>('*');
 
-	/** Whether multiple files can be selected (file format). */
+	/**
+	 * Whether multiple files can be selected (file format).
+	 *
+	 * @deprecated Since 22.6.0. Use `<hub-file-input>`. Removed in the next major.
+	 */
 	readonly multiple = input(false, { transform: booleanAttribute });
 
-	/** Text of the file-picker button (file format). */
+	/**
+	 * Text of the file-picker button (file format).
+	 *
+	 * @deprecated Since 22.6.0. Use `<hub-file-input>` and its `buttonLabel`. Removed in the next major.
+	 */
 	readonly buttonLabel = input<string>('Choose file');
 
 	/** Reference to the hidden native file input. */
@@ -245,6 +263,7 @@ export class HubInputComponent extends HubFieldControl {
 	override ngAfterContentInit(): void {
 		super.ngAfterContentInit();
 		this.#attachNumericValidators();
+		this.#warnDeprecatedFileFormat();
 	}
 
 	writeValue(value: HubInputValue): void {
@@ -397,6 +416,20 @@ export class HubInputComponent extends HubFieldControl {
 		this._value.set(null);
 		this.onChange?.(null);
 		this.valueChange.emit(null);
+	}
+
+	/**
+	 * Warns once, in development only, that the `file` format is deprecated.
+	 *
+	 * It still works, but it cannot enforce `accept` on a drop, has no size limits, no preview and
+	 * no per-file removal. `<hub-file-input>` supersedes it.
+	 */
+	#warnDeprecatedFileFormat(): void {
+		if (isDevMode() && this.type() === this._inputFormats.File) {
+			console.warn(
+				'[ng-hub-ui-forms] <hub-input type="file"> is deprecated since 22.6.0 and will be removed in the next major. Use <hub-file-input> instead.'
+			);
+		}
 	}
 
 	/**
