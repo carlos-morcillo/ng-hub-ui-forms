@@ -370,7 +370,7 @@ hub-input {
 }
 ```
 
-**`hub-select` dentro de un modal** — el panel del desplegable se apila con `--hub-select-dropdown-z-index` (por defecto `calc(var(--hub-sys-zindex-modal, 1055) + 5)`), así que un select abierto dentro de un `HubModal` se renderiza por encima del diálogo en vez de quedar recortado debajo.
+**`hub-select` dentro de un modal** — el panel del desplegable se apila con `--hub-select-dropdown-zindex` (por defecto `calc(var(--hub-sys-zindex-modal, 1055) + 5)`; la grafía anterior `--hub-select-dropdown-z-index` queda deprecada pero se sigue respetando), así que un select abierto dentro de un `HubModal` se renderiza por encima del diálogo en vez de quedar recortado debajo.
 
 **Variantes y theming de `hub-segmented`** — el input `color` tiñe el segmento seleccionado desde las familias semánticas (`<hub-segmented color="primary">`); puedes fijar cualquier slot `--hub-segmented-*` directamente, o en una llamada con el mixin SCSS:
 

@@ -407,7 +407,7 @@ hub-input {
 }
 ```
 
-**`hub-select` inside a modal** — the dropdown panel stacks through `--hub-select-dropdown-z-index` (default `calc(var(--hub-sys-zindex-modal, 1055) + 5)`), so a select opened inside a `HubModal` renders above the dialog instead of being clipped underneath it.
+**`hub-select` inside a modal** — the dropdown panel stacks through `--hub-select-dropdown-zindex` (default `calc(var(--hub-sys-zindex-modal, 1055) + 5)`; the previous `--hub-select-dropdown-z-index` spelling is deprecated but still honoured), so a select opened inside a `HubModal` renders above the dialog instead of being clipped underneath it.
 
 **`hub-segmented` variants & theming** — the `color` input tints the selected segment from the semantic families (`<hub-segmented color="primary">`); any of the `--hub-segmented-*` slots can be set directly, or in one call with the SCSS mixin:
 

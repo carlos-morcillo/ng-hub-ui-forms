@@ -294,6 +294,9 @@
 	// `.ng-dropdown-panel` — one below HubModal (`--hub-sys-zindex-modal`, 1055) — so a
 	// select opened inside a modal was clipped underneath it. Sit a few layers above
 	// the modal instead.
+	// DEPRECATED name (non-canonical `z-index` spelling), kept one cycle as the default
+	// carrier and override bridge; the canonical hook is `--hub-select-dropdown-zindex`,
+	// read first at the consumption point (select.component.scss).
 	--hub-select-dropdown-z-index: calc(var(--hub-sys-zindex-modal, 1055) + 5);
 
 	// ── Datepicker ──────────────────────────────────────────────────────────────

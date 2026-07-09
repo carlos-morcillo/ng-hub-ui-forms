@@ -174,7 +174,9 @@ hub-select.hidden-control {
 // onto the panel when `appendTo` is set).
 .hub-select__control .ng-dropdown-panel,
 .ng-dropdown-panel.hub-select__control {
-	z-index: var(--hub-select-dropdown-z-index);
+	// Canonical hook first (`zindex` spelling); the deprecated `z-index` name keeps
+	// working one cycle as the fallback/default carrier declared in _tokens.scss.
+	z-index: var(--hub-select-dropdown-zindex, var(--hub-select-dropdown-z-index));
 }
 
 // ── buttons format ──────────────────────────────────────────────────────────

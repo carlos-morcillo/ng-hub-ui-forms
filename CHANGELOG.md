@@ -5,6 +5,16 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.8.0] - 2026-07-09
+
+### Added
+
+- **`--hub-select-dropdown-zindex`** — canonical spelling of the select dropdown stacking hook (the design-system convention is `zindex` without a hyphen, matching `--hub-sys-zindex-*` and the rest of the family). It is read first at the consumption point, so setting it anywhere in the cascade wins without fighting a host declaration.
+
+### Deprecated
+
+- **`--hub-select-dropdown-z-index`** — the old hyphenated spelling. It keeps working exactly as before (it remains the declared default carrier and override bridge), but it is scheduled for removal after one release cycle. Migrate overrides to `--hub-select-dropdown-zindex`.
+
 ## [22.7.0] - 2026-07-09
 
 ### Added
