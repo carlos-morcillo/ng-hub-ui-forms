@@ -71,28 +71,78 @@
 		border: 0;
 	}
 
+	// The element is the medallion; the glyph is painted in its `::before`. With the default
+	// tokens the medallion is transparent and exactly the glyph's box, so nothing moves.
 	&__icon {
-		display: block;
-		width: var(--hub-file-input-icon-size);
-		height: var(--hub-file-input-icon-size);
-		background-color: var(--hub-file-input-icon-color);
-		mask: var(--hub-file-input-icon) center / contain no-repeat;
+		display: inline-flex;
+		flex: 0 0 auto;
+		align-items: center;
+		justify-content: center;
+		width: var(--hub-file-input-icon-chip-size);
+		height: var(--hub-file-input-icon-chip-size);
+		background-color: var(--hub-file-input-icon-bg);
+		border-radius: var(--hub-file-input-icon-chip-radius);
+
+		&::before {
+			content: '';
+			width: var(--hub-file-input-icon-size);
+			height: var(--hub-file-input-icon-size);
+			background-color: var(--hub-file-input-icon-color);
+			mask: var(--hub-file-input-icon) center / contain no-repeat;
+		}
 	}
 
 	&__prompt {
 		display: flex;
+		flex-direction: var(--hub-file-input-prompt-direction);
 		flex-wrap: wrap;
-		align-items: baseline;
+		align-items: var(--hub-file-input-prompt-align);
 		justify-content: center;
-		gap: 0.25em;
+		gap: var(--hub-file-input-prompt-gap);
 		color: var(--hub-file-input-prompt-color);
 		font-size: var(--hub-file-input-prompt-font-size);
 	}
 
+	&__drop-text {
+		color: var(--hub-file-input-drop-text-color);
+		font-size: var(--hub-file-input-drop-text-font-size);
+		font-weight: var(--hub-file-input-drop-text-font-weight);
+	}
+
+	&__drop-subtext {
+		color: var(--hub-file-input-drop-subtext-color);
+		font-size: var(--hub-file-input-drop-subtext-font-size);
+	}
+
+	// Transparent underlined text by default; the surface tokens turn it into a button.
 	&__browse {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--hub-file-input-browse-gap);
+		margin-top: var(--hub-file-input-browse-margin-top);
+		padding: var(--hub-file-input-browse-padding-y) var(--hub-file-input-browse-padding-x);
 		color: var(--hub-file-input-browse-color);
+		font-size: var(--hub-file-input-browse-font-size);
 		font-weight: var(--hub-file-input-browse-font-weight);
-		text-decoration: underline;
+		text-decoration: var(--hub-file-input-browse-text-decoration);
+		background-color: var(--hub-file-input-browse-bg);
+		border-radius: var(--hub-file-input-browse-radius);
+		transition: var(--hub-file-input-transition);
+
+		// Optional leading glyph, off until the consumer switches `-display` on.
+		&::before {
+			content: '';
+			display: var(--hub-file-input-browse-icon-display);
+			flex: 0 0 auto;
+			width: var(--hub-file-input-browse-icon-size);
+			height: var(--hub-file-input-browse-icon-size);
+			background-color: currentcolor;
+			mask: var(--hub-file-input-browse-icon) center / contain no-repeat;
+		}
+	}
+
+	&__dropzone:hover .hub-file-input__browse {
+		background-color: var(--hub-file-input-browse-hover-bg);
 	}
 
 	&__hint {

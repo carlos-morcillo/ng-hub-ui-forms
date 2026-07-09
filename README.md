@@ -279,12 +279,29 @@ Whatever the uploader reports on `done` is kept on the item, so the ids the serv
 const uploadedIds = fileInput.files().map((item) => (item.response as { id: string }).id);
 ```
 
-Customize it without forking the template: 66 `--hub-file-input-*` tokens (every icon is a swappable CSS mask), the `hub-file-input-theme(...)` mixin, and two projection slots.
+Customize it without forking the template: the `--hub-file-input-*` tokens (every icon is a swappable CSS mask), the `hub-file-input-theme(...)` mixin, and three projection slots.
 
 ```html
 <hub-file-input formControlName="attachments" [multiple]="true">
 	<ng-template hubFileIcon let-item>
 		<hub-icon [name]="item.file.type === 'application/pdf' ? 'fa:solid:file-pdf' : 'fa:solid:file'" />
+	</ng-template>
+</hub-file-input>
+```
+
+#### Reproducing your own dropzone
+
+The dropzone is built from a glyph, an invitation and a browse action, each themeable on its own — so a design system reproduces its own without forking the template.
+
+- **Icon medallion** — `--hub-file-input-icon-bg`, `-icon-chip-size` and `-icon-chip-radius` put the glyph on a tinted, rounded surface. Transparent and square by default.
+- **Browse as a button** — `--hub-file-input-browse-bg`, `-hover-bg`, `-padding-x`, `-padding-y`, `-radius` and an optional leading glyph (`-browse-icon`, `-browse-icon-display`, `-browse-icon-size`). A transparent underlined link by default.
+- **Two invitation lines** — `[dropText]` and `[dropSubtext]` (or the `dropHere` / `dropSubtext` labels), stacked with `--hub-file-input-prompt-direction: column`. The second line is empty by default.
+- **A leading notice** — `hubFileDropzoneNotice` projects markup inside the dropzone, between the glyph and the invitation, for something the invitation cannot say.
+
+```html
+<hub-file-input dropText="Drop your documents here" dropSubtext="or click to browse" buttonLabel="Select files">
+	<ng-template hubFileDropzoneNotice>
+		<strong class="missing">{{ missingCount }} documents still missing</strong>
 	</ng-template>
 </hub-file-input>
 ```

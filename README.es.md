@@ -256,7 +256,9 @@ Lo que el uploader devuelva en `done` se conserva en el item, así que los ids q
 const uploadedIds = fileInput.files().map((item) => (item.response as { id: string }).id);
 ```
 
-Se personaliza sin tocar la plantilla: 66 tokens `--hub-file-input-*` (cada icono es una máscara CSS intercambiable), el mixin `hub-file-input-theme(...)` y dos slots de proyección.
+Se personaliza sin tocar la plantilla: los tokens `--hub-file-input-*` (cada icono es una máscara CSS intercambiable), el mixin `hub-file-input-theme(...)` y tres slots de proyección.
+
+El dropzone se compone de un glifo, una invitación y una acción de examinar, cada uno tematizable por separado — así un design system reproduce el suyo sin bifurcar la plantilla: el **medallón del icono** (`--hub-file-input-icon-bg`, `-icon-chip-size`, `-icon-chip-radius`), el **botón de examinar** (`--hub-file-input-browse-bg`, `-hover-bg`, `-padding-x/-y`, `-radius` y un glifo delantero opcional), la **segunda línea de invitación** (`[dropText]` / `[dropSubtext]`, apiladas con `--hub-file-input-prompt-direction: column`) y un **aviso** proyectado entre el glifo y la invitación con `hubFileDropzoneNotice`. Todos los valores por defecto dejan el dropzone exactamente como estaba.
 
 ```html
 <hub-file-input formControlName="attachments" [multiple]="true">

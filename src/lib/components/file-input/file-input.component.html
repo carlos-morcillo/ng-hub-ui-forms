@@ -49,9 +49,16 @@
 
 			<span class="hub-file-input__icon" aria-hidden="true"></span>
 
+			@if (noticeTpt(); as notice) {
+				<ng-container [ngTemplateOutlet]="notice.template"></ng-container>
+			}
+
 			<span class="hub-file-input__prompt">
 				@if (dragDrop()) {
-					<span class="hub-file-input__drop-text">{{ labels().dropHere }}</span>
+					<span class="hub-file-input__drop-text">{{ dropTextLabel() }}</span>
+				}
+				@if (dropSubtextLabel()) {
+					<span class="hub-file-input__drop-subtext">{{ dropSubtextLabel() }}</span>
 				}
 				<span class="hub-file-input__browse">{{ browseLabel() }}</span>
 			</span>

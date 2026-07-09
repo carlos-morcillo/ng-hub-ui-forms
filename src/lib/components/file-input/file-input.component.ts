@@ -18,6 +18,7 @@ import {
 } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { HubFileIconDirective } from '../../directives/file-icon.directive';
+import { HubFileDropzoneNoticeDirective } from '../../directives/file-dropzone-notice.directive';
 import { HubFilePreviewContext, HubFilePreviewDirective } from '../../directives/file-preview.directive';
 import { FormTextType, FormTextTypes } from '../../interfaces/common.interface';
 import {
@@ -147,6 +148,12 @@ export class HubFileInputComponent extends HubFieldControl {
 	/** Overrides the "browse" button text coming from the global labels. */
 	readonly buttonLabel = input<string | null>(null);
 
+	/** Overrides the dropzone invitation coming from the global labels. */
+	readonly dropText = input<string | null>(null);
+
+	/** Overrides the second invitation line coming from the global labels. Pass `''` to hide it. */
+	readonly dropSubtext = input<string | null>(null);
+
 	/** Overrides the auto-generated hint that summarizes the active constraints. Pass `''` to hide it. */
 	readonly hint = input<string | null>(null);
 
@@ -180,6 +187,9 @@ export class HubFileInputComponent extends HubFieldControl {
 	/** Projected per-file preview template, replacing the built-in item rendering. */
 	protected readonly previewTpt = contentChild(HubFilePreviewDirective);
 
+	/** Projected notice rendered between the glyph and the invitation. */
+	protected readonly noticeTpt = contentChild(HubFileDropzoneNoticeDirective);
+
 	/** Whether a drag is currently hovering the dropzone. */
 	protected readonly isDragging = signal(false);
 
@@ -200,6 +210,12 @@ export class HubFileInputComponent extends HubFieldControl {
 
 	/** Text of the browse action. */
 	protected readonly browseLabel = computed<string>(() => this.buttonLabel() ?? this.labels().browse);
+
+	/** The dropzone invitation. */
+	protected readonly dropTextLabel = computed<string>(() => this.dropText() ?? this.labels().dropHere);
+
+	/** The second invitation line. Empty renders nothing. */
+	protected readonly dropSubtextLabel = computed<string>(() => this.dropSubtext() ?? this.labels().dropSubtext);
 
 	/** The hint summarizing the active constraints. */
 	protected readonly constraintsHint = computed<string>(() => {

@@ -110,13 +110,41 @@
 	--hub-file-input-focus-border-color: var(--hub-input-focus-border-color);
 	--hub-file-input-focus-box-shadow: var(--hub-input-focus-box-shadow);
 
-	// Dropzone copy
+	// Dropzone copy. The prompt is a row by default (invitation and browse action side by
+	// side); `--hub-file-input-prompt-direction: column` stacks them, which is what a
+	// dropzone carrying a `dropSubtext` wants.
 	--hub-file-input-prompt-color: var(--hub-sys-text-muted, #6c757d);
 	--hub-file-input-prompt-font-size: var(--hub-ref-font-size-base, 1rem);
-	--hub-file-input-browse-color: var(--hub-sys-color-primary, #0d6efd);
-	--hub-file-input-browse-font-weight: var(--hub-ref-font-weight-medium, 500);
+	--hub-file-input-prompt-direction: row;
+	// `baseline` aligns a row of text; a column prompt wants `center`.
+	--hub-file-input-prompt-align: baseline;
+	--hub-file-input-prompt-gap: 0.25em;
+	--hub-file-input-drop-text-color: inherit;
+	--hub-file-input-drop-text-font-size: inherit;
+	--hub-file-input-drop-text-font-weight: inherit;
+	--hub-file-input-drop-subtext-color: var(--hub-file-input-hint-color);
+	--hub-file-input-drop-subtext-font-size: var(--hub-file-input-hint-font-size);
 	--hub-file-input-hint-color: var(--hub-sys-text-muted, #6c757d);
 	--hub-file-input-hint-font-size: var(--hub-ref-font-size-sm, 0.875rem);
+
+	// Browse action — a transparent, underlined text affordance by default. Give it a
+	// background, padding and a radius to render it as a button instead.
+	--hub-file-input-browse-color: var(--hub-sys-color-primary, #0d6efd);
+	--hub-file-input-browse-font-weight: var(--hub-ref-font-weight-medium, 500);
+	--hub-file-input-browse-font-size: inherit;
+	--hub-file-input-browse-text-decoration: underline;
+	--hub-file-input-browse-bg: transparent;
+	--hub-file-input-browse-hover-bg: var(--hub-file-input-browse-bg);
+	--hub-file-input-browse-padding-x: 0;
+	--hub-file-input-browse-padding-y: 0;
+	--hub-file-input-browse-radius: 0;
+	--hub-file-input-browse-gap: var(--hub-ref-space-2, 0.5rem);
+	--hub-file-input-browse-margin-top: 0;
+	// Optional leading glyph of the browse action — OFF until `-display` is switched on and
+	// a mask is supplied, mirroring the leading-icon contract of the rest of the family.
+	--hub-file-input-browse-icon: none;
+	--hub-file-input-browse-icon-display: none;
+	--hub-file-input-browse-icon-size: 1.125em;
 
 	// Glyphs — every icon is a swappable mask, tinted by its `-color` token. Replace the
 	// `url(…)` to change the drawing without touching the template; project an
@@ -124,6 +152,11 @@
 	--hub-file-input-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='black' d='M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5'/%3E%3Cpath fill='black' d='M7.646.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 1.707V10.5a.5.5 0 0 1-1 0V1.707L5.354 3.854a.5.5 0 1 1-.708-.708z'/%3E%3C/svg%3E");
 	--hub-file-input-icon-size: 2rem;
 	--hub-file-input-icon-color: var(--hub-sys-text-muted, #6c757d);
+	// The glyph can sit on a medallion: a tinted, rounded surface behind it. Off by default
+	// (transparent, square, exactly the glyph's box), so the dropzone renders unchanged.
+	--hub-file-input-icon-bg: transparent;
+	--hub-file-input-icon-chip-size: var(--hub-file-input-icon-size);
+	--hub-file-input-icon-chip-radius: 0;
 	--hub-file-input-file-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='black' d='M4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.414A1.5 1.5 0 0 0 13.56 3.35L10.65.44A1.5 1.5 0 0 0 9.586 0zm5.5 1.5v2a1 1 0 0 0 1 1h2z'/%3E%3C/svg%3E");
 	--hub-file-input-file-icon-size: 1.5rem;
 	--hub-file-input-file-icon-color: var(--hub-sys-text-muted, #6c757d);

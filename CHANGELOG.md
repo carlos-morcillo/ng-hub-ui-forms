@@ -5,6 +5,16 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.7.0] - 2026-07-09
+
+### Added
+
+- **`<hub-file-input>` dropzone chrome is now themeable end to end.** The control shipped a dropzone that could only ever look like the library's: a bare glyph, one line of invitation, and an underlined text link to browse. Four additions let a design system reproduce its own dropzone without forking the template or writing a single bespoke selector — every default is unchanged, so no existing consumer moves a pixel.
+  - **Icon medallion.** `--hub-file-input-icon-bg`, `--hub-file-input-icon-chip-size` and `--hub-file-input-icon-chip-radius` put the glyph on a tinted, rounded surface. The glyph moved to the element's `::before`, so `--hub-file-input-icon-color` / `-size` / `-icon` keep meaning exactly what they meant. Defaults (transparent, square, the glyph's own box) render identically.
+  - **Browse action as a button.** `--hub-file-input-browse-bg`, `-hover-bg`, `-padding-x`, `-padding-y`, `-radius`, `-font-size`, `-text-decoration` and `-gap`, plus an optional leading glyph (`--hub-file-input-browse-icon`, `-icon-display`, `-icon-size`) that follows the same mask contract as the rest of the family. Defaults keep it a transparent, underlined text affordance.
+  - **A second invitation line.** New `dropSubtext` label and a matching per-instance `[dropSubtext]` input, rendered under the invitation as `.hub-file-input__drop-subtext`. Empty by default, so it renders nothing. `[dropText]` was added alongside it, so the invitation is now overridable per instance too (`buttonLabel` already was). New `--hub-file-input-prompt-direction`, `-align` and `-gap` stack the prompt into a column, and `--hub-file-input-drop-text-*` / `-drop-subtext-*` type each line.
+  - **A leading slot.** New `hubFileDropzoneNotice` directive (`HubFileDropzoneNoticeDirective`) projects arbitrary markup inside the dropzone, between the glyph and the invitation — the place for a per-instance notice ("2 documents still missing") that neither the invitation nor the constraints hint can express.
+
 ## [22.6.1] - 2026-07-09
 
 ### Fixed

@@ -71,6 +71,12 @@ export interface HubFileInputLabels {
 	browse: string;
 	/** Invitation rendered inside the dropzone. */
 	dropHere: string;
+	/**
+	 * Second line of the invitation, under {@link dropHere}. Empty by default, so it renders
+	 * nothing. A dropzone that sets it usually stacks the prompt too, with
+	 * `--hub-file-input-prompt-direction: column`.
+	 */
+	dropSubtext: string;
 	/** Accessible name of the per-file remove button. */
 	remove: string;
 	/** Text + accessible name of the "remove all" button. */
@@ -93,6 +99,7 @@ export interface HubFileInputLabels {
 export const defaultHubFileInputLabels: HubFileInputLabels = {
 	browse: 'Browse files',
 	dropHere: 'Drag files here, or',
+	dropSubtext: '',
 	remove: 'Remove file',
 	clear: 'Remove all',
 	retry: 'Retry upload',

@@ -59,6 +59,7 @@ export { HubFileIconDirective } from './lib/directives/file-icon.directive';
 export type { HubFileIconContext } from './lib/directives/file-icon.directive';
 export { HubFilePreviewDirective } from './lib/directives/file-preview.directive';
 export type { HubFilePreviewContext } from './lib/directives/file-preview.directive';
+export { HubFileDropzoneNoticeDirective } from './lib/directives/file-dropzone-notice.directive';
 
 // Pipes
 export { HubInvertColorPipe } from './lib/pipes/invert-color.pipe';
