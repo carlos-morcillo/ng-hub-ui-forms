@@ -39,6 +39,12 @@ export interface HubFileItem {
 	readonly progress: number | null;
 	/** The error thrown by the uploader, when `status` is `'error'`. */
 	readonly error: unknown | null;
+	/**
+	 * The body the uploader reported on `done` — typically the record the server created, whose id
+	 * the application needs to reference the stored file. `null` until the upload succeeds, and
+	 * again after a `retry` restarts it.
+	 */
+	readonly response: unknown | null;
 }
 
 /** How the accepted files are previewed below the dropzone. */

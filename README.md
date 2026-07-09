@@ -273,6 +273,12 @@ bootstrapApplication(App, { providers: [provideHttpClient(), provideHubFileUploa
 > The observable **must be cold**: one subscription is one request. `cancel()` unsubscribes, which is what aborts the underlying `XMLHttpRequest`. A shared or hot observable silently breaks cancellation.
 > Bind a submit button to `uploading()` if you need to wait for the uploads: the control stays valid while they run, by design.
 
+Whatever the uploader reports on `done` is kept on the item, so the ids the server minted are there when you submit the form:
+
+```ts
+const uploadedIds = fileInput.files().map((item) => (item.response as { id: string }).id);
+```
+
 Customize it without forking the template: 66 `--hub-file-input-*` tokens (every icon is a swappable CSS mask), the `hub-file-input-theme(...)` mixin, and two projection slots.
 
 ```html

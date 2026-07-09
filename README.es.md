@@ -250,6 +250,12 @@ bootstrapApplication(App, { providers: [provideHttpClient(), provideHubFileUploa
 > El observable **debe ser frío**: una suscripción es una petición. `cancel()` se desuscribe, y eso es lo que aborta el `XMLHttpRequest` subyacente. Un observable caliente o compartido rompe la cancelación en silencio.
 > Si necesitas esperar a que terminen las subidas, engancha el botón de envío a `uploading()`: el control sigue siendo válido mientras se suben, por diseño.
 
+Lo que el uploader devuelva en `done` se conserva en el item, así que los ids que acuñó el servidor están ahí cuando envías el formulario:
+
+```ts
+const uploadedIds = fileInput.files().map((item) => (item.response as { id: string }).id);
+```
+
 Se personaliza sin tocar la plantilla: 66 tokens `--hub-file-input-*` (cada icono es una máscara CSS intercambiable), el mixin `hub-file-input-theme(...)` y dos slots de proyección.
 
 ```html

@@ -314,6 +314,46 @@ describe('HubFileInputComponent', () => {
 			expect(component.uploading()).toBe(false);
 		});
 
+		// The server's body identifies the stored file; dropping it leaves the application unable to
+		// reference what it just uploaded.
+		it('keeps the response the uploader reported on done', () => {
+			drop([makeFile('a.txt')]);
+
+			expect(component.files()[0].response).toBeNull();
+
+			events.next({ status: 'done', response: { id: 42 } });
+			fixture.detectChanges();
+
+			expect(component.files()[0].response).toEqual({ id: 42 });
+		});
+
+		it('exposes a null response when the uploader completes without a body', () => {
+			drop([makeFile('a.txt')]);
+
+			events.next({ status: 'done' });
+			fixture.detectChanges();
+
+			expect(component.files()[0].status).toBe('done');
+			expect(component.files()[0].response).toBeNull();
+		});
+
+		it('clears a stale response when the upload is retried, and again when cancelled', () => {
+			drop([makeFile('a.txt')]);
+
+			events.next({ status: 'done', response: { id: 42 } });
+			fixture.detectChanges();
+
+			component.retry(component.files()[0].id);
+			fixture.detectChanges();
+
+			expect(component.files()[0].response).toBeNull();
+
+			component.cancel(component.files()[0].id);
+			fixture.detectChanges();
+
+			expect(component.files()[0].response).toBeNull();
+		});
+
 		it('treats a completion without a `done` event as a success', () => {
 			drop([makeFile('a.txt')]);
 

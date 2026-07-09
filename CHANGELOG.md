@@ -5,6 +5,12 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.6.1] - 2026-07-09
+
+### Fixed
+
+- **`<hub-file-input>` dropped the uploader's response body.** `HubFileUploadEvent` carries a `response` on `done` — typically the record the server created — but the component discarded it, leaving the application with no way to reference the file it had just uploaded. `HubFileItem` now exposes a `response` field, populated on `done` and reset to `null` when the upload is retried or cancelled. Reading it does not change the form value, which stays native.
+
 ## [22.6.0] - 2026-07-09
 
 ### Added

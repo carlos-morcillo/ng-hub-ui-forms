@@ -316,7 +316,7 @@ export class HubFileInputComponent extends HubFieldControl {
 		}
 
 		this.#abort(id);
-		this.#patch(id, { status: 'ready', progress: null, error: null });
+		this.#patch(id, { status: 'ready', progress: null, error: null, response: null });
 	}
 
 	/**
@@ -566,7 +566,8 @@ export class HubFileInputComponent extends HubFieldControl {
 			previewUrl: previewable ? URL.createObjectURL(file) : null,
 			status: 'ready',
 			progress: null,
-			error: null
+			error: null,
+			response: null
 		};
 	}
 
@@ -604,7 +605,7 @@ export class HubFileInputComponent extends HubFieldControl {
 		}
 
 		this.#abort(id);
-		this.#patch(id, { status: 'uploading', progress: null, error: null });
+		this.#patch(id, { status: 'uploading', progress: null, error: null, response: null });
 
 		const subscription = uploader.upload(item.file, { id }).subscribe({
 			next: (event) => {
@@ -617,7 +618,9 @@ export class HubFileInputComponent extends HubFieldControl {
 				}
 
 				if (event.status === 'done') {
-					this.#patch(id, { status: 'done', progress: 100, error: null });
+					// The body is what identifies the stored file server-side; without keeping it the
+					// application has no way to reference what it just uploaded.
+					this.#patch(id, { status: 'done', progress: 100, error: null, response: event.response ?? null });
 					return;
 				}
 
@@ -653,7 +656,10 @@ export class HubFileInputComponent extends HubFieldControl {
 	 * @param id - The id of the item to update.
 	 * @param patch - The fields to overwrite.
 	 */
-	#patch(id: string, patch: Partial<Pick<HubFileItem, 'status' | 'progress' | 'error'>> & { status: HubFileStatus }): void {
+	#patch(
+		id: string,
+		patch: Partial<Pick<HubFileItem, 'status' | 'progress' | 'error' | 'response'>> & { status: HubFileStatus }
+	): void {
 		let changed = false;
 
 		this._items.update((items) =>
