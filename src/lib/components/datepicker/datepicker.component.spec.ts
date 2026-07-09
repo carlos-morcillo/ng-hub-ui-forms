@@ -1,13 +1,17 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
-/** Processes pending real timers (e.g. the cell-focus setTimeout(0)) under the zoneless Vitest runner. */
-const tick0 = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { vi } from 'vitest';
 import { provideHubForms } from '../../services/forms-config';
 import { HubDatepickerComponent } from './datepicker.component';
+
+/** Processes pending real timers (e.g. the cell-focus setTimeout(0)) under the zoneless Vitest runner. */
+const tick0 = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+/** The "today" every test runs against. June 15th 2026 — a Monday. */
+const TODAY = new Date(2026, 5, 15);
 
 /**
  * Host wrapping `<hub-datepicker>` with a reactive control so the CVA wiring can be asserted.
@@ -49,6 +53,13 @@ describe('HubDatepickerComponent', () => {
     let host: DatepickerHostComponent;
 
     beforeEach(() => {
+        // The component seeds `_viewDate` with `new Date()` in a field initializer, so an unbound
+        // calendar opens on the current month. Freeze the clock BEFORE `createComponent`, or a test
+        // that picks a June cell without first setting a value only passes during June.
+        // Only `Date` is faked: `tick0()` relies on a real `setTimeout`.
+        vi.useFakeTimers({ toFake: ['Date'] });
+        vi.setSystemTime(TODAY);
+
         TestBed.configureTestingModule({
             imports: [DatepickerHostComponent, ReactiveFormsModule, NoopAnimationsModule],
             providers: [provideHubForms()]
@@ -59,6 +70,7 @@ describe('HubDatepickerComponent', () => {
     });
 
     afterEach(() => {
+        vi.useRealTimers();
         // CDK appends the overlay container to <body>; remove any leftover so suites stay isolated.
         document.querySelectorAll('.cdk-overlay-container').forEach((el) => el.remove());
     });
