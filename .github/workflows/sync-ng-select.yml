@@ -1,0 +1,135 @@
+name: Sync vendored ng-select
+
+# Keeps the vendored ng-select fork (src/lib/select/vendor) aware of upstream releases.
+# When ng-select publishes a newer tag than the one pinned in `UPSTREAM`, this workflow
+# re-copies the library source, re-applies the hub patches (see PATCHES.md) and opens a
+# PR for human review.
+#
+# This workflow lives in the ng-hub-ui-forms repo (not the ng-hub-ui monorepo) on
+# purpose: the vendored sources belong to this repo, so the default GITHUB_TOKEN can
+# push the sync branch and open the PR here. Build validation (`ng build forms`) must
+# run from the ng-hub-ui monorepo, which provides the Angular toolchain — see the
+# reviewer checklist in the PR body.
+
+on:
+  schedule:
+    - cron: '0 6 * * 1' # every Monday 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Force a specific upstream tag (e.g. v23.1.0). Leave empty to use the latest.'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: sync-ng-select
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      VENDOR_DIR: src/lib/select/vendor
+      UPSTREAM_FILE: src/lib/select/UPSTREAM
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read pinned upstream
+        id: pinned
+        run: |
+          repo=$(grep -E '^repo=' "$UPSTREAM_FILE" | cut -d= -f2-)
+          subdir=$(grep -E '^subdir=' "$UPSTREAM_FILE" | cut -d= -f2-)
+          current=$(grep -E '^tag=' "$UPSTREAM_FILE" | cut -d= -f2-)
+          echo "repo=$repo" >> "$GITHUB_OUTPUT"
+          echo "subdir=$subdir" >> "$GITHUB_OUTPUT"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          echo "Pinned: $current ($repo / $subdir)"
+
+      - name: Resolve target tag
+        id: target
+        run: |
+          if [ -n "${{ github.event.inputs.tag }}" ]; then
+            target="${{ github.event.inputs.tag }}"
+          else
+            # Latest v-prefixed semver tag from upstream.
+            target=$(git ls-remote --tags --refs "${{ steps.pinned.outputs.repo }}" 'v*' \
+              | awk -F/ '{print $NF}' \
+              | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+              | sort -V | tail -1)
+          fi
+          echo "target=$target" >> "$GITHUB_OUTPUT"
+          echo "Target: $target"
+
+      - name: Stop if already up to date
+        id: check
+        run: |
+          if [ "${{ steps.target.outputs.target }}" = "${{ steps.pinned.outputs.current }}" ]; then
+            echo "up_to_date=true" >> "$GITHUB_OUTPUT"
+            echo "Already on ${{ steps.pinned.outputs.current }} — nothing to do."
+          else
+            echo "up_to_date=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Clone upstream at target tag
+        if: steps.check.outputs.up_to_date == 'false'
+        run: |
+          git clone --depth 1 --branch "${{ steps.target.outputs.target }}" \
+            "${{ steps.pinned.outputs.repo }}" /tmp/ng-select-src
+          echo "UPSTREAM_SHA=$(git -C /tmp/ng-select-src rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Re-vendor source + re-apply patches
+        if: steps.check.outputs.up_to_date == 'false'
+        run: |
+          SRC="/tmp/ng-select-src/${{ steps.pinned.outputs.subdir }}"
+          # Replace vendored lib/themes/public-api (so upstream deletions are reflected).
+          rm -rf "$VENDOR_DIR/lib" "$VENDOR_DIR/themes" "$VENDOR_DIR/public-api.ts"
+          mkdir -p "$VENDOR_DIR/lib" "$VENDOR_DIR/themes"
+          for f in "$SRC"/lib/*.ts; do case "$f" in *.spec.ts) ;; *) cp "$f" "$VENDOR_DIR/lib/";; esac; done
+          cp "$SRC"/lib/*.html "$VENDOR_DIR/lib/" 2>/dev/null || true
+          cp "$SRC"/lib/*.scss "$VENDOR_DIR/lib/" 2>/dev/null || true
+          cp "$SRC"/themes/*.scss "$VENDOR_DIR/themes/" 2>/dev/null || true
+          cp "$SRC"/public-api.ts "$VENDOR_DIR/public-api.ts"
+          # PATCH #1 — prepend @ts-nocheck to every vendored .ts (see PATCHES.md).
+          NOTE='// @ts-nocheck -- vendored ng-select source (type-checked upstream); see ../PATCHES.md'
+          for f in $(find "$VENDOR_DIR" -name '*.ts'); do
+            if ! head -1 "$f" | grep -q '@ts-nocheck'; then
+              printf '%s\n' "$NOTE" | cat - "$f" > "$f.tmp" && mv "$f.tmp" "$f"
+            fi
+          done
+          # Update UPSTREAM pin.
+          today=$(date -u +%Y-%m-%d)
+          sed -i \
+            -e "s/^tag=.*/tag=${{ steps.target.outputs.target }}/" \
+            -e "s/^commit=.*/commit=${UPSTREAM_SHA}/" \
+            -e "s/^vendored_at=.*/vendored_at=${today}/" \
+            "$UPSTREAM_FILE"
+
+      - name: Open pull request
+        if: steps.check.outputs.up_to_date == 'false'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: chore/sync-ng-select-${{ steps.target.outputs.target }}
+          base: main
+          title: 'chore(select): sync vendored ng-select ${{ steps.pinned.outputs.current }} → ${{ steps.target.outputs.target }}'
+          labels: upstream-sync
+          commit-message: 'chore(select): sync vendored ng-select to ${{ steps.target.outputs.target }}'
+          body: |
+            Automated sync of the vendored ng-select fork.
+
+            - **From:** `${{ steps.pinned.outputs.current }}`
+            - **To:** `${{ steps.target.outputs.target }}` (`${{ env.UPSTREAM_SHA }}`)
+
+            ### Reviewer checklist
+            - [ ] `@ts-nocheck` patch re-applied to all vendored `.ts` (PATCHES.md #1).
+            - [ ] Review the diff under `src/lib/select/vendor/` for breaking changes.
+            - [ ] Re-apply any other entries in `PATCHES.md` if they conflicted.
+            - [ ] Check the hub theme (`select/theme/`) still maps cleanly to the upstream `.ng-select` classes.
+            - [ ] **Build-validate from the ng-hub-ui monorepo**: update the `projects/forms`
+                  submodule to this branch and run `ng build forms` + `ng test forms` there
+                  (this repo has no standalone Angular toolchain).
+            - [ ] Upstream release notes: https://github.com/ng-select/ng-select/releases/tag/${{ steps.target.outputs.target }}
