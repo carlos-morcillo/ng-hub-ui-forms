@@ -20,7 +20,7 @@ import { isPlatformBrowser, KeyValuePipe, NgTemplateOutlet } from '@angular/comm
 import { HubLabelType, HubLabelTypes } from '../../interfaces/common.interface';
 import { HubSegmentedOptionDirective } from '../../directives/segmented-option.directive';
 import { HubFieldControl } from '../../shared/hub-field-control';
-import { resolveHubAccent } from '../../shared/resolve-hub-accent';
+import { resolveHubAccent } from 'ng-hub-ui-utils';
 
 /** A single choice rendered by {@link HubSegmentedComponent}. */
 export interface HubSegmentedOption {
