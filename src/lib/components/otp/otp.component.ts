@@ -58,6 +58,7 @@ export type HubOtpMode = 'numeric' | 'alphanumeric' | 'alpha';
 							[type]="secret() ? 'password' : 'text'"
 							[attr.inputmode]="mode() === 'numeric' ? 'numeric' : 'text'"
 							[attr.autocomplete]="index === 0 ? 'one-time-code' : 'off'"
+							[attr.aria-required]="required() ? 'true' : null"
 							[attr.aria-label]="ariaCellLabel() + ' ' + (index + 1)"
 							maxlength="1"
 							[value]="chars()[index]"

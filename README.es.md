@@ -93,7 +93,7 @@ en tiempo de ejecución — sin dependencia de Bootstrap.
 
 ## 🎯 Características
 
-- **Campos** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, con addons de input-group y máscaras, afijos de icono dentro del campo y `search` typeahead con debounce; el formato `file` está **deprecado** → usa `hub-file-input`), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider` (uno / dos thumbs, relleno con degradado), `hub-segmented` (campo de control segmentado — selección simple y múltiple, horizontal y vertical, con label + validación), `hub-select` (formato dropdown, agrupación, typeahead, templates personalizados; los formatos `buttons` / `checkbox` / `radio` están **deprecados** → usa `hub-segmented`), `hub-datepicker` (simple y rango, navegación por teclado, i18n), `hub-file-input` (arrastrar y soltar, pegado desde el portapapeles, límites de tipo y tamaño, previsualización, progreso de subida opcional).
+- **Campos** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, con addons de input-group y máscaras, afijos de icono dentro del campo y `search` typeahead con debounce; el formato `file` está **deprecado** → usa `hub-file-input`), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider` (uno / dos thumbs, relleno con degradado), `hub-segmented` (campo de control segmentado — selección simple y múltiple, horizontal y vertical, con label + validación), `hub-select` (formato dropdown, agrupación, búsqueda en cliente vía `searchable` **y** typeahead asíncrono en servidor vía un Subject `typeahead`, creación de tags con `addTag`, templates personalizados; los formatos `buttons` / `checkbox` / `radio` están **deprecados** → usa `hub-segmented`), `hub-datepicker` (simple y rango, navegación por teclado, i18n), `hub-file-input` (arrastrar y soltar, pegado desde el portapapeles, límites de tipo y tamaño, previsualización, progreso de subida opcional).
 - **Visualización automática de errores** — vinculas un campo y sus errores de control se renderizan debajo; `hub-fieldset`, `form[hubForm]` y `hub-legend` muestran los errores de grupo y de formulario (cross-field) igual, sin cableado.
 - **Contenedores** — `hub-fieldset` / `form[hubForm]` agrupan campos y muestran sus errores de grupo; `hub-legend` renderiza una leyenda accesible.
 - **Configurable** — `provideHubForms({ … })` define las plantillas de invalid-feedback, locale/labels del datepicker, los textos del file input y más, a nivel de app o por instancia.
@@ -166,7 +166,7 @@ Proyecta un icono inicial o final **dentro** del campo, emite el término con _d
 <!-- items de objeto -->
 <hub-select formControlName="country" label="Country" [items]="countries" bindLabel="name" bindValue="code" />
 
-<!-- múltiple + typeahead -->
+<!-- múltiple + búsqueda en cliente (searchable filtra los items ya cargados mientras escribes) -->
 <hub-select formControlName="tags" label="Tags" [items]="tags" [multiple]="true" [searchable]="true" />
 
 <!-- agrupado -->
@@ -184,6 +184,51 @@ Los templates de opción/etiqueta se proyectan directamente al motor:
 
 > Importa `NgOptionTemplateDirective` / `NgLabelTemplateDirective` de `ng-hub-ui-forms`.
 > El panel del dropdown se renderiza al `body` por defecto (`appendTo`), así que nunca lo recortan tarjetas ni contenedores con scroll.
+
+#### Typeahead asíncrono y tags
+
+`searchable` filtra en cliente los `items` ya cargados. Para carga **en servidor**, pasa un Subject `typeahead` — el control deja de filtrar localmente, empuja cada término al Subject, y tú devuelves los resultados a través de `[items]`:
+
+```html
+<hub-select
+	formControlName="city"
+	label="City"
+	[items]="cities()"
+	bindLabel="name"
+	bindValue="code"
+	[typeahead]="citySearch$"
+	[minTermLength]="2"
+	[loading]="loading()"
+/>
+
+<!-- tagging: crea items a partir del término escrito -->
+<hub-select formControlName="tags" [items]="tags" [multiple]="true" [addTag]="true" addTagText="Create tag" />
+```
+
+- `typeahead` (`Subject<string> | undefined`, por defecto `undefined`) — recibe cada cambio del término de búsqueda para carga asíncrona; combínalo con el output `onSearch` si además necesitas los items coincidentes.
+- `minTermLength` (`number`, por defecto `0`) — longitud mínima del término antes de que arranque el filtrado (o el Subject `typeahead`).
+- `addTag` (`boolean | (term: string) => any | Promise<any>`, por defecto `false`) — `true` añade el término tal cual; una función mapea el término a un item nuevo (síncrona o `Promise`).
+- `addTagText` (`string`, por defecto `'Add item'`) — etiqueta de la fila "añadir item" mostrada mientras escribes.
+- `compareWith` (`(a, b) => boolean | undefined`, por defecto `undefined`) — igualdad personalizada entre item y valor (p. ej. objetos comparados por id); si se omite, aplica la comparación integrada del motor (incluido el emparejamiento por `bindValue`).
+
+### Segmented
+
+```html
+<hub-segmented formControlName="view" label="View" [options]="viewOptions" />
+```
+
+Un template `hubSegmentedOption` proyectado sustituye el contenido de cada segmento (iconos, badges, markup rico) mientras el componente sigue siendo dueño de la selección, la navegación por teclado y el ARIA. Contexto: la opción (implícita), `selected` e `index`:
+
+```html
+<hub-segmented formControlName="view" label="View" [options]="viewOptions">
+	<ng-template hubSegmentedOption let-option let-selected="selected" let-index="index">
+		<hub-icon [name]="option.value" />
+		{{ option.label }}
+	</ng-template>
+</hub-segmented>
+```
+
+> Importa `HubSegmentedOptionDirective` de `ng-hub-ui-forms`; el contexto está tipado como `HubSegmentedOptionContext`.
 
 ### Datepicker
 
@@ -401,6 +446,7 @@ import { HubSignalFieldControl, hubSignalErrorMessages } from 'ng-hub-ui-forms/s
 ## ♿ Accesibilidad
 
 - Las etiquetas se asocian con su control (`for`/`id`); los campos requeridos se marcan.
+- `required` — declarado inline o derivado de `Validators.required`, con `formControlName` **o** con binding directo `[formControl]` — se refleja como `aria-required` en todos los campos, incluidos el input de búsqueda del combobox del select, el `radiogroup` del segmented y cada celda del OTP.
 - Los errores de validación se renderizan en una región `role="alert"` ligada al campo.
 - El select expone la semántica combobox/listbox correcta; el datepicker es totalmente navegable por teclado.
 

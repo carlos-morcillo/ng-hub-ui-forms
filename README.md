@@ -92,7 +92,7 @@ mode — no Bootstrap dependency.
 
 ## 🎯 Features
 
-- **Fields** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, with input-group addons & masks, projected in-field affixes, a built-in `clearable` button and debounced typeahead `search`; the `file` format is **deprecated** → use `hub-file-input`), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider` (single / dual thumb, gradient fill), `hub-segmented` (segmented control field — single & multiple selection, horizontal & vertical, with label + validation), `hub-select` (dropdown format, grouping, typeahead, custom templates; the `buttons` / `checkbox` / `radio` formats are **deprecated** → use `hub-segmented`), `hub-datepicker` (single & range, keyboard nav, i18n), `hub-file-input` (drag & drop, clipboard paste, type/size limits, previews, optional upload progress).
+- **Fields** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, with input-group addons & masks, projected in-field affixes, a built-in `clearable` button and debounced typeahead `search`; the `file` format is **deprecated** → use `hub-file-input`), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider` (single / dual thumb, gradient fill), `hub-segmented` (segmented control field — single & multiple selection, horizontal & vertical, with label + validation), `hub-select` (dropdown format, grouping, client-side search via `searchable` **and** server-side async typeahead via a `typeahead` Subject, tag creation with `addTag`, custom templates; the `buttons` / `checkbox` / `radio` formats are **deprecated** → use `hub-segmented`), `hub-datepicker` (single & range, keyboard nav, i18n), `hub-file-input` (drag & drop, clipboard paste, type/size limits, previews, optional upload progress).
 - **Automatic error display** — bind a field and its control errors render below it; `hub-fieldset`, `form[hubForm]` and `hub-legend` surface group- and form-level (cross-field) errors the same way, with zero wiring.
 - **Containers** — `hub-fieldset` / `form[hubForm]` group fields and show their group errors; `hub-legend` renders an accessible legend.
 - **Configurable** — `provideHubForms({ … })` sets the invalid-feedback templates, datepicker locale/labels, file-input labels and more, app-wide or per instance.
@@ -189,7 +189,7 @@ Project a leading / trailing icon **inside** the field, emit a debounced term on
 <!-- object items -->
 <hub-select formControlName="country" label="Country" [items]="countries" bindLabel="name" bindValue="code" />
 
-<!-- multiple + typeahead -->
+<!-- multiple + client-side search (searchable filters the loaded items as you type) -->
 <hub-select formControlName="tags" label="Tags" [items]="tags" [multiple]="true" [searchable]="true" />
 
 <!-- grouped -->
@@ -207,6 +207,51 @@ Custom option/label templates are projected straight through to the engine:
 
 > Import `NgOptionTemplateDirective` / `NgLabelTemplateDirective` from `ng-hub-ui-forms`.
 > The dropdown panel renders to `body` by default (`appendTo`) so it is never clipped by cards or scroll containers.
+
+#### Async typeahead & tags
+
+`searchable` filters the already-loaded `items` client-side. For **server-side** loading, pass a `typeahead` Subject instead — the control stops filtering locally, pushes each term to the Subject, and you feed the results back through `[items]`:
+
+```html
+<hub-select
+	formControlName="city"
+	label="City"
+	[items]="cities()"
+	bindLabel="name"
+	bindValue="code"
+	[typeahead]="citySearch$"
+	[minTermLength]="2"
+	[loading]="loading()"
+/>
+
+<!-- tagging: create items from the typed term -->
+<hub-select formControlName="tags" [items]="tags" [multiple]="true" [addTag]="true" addTagText="Create tag" />
+```
+
+- `typeahead` (`Subject<string> | undefined`, default `undefined`) — receives every search-term change for async loading; pair with the `onSearch` output if you also need the matched items.
+- `minTermLength` (`number`, default `0`) — minimum term length before filtering (or the `typeahead` Subject) kicks in.
+- `addTag` (`boolean | (term: string) => any | Promise<any>`, default `false`) — `true` adds the term as-is; a function maps the term to a new item (sync or `Promise`).
+- `addTagText` (`string`, default `'Add item'`) — label of the "add item" row shown while typing.
+- `compareWith` (`(a, b) => boolean | undefined`, default `undefined`) — custom item/value equality (e.g. objects compared by id); when omitted, the engine's built-in comparison (including `bindValue` matching) applies.
+
+### Segmented
+
+```html
+<hub-segmented formControlName="view" label="View" [options]="viewOptions" />
+```
+
+A projected `hubSegmentedOption` template replaces each segment's content (icons, badges, rich markup) while the component keeps owning selection, keyboard navigation and ARIA. Context: the option (implicit), `selected` and `index`:
+
+```html
+<hub-segmented formControlName="view" label="View" [options]="viewOptions">
+	<ng-template hubSegmentedOption let-option let-selected="selected" let-index="index">
+		<hub-icon [name]="option.value" />
+		{{ option.label }}
+	</ng-template>
+</hub-segmented>
+```
+
+> Import `HubSegmentedOptionDirective` from `ng-hub-ui-forms`; the context is typed as `HubSegmentedOptionContext`.
 
 ### Datepicker
 
@@ -438,6 +483,7 @@ import { HubSignalFieldControl, hubSignalErrorMessages } from 'ng-hub-ui-forms/s
 ## ♿ Accessibility
 
 - Labels are associated with their control (`for`/`id`); required fields are marked.
+- `required` — set inline or derived from `Validators.required`, with `formControlName` **or** a direct `[formControl]` binding — is reflected as `aria-required` on every field, including the select's combobox search input, the segmented `radiogroup` and each OTP cell.
 - Validation errors render in an `role="alert"` region tied to the field.
 - The select exposes correct combobox/listbox semantics; the datepicker is fully keyboard-navigable.
 

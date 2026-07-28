@@ -6,11 +6,13 @@ import {
 	computed,
 	contentChild,
 	input,
+	numberAttribute,
 	output,
 	signal,
 	TemplateRef,
 	ViewEncapsulation
 } from '@angular/core';
+import { Subject } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { FormTextType, FormTextTypes, HubLabelType, HubLabelTypes } from '../interfaces/common.interface';
 import { HubSelectFormat, HubSelectFormats } from '../interfaces/select.interface';
@@ -163,6 +165,32 @@ export class HubSelectComponent extends HubFieldControl {
 	 */
 	readonly appendTo = input<string | undefined>('body');
 
+	/**
+	 * Allows creating new items from the search term (dropdown format). `true`
+	 * adds the term as-is; a function maps the term to a new item (sync or
+	 * `Promise`).
+	 */
+	readonly addTag = input<boolean | ((term: string) => any | Promise<any>)>(false);
+
+	/** Label of the "add item" row shown while typing when `addTag` is enabled. */
+	readonly addTagText = input<string>('Add item');
+
+	/** Minimum search-term length before filtering (or `typeahead`) kicks in. */
+	readonly minTermLength = input(0, { transform: numberAttribute });
+
+	/**
+	 * Subject that receives search-term changes for async/server-side loading
+	 * (dropdown format). When provided, the control stops filtering client-side
+	 * and pushes each term here; feed the results back through `items`.
+	 */
+	readonly typeahead = input<Subject<string> | undefined>(undefined);
+
+	/**
+	 * Custom equality between an item and the bound value (e.g. objects compared
+	 * by id). When omitted, the vendor's built-in comparison applies.
+	 */
+	readonly compareWith = input<((a: any, b: any) => boolean) | undefined>(undefined);
+
 	/** Helper text shown below the control. */
 	readonly formText = input<string>('');
 
@@ -171,6 +199,15 @@ export class HubSelectComponent extends HubFieldControl {
 
 	/** Extra CSS classes applied to the host element. */
 	readonly classlist = input<string>('');
+
+	/** ARIA attributes forwarded to the vendor's combobox search input. */
+	protected readonly a11yInputAttrs = computed<Record<string, string>>(() => {
+		const attrs: Record<string, string> = {};
+		if (this.required()) {
+			attrs['aria-required'] = 'true';
+		}
+		return attrs;
+	});
 
 	/** Emits whenever the value changes. */
 	readonly valueChange = output<any>();

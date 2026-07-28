@@ -5,6 +5,7 @@ import {
 	ChangeDetectionStrategy,
 	Component,
 	computed,
+	contentChild,
 	DestroyRef,
 	ElementRef,
 	inject,
@@ -17,6 +18,7 @@ import {
 } from '@angular/core';
 import { isPlatformBrowser, KeyValuePipe, NgTemplateOutlet } from '@angular/common';
 import { HubLabelType, HubLabelTypes } from '../../interfaces/common.interface';
+import { HubSegmentedOptionDirective } from '../../directives/segmented-option.directive';
 import { HubFieldControl } from '../../shared/hub-field-control';
 import { resolveHubAccent } from '../../shared/resolve-hub-accent';
 
@@ -73,6 +75,9 @@ export class HubSegmentedComponent extends HubFieldControl {
 
 	/** The selectable options, in render order. */
 	readonly options = input<HubSegmentedOption[]>([]);
+
+	/** Optional `hubSegmentedOption` template replacing each option's content. */
+	protected readonly optionTpt = contentChild(HubSegmentedOptionDirective);
 
 	/** Visual density. */
 	readonly size = input<HubSegmentedSize>('md');

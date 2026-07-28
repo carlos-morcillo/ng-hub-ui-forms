@@ -109,6 +109,39 @@ describe('HubFormControl', () => {
         });
     });
 
+    describe('direct [formControl] binding', () => {
+        @Component({
+            standalone: true,
+            imports: [TestFormControlComponent, ReactiveFormsModule],
+            template: `<hub-test-form-control [formControl]="control"></hub-test-form-control>`
+        })
+        class Host {
+            readonly control = new FormControl('', Validators.required);
+        }
+
+        it('derives `required` from the validators without a formControlName', () => {
+            TestBed.configureTestingModule({ imports: [Host] });
+            const fixture = TestBed.createComponent(Host);
+            fixture.detectChanges();
+            const cmp = fixture.debugElement.query(By.directive(TestFormControlComponent)).componentInstance;
+
+            expect(cmp.required()).toBe(true);
+        });
+
+        it('keeps tracking validator changes on the directly bound control', () => {
+            TestBed.configureTestingModule({ imports: [Host] });
+            const fixture = TestBed.createComponent(Host);
+            fixture.detectChanges();
+            const cmp = fixture.debugElement.query(By.directive(TestFormControlComponent)).componentInstance;
+
+            fixture.componentInstance.control.clearValidators();
+            fixture.componentInstance.control.updateValueAndValidity();
+            fixture.detectChanges();
+
+            expect(cmp.required()).toBe(false);
+        });
+    });
+
     describe('missing control name', () => {
         @Component({
             standalone: true,

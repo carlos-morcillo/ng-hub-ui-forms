@@ -1,5 +1,12 @@
 import { AfterContentInit, Directive, input, model, OnDestroy, OnInit } from '@angular/core';
-import { ControlContainer, FormControlStatus, NgControl, Validators } from '@angular/forms';
+import {
+	ControlContainer,
+	FormControlDirective,
+	FormControlName,
+	FormControlStatus,
+	NgControl,
+	Validators
+} from '@angular/forms';
 import { Subject, takeUntil, tap } from 'rxjs';
 import { isDefined } from '../utils/utils';
 
@@ -73,7 +80,13 @@ export abstract class HubFormControl implements OnInit, AfterContentInit, OnDest
 			throw new Error(`Can't find form control with name ${formControlName}`);
 		}
 
-		if (this._control?.control && formControlName) {
+		// Derive `required` from the reactive control's validators for BOTH reactive
+		// bindings (`formControlName` and `[formControl]`); template-driven bindings
+		// (ngModel) keep honoring the inline `required` input instead.
+		const isReactiveBinding =
+			this._control instanceof FormControlName || this._control instanceof FormControlDirective;
+
+		if (this._control?.control && isReactiveBinding) {
 			const control = this._control.control;
 
 			if (isDefined(this.required())) {

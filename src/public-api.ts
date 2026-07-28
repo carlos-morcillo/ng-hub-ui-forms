@@ -59,6 +59,8 @@ export { HubFileIconDirective } from './lib/directives/file-icon.directive';
 export type { HubFileIconContext } from './lib/directives/file-icon.directive';
 export { HubFilePreviewDirective } from './lib/directives/file-preview.directive';
 export type { HubFilePreviewContext } from './lib/directives/file-preview.directive';
+export { HubSegmentedOptionDirective } from './lib/directives/segmented-option.directive';
+export type { HubSegmentedOptionContext } from './lib/directives/segmented-option.directive';
 export { HubFileDropzoneNoticeDirective } from './lib/directives/file-dropzone-notice.directive';
 
 // Pipes

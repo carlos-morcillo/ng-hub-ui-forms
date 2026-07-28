@@ -27,6 +27,7 @@
 			[attr.data-variant]="color() || null"
 			[style.--hub-segmented-accent]="accentVar()"
 			[attr.role]="multiple() ? 'group' : 'radiogroup'"
+			[attr.aria-required]="multiple() ? null : required() ? 'true' : null"
 			[attr.aria-disabled]="disabled() ? 'true' : null"
 			(keydown)="onKeydown($event)"
 		>
@@ -47,7 +48,14 @@
 					[tabindex]="rovingIndex() === index ? 0 : -1"
 					(click)="select(option)"
 				>
-					{{ option.label }}
+					@if (optionTpt(); as tpt) {
+						<ng-container
+							[ngTemplateOutlet]="tpt.template"
+							[ngTemplateOutletContext]="{ $implicit: option, selected: isSelected(option), index }"
+						></ng-container>
+					} @else {
+						{{ option.label }}
+					}
 				</button>
 			}
 		</div>

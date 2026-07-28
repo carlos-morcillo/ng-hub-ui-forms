@@ -2,6 +2,8 @@ import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { HubSegmentedComponent, HubSegmentedOption } from './segmented.component';
+import { HubSegmentedOptionDirective } from '../../directives/segmented-option.directive';
+import { Validators } from '@angular/forms';
 
 /**
  * Inline host that binds a reactive {@link FormControl} to a single-select `<hub-segmented>` so the
@@ -41,7 +43,52 @@ class MultipleSegmentedHostComponent {
 	]);
 }
 
+/**
+ * Inline host projecting a `hubSegmentedOption` template so the custom option rendering
+ * path (template + context) can be asserted, with a required reactive control for ARIA.
+ */
+@Component({
+	standalone: true,
+	imports: [HubSegmentedComponent, HubSegmentedOptionDirective, ReactiveFormsModule],
+	template: `
+		<hub-segmented [formControl]="ctrl" [options]="options()">
+			<ng-template hubSegmentedOption let-option let-selected="selected" let-index="index">
+				<em class="custom-option">{{ index }}:{{ option.label }}{{ selected ? '*' : '' }}</em>
+			</ng-template>
+		</hub-segmented>
+	`
+})
+class TemplateSegmentedHostComponent {
+	ctrl = new FormControl<unknown>('list', Validators.required);
+	options = signal<HubSegmentedOption[]>([
+		{ value: 'list', label: 'List' },
+		{ value: 'grid', label: 'Grid' }
+	]);
+}
+
 describe('HubSegmentedComponent', () => {
+	describe('option template + required ARIA', () => {
+		let fixture: ComponentFixture<TemplateSegmentedHostComponent>;
+
+		beforeEach(async () => {
+			await TestBed.configureTestingModule({ imports: [TemplateSegmentedHostComponent] }).compileComponents();
+			fixture = TestBed.createComponent(TemplateSegmentedHostComponent);
+			fixture.detectChanges();
+		});
+
+		it('renders each option through the projected hubSegmentedOption template', () => {
+			const custom: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll('.custom-option');
+			expect(custom.length).toBe(2);
+			expect(custom[0].textContent).toBe('0:List*');
+			expect(custom[1].textContent).toBe('1:Grid');
+		});
+
+		it('reflects the required validator as aria-required on the radiogroup', () => {
+			const bar: HTMLElement = fixture.nativeElement.querySelector('[role="radiogroup"]');
+			expect(bar.getAttribute('aria-required')).toBe('true');
+		});
+	});
+
 	describe('single mode', () => {
 		let fixture: ComponentFixture<SegmentedHostComponent>;
 		let host: SegmentedHostComponent;
