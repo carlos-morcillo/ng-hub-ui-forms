@@ -5,6 +5,18 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.9.0] - 2026-07-27
+
+### Added
+
+- **`hub-select` async/tagging passthrough (dropdown format).** New inputs forwarded to the vendored ng-select: `addTag` (create items from the search term — `true` or a mapping function, sync or `Promise`), `addTagText`, `minTermLength`, `typeahead` (a `Subject<string>` receiving term changes for server-side loading — the already-documented companion of the `onSearch` output) and `compareWith` (custom item/value equality, applied only when provided so the vendor's default comparison — including `bindValue` matching — stays intact otherwise).
+- **`hubSegmentedOption` template.** `<hub-segmented>` accepts a projected `<ng-template hubSegmentedOption let-option let-selected="selected" let-index="index">` that replaces each segment's content (icons, badges, rich markup) while the component keeps owning selection, keyboard navigation and ARIA. Exported as `HubSegmentedOptionDirective` + `HubSegmentedOptionContext` (typed via `ngTemplateContextGuard`).
+
+### Fixed
+
+- **`required` is reflected to assistive technology on every field.** `hub-select` forwards `aria-required` to the vendor's combobox search input (via `inputAttrs`), `hub-segmented` sets it on the `radiogroup` surface (single mode) and `hub-otp` on each cell. Previously only the native-control fields (`input`, `textarea`, `datepicker`, `slider`) and `file-input` conveyed it.
+- **`required` derivation now also works with `[formControl]`.** The validator introspection in `HubFormControl` only ran when a `formControlName` string was present, so directly-bound `[formControl]` fields never derived `required` from `Validators.required`. It now runs for both reactive binding styles; template-driven `ngModel` bindings keep honoring the inline `required` input.
+
 ## [22.8.0] - 2026-07-09
 
 ### Added
