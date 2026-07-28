@@ -1,6 +1,6 @@
 {
   "name": "ng-hub-ui-forms",
-  "version": "22.9.0",
+  "version": "22.10.0",
   "license": "MIT",
   "description": "Accessible, signal-based form fields for Angular (input, textarea, slider, segmented, select, datepicker, file input with drag & drop and upload progress) with automatic error display for controls, FormGroups and FormArrays. Reactive Forms today, Signal Forms ready. Part of the ng-hub-ui family.",
   "author": "Carlos Morcillo <carlos.morcillo@me.com> (https://www.carlosmorcillo.com)",
@@ -37,7 +37,8 @@
     "@angular/common": ">=21.0.0",
     "@angular/core": ">=21.0.0",
     "@angular/forms": ">=21.0.0",
-    "@angular/platform-browser": ">=21.0.0"
+    "@angular/platform-browser": ">=21.0.0",
+    "ng-hub-ui-utils": ">=22.7.0"
   },
   "dependencies": {
     "tslib": "^2.3.0"
