@@ -182,6 +182,10 @@ export class HubSelectComponent extends HubFieldControl {
 	 * Subject that receives search-term changes for async/server-side loading
 	 * (dropdown format). When provided, the control stops filtering client-side
 	 * and pushes each term here; feed the results back through `items`.
+	 *
+	 * Note: the vendor also pushes `null` through the Subject when it clears the
+	 * search box (e.g. right after a selection) — filter it out if you only
+	 * expect strings.
 	 */
 	readonly typeahead = input<Subject<string> | undefined>(undefined);
 
