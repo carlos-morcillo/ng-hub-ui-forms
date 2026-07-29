@@ -104,9 +104,23 @@ hub-select.hidden-control {
 		}
 	}
 
-	// Arrow + clear.
+	// Arrow + clear. The vendored engine ships the caret as a 0×0 span (the
+	// border-triangle technique) and carries NO geometry — the full declaration
+	// (border-style + widths + colour) must live here or nothing renders.
+	.ng-arrow-wrapper {
+		padding-inline: var(--hub-select-arrow-gap);
+	}
+
 	.ng-arrow-wrapper .ng-arrow {
+		border-style: solid;
+		border-width: var(--hub-select-arrow-size) var(--hub-select-arrow-size) calc(var(--hub-select-arrow-size) / 2);
 		border-color: var(--hub-select-arrow-color) transparent transparent;
+	}
+
+	// Open panel — flip to an upward triangle (top edge collapsed, bottom painted).
+	&.ng-select-opened .ng-arrow-wrapper .ng-arrow {
+		border-width: 0 var(--hub-select-arrow-size) var(--hub-select-arrow-size);
+		border-color: transparent transparent var(--hub-select-arrow-color);
 	}
 
 	.ng-clear-wrapper {

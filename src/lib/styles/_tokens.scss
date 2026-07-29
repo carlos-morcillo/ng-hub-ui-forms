@@ -272,6 +272,11 @@
 	--hub-select-padding-x: var(--hub-input-padding-x);
 	--hub-select-min-height: 2.5rem;
 	--hub-select-arrow-color: var(--hub-sys-text-muted, #6c757d);
+	// Caret geometry — the border of the CSS triangle and the wrapper's inline
+	// padding (clearance from the value and from the field edge). Tune both to
+	// follow a denser field scale (`--hub-select-font-size` / `-min-height`).
+	--hub-select-arrow-size: 5px;
+	--hub-select-arrow-gap: var(--hub-ref-space-2, 0.5rem);
 	--hub-select-clear-color: var(--hub-sys-text-muted, #6c757d);
 	--hub-select-clear-hover-color: var(--hub-sys-color-danger, #dc3545);
 	--hub-select-option-color: var(--hub-sys-text-primary, #212529);

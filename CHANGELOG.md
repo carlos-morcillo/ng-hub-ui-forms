@@ -5,6 +5,16 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.11.0] - 2026-07-29
+
+### Fixed
+
+- **The select caret never rendered** (upstream report). The vendored ng-select engine ships `.ng-arrow` as a 0×0 span — the CSS border-triangle technique — and the hub theme only published `border-color`: a colour on a borderless box, i.e. no caret at all, in every consuming app. The theme now publishes the full declaration (`border-style: solid` + token-driven `border-width`), gives the wrapper inline clearance so the triangle doesn't touch the value, and flips the triangle upwards while the panel is open (`.ng-select-opened`), which it had never signalled. Regression spec added asserting the complete closed AND open declarations — a colour-only assertion would have stayed green through this bug.
+
+### Added
+
+- **`--hub-select-arrow-size`** (default `5px`) — the border of the caret triangle — and **`--hub-select-arrow-gap`** (default `var(--hub-ref-space-2, 0.5rem)`) — the wrapper's inline clearance. Dense contexts that already tune `--hub-select-font-size` / `--hub-select-padding-x` / `--hub-select-min-height` can now scale the caret with the same axis.
+
 ## [22.10.0] - 2026-07-28
 
 ### Changed
