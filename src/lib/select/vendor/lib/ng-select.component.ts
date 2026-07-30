@@ -24,6 +24,7 @@ import {
 	OnChanges,
 	OnInit,
 	output,
+	Renderer2,
 	signal,
 	SimpleChanges,
 	TemplateRef,
@@ -97,7 +98,6 @@ function optionalBooleanAttribute(value: unknown): boolean | undefined {
 		'[class.ng-select-taggable]': 'addTag()',
 		'[class.ng-select-searchable]': 'searchable()',
 		'[class.ng-select-clearable]': 'clearable()',
-		'[class.ng-select-opened]': 'isOpen()',
 		'[class.ng-select-filtered]': 'filtered',
 		'[class.ng-select-disabled]': 'disabled()',
 	},
@@ -367,14 +367,36 @@ export class NgSelectComponent implements OnChanges, OnInit, AfterViewInit, Cont
 		return term && term.length >= this.minTermLength();
 	});
 
+	/** Adds/removes `ng-select-opened` on the host — assigned in the constructor. */
+	private _reflectOpenState!: (open: boolean) => void;
+
 	constructor() {
 		const config = this.config;
 		const newSelectionModel = inject<SelectionModelFactory | undefined>(SELECTION_MODEL_FACTORY, { optional: true });
 		const _elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
+		const _renderer = inject(Renderer2);
 
 		this._mergeGlobalConfig(config);
 		this.itemsList = new ItemsList(this, newSelectionModel ? newSelectionModel() : DefaultSelectionModelFactory());
 		this.element = _elementRef.nativeElement;
+
+		// Reflect the open state imperatively — the same mechanism the dropdown
+		// panel uses for `ng-select-bottom/top`. As a `host` binding this class
+		// only applied when the PARENT view happened to be refreshed: open()
+		// ends in a LOCAL `_cd.detectChanges()`, which updates the own template
+		// (panel, aria-expanded) but neither applies host bindings nor flushes
+		// effects — so themes keyed on `.ng-select-opened` (the caret flip)
+		// never engaged until some unrelated global tick. open()/close() call
+		// `_reflectOpenState` synchronously; this effect covers the remaining
+		// signal writes (`[isOpen]` input–driven manual mode).
+		this._reflectOpenState = (open: boolean) => {
+			if (open) {
+				_renderer.addClass(this.element, 'ng-select-opened');
+			} else {
+				_renderer.removeClass(this.element, 'ng-select-opened');
+			}
+		};
+		effect(() => this._reflectOpenState(this.isOpen() ?? false));
 	}
 
 	get filtered() {
@@ -629,6 +651,7 @@ export class NgSelectComponent implements OnChanges, OnInit, AfterViewInit, Cont
 			return;
 		}
 		this.isOpen.set(true);
+		this._reflectOpenState(true);
 		this.itemsList.markSelectedOrDefault(this.markFirst());
 		this.openEvent.emit();
 		if (!this.searchTerm) {
@@ -642,6 +665,7 @@ export class NgSelectComponent implements OnChanges, OnInit, AfterViewInit, Cont
 			return;
 		}
 		this.isOpen.set(false);
+		this._reflectOpenState(false);
 		this._isComposing = false;
 		if (!this._editableSearchTermActive()) {
 			this._clearSearch();

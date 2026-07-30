@@ -5,6 +5,12 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.11.1] - 2026-07-30
+
+### Fixed
+
+- **`ng-select-opened` never reached the host in apps without a global tick** (upstream report), so the 22.11.0 caret flip — keyed on that class — did not engage: the panel opened (`aria-expanded`, `.ng-dropdown-panel`, the imperative `ng-select-bottom`) while the caret kept pointing down. Root cause: the class was a `host` binding, and host bindings apply during the PARENT view's refresh — but `open()` ends in a local `_cd.detectChanges()` that only updates the component's own template, so in zoneless apps (or OnPush islands) the class waited for an unrelated global tick that never came. The class is now reflected imperatively — synchronously from `open()`/`close()` plus an `effect` for `[isOpen]`-driven writes — the same renderer mechanism as the panel's `ng-select-bottom`, which no parent refresh can starve. Regression spec toggles the select in BOTH zone-based and zoneless TestBeds with no manual `detectChanges()` (the manual tick is exactly what masked the bug) and asserts the class tracks open and close.
+
 ## [22.11.0] - 2026-07-29
 
 ### Fixed
