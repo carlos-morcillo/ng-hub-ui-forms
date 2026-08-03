@@ -3,6 +3,6 @@
 
 repo=https://github.com/ng-select/ng-select.git
 subdir=src/ng-select
-tag=v23.0.1
-commit=6bbdbade47b8251611a44d9872321242ffd60257
-vendored_at=2026-06-13
+tag=v23.5.1
+commit=5dad3261cfa3af0ea6b77cea8fa717dec784421b
+vendored_at=2026-08-03
