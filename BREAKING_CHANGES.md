@@ -2,6 +2,25 @@
 
 This document tracks all breaking changes in the `ng-hub-ui-forms` library.
 
+## Version 22.12.0
+
+### The public `showPassword` field of `<hub-input>` is removed
+
+- **Change**: the `showPassword` class field is gone. It never worked — `resolvedType` is a `computed()` and a plain field mutation never re-evaluated it, so the native `type` never flipped. The reveal state is now the `passwordRevealed` two-way model.
+- **Impact**: only code that read or wrote `showPassword` directly on the component instance. Template usage of the toggle button keeps working (and now actually reveals the value).
+- **Migration**: bind the model instead.
+
+```html
+<!-- Before (never actually worked) -->
+<hub-input #field type="password" />
+<!-- field.showPassword = true -->
+
+<!-- After -->
+<hub-input type="password" [(passwordRevealed)]="revealed" />
+```
+
+- **Also note**: readonly password fields no longer render `type="text"`. The value stays masked; an explicit toggle click can still reveal it.
+
 ## Version 22.6.0
 
 ### `<hub-input type="file">` is deprecated (removal scheduled for the next major)
