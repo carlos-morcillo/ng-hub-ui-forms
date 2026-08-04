@@ -83,8 +83,8 @@ export { hubMinFiles } from './lib/validators/min-files.validator';
 // Interfaces & types
 export type { FormTextType, HubLabelType } from './lib/interfaces/common.interface';
 export { FormTextTypes, HubLabelTypes } from './lib/interfaces/common.interface';
-export type { HubInputFormat } from './lib/interfaces/input.interface';
-export { HubInputFormats } from './lib/interfaces/input.interface';
+export type { HubInputFormat, HubPasswordLabels, HubPasswordStrengthScore } from './lib/interfaces/input.interface';
+export { HubInputFormats, defaultHubPasswordLabels } from './lib/interfaces/input.interface';
 export type { HubSelectFormat } from './lib/interfaces/select.interface';
 export { HubSelectFormats } from './lib/interfaces/select.interface';
 export type { HubDatepickerMode, HubDateRange, HubDateValue, HubDatepickerLabels, HubDatepickerConfig } from './lib/interfaces/datepicker.interface';
@@ -122,6 +122,7 @@ export {
 } from './lib/utils/utils';
 export { applyMask, isMaskActive } from './lib/utils/mask';
 export type { HubMaskResult } from './lib/utils/mask';
+export { scorePasswordStrength } from './lib/utils/password-strength';
 
 // Integrations — agnostic adapter for hosting form controls in other libraries
 export { hubFormControlAdapter } from './lib/integrations/form-control-adapter';

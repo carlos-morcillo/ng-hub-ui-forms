@@ -82,6 +82,17 @@
 	--hub-input-clear-color: var(--hub-sys-text-muted, #6c757d);
 	--hub-input-clear-hover-color: var(--hub-sys-color-danger, #dc3545);
 
+	// Input · password format (reveal toggle, Caps Lock hint, strength meter)
+	--hub-input-password-toggle-width: 2.5rem;
+	--hub-input-capslock-color: var(--hub-sys-color-warning, #997404);
+	--hub-input-strength-height: 0.25rem;
+	--hub-input-strength-gap: 0.25rem;
+	--hub-input-strength-track: var(--hub-input-border-color);
+	--hub-input-strength-1: var(--hub-sys-color-danger, #dc3545);
+	--hub-input-strength-2: var(--hub-sys-color-warning, #ffc107);
+	--hub-input-strength-3: var(--hub-sys-color-info, #0dcaf0);
+	--hub-input-strength-4: var(--hub-sys-color-success, #198754);
+
 	// Input · counter format (−/+)
 	--hub-input-counter-button-bg: var(--hub-sys-surface-elevated, #f8f9fa);
 	--hub-input-counter-button-color: var(--hub-sys-text-primary, #212529);

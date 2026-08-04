@@ -19,12 +19,14 @@ import {
 } from '@angular/core';
 import { FormsModule, Validators } from '@angular/forms';
 import { FormTextType, FormTextTypes, HubLabelType, HubLabelTypes } from '../../interfaces/common.interface';
-import { HubInputFormat, HubInputFormats } from '../../interfaces/input.interface';
+import { HubInputFormat, HubInputFormats, HubPasswordStrengthScore } from '../../interfaces/input.interface';
 import { HubInputPrefixDirective } from '../../directives/input-prefix.directive';
 import { HubInputSuffixDirective } from '../../directives/input-suffix.directive';
 import { HubFieldControl } from '../../shared/hub-field-control';
 import { controlHasMinOrMaxValidator, isDefined } from '../../utils/utils';
 import { applyMask, isMaskActive } from '../../utils/mask';
+import { scorePasswordStrength } from '../../utils/password-strength';
+import { HUB_FORMS_CONFIG } from '../../services/forms-config';
 
 /** Value held by a `<hub-input>` across its supported formats. */
 type HubInputValue = number | string | boolean | File | FileList | null;
@@ -71,8 +73,71 @@ export class HubInputComponent extends HubFieldControl {
 	protected readonly _formTextTypes = FormTextTypes;
 	protected readonly _value = signal<HubInputValue>('');
 
-	/** Whether the password value is currently revealed (password format only). */
-	showPassword = false;
+	/**
+	 * Whether the password value is currently revealed (password format only). Two-way
+	 * bindable, so the reveal state can be driven or observed from outside.
+	 */
+	readonly passwordRevealed = model(false);
+
+	/** Resolved password labels from the global forms config. */
+	protected readonly _passwordLabels = inject(HUB_FORMS_CONFIG).password;
+
+	/** Whether the reveal toggle button is rendered (password format only). */
+	readonly passwordToggle = input(true, { transform: booleanAttribute });
+
+	/** Whether the integrated reveal toggle should render right now. */
+	protected readonly showsPasswordToggle = computed<boolean>(
+		() => this.type() === this._inputFormats.Password && this.passwordToggle()
+	);
+
+	/** Whether a revealed password re-masks when focus leaves the field. */
+	readonly hideOnBlur = input(true, { transform: booleanAttribute });
+
+	/** Whether the Caps Lock hint renders while Caps Lock is active (password format only). */
+	readonly capsLockWarning = input(true, { transform: booleanAttribute });
+
+	/** Whether Caps Lock is currently detected as active on the focused password field. */
+	protected readonly capsLockOn = signal(false);
+
+	/** Whether the Caps Lock hint should render right now. */
+	protected readonly showsCapsLock = computed<boolean>(
+		() => this.capsLockOn() && this.capsLockWarning() && this.type() === this._inputFormats.Password
+	);
+
+	/** Whether the opt-in strength meter renders under the field (password format only). */
+	readonly passwordStrength = input(false, { transform: booleanAttribute });
+
+	/**
+	 * Current strength score of the typed value. Clamped to `[0, 4]` here — at the source —
+	 * so a misconfigured custom `strengthFn` returning an out-of-range number (e.g. `5` or
+	 * `-1`) cannot corrupt the label lookup or the template's segment/`data-level` rendering.
+	 */
+	protected readonly strengthScore = computed<HubPasswordStrengthScore>(() => {
+		const value = this._value();
+
+		if (typeof value !== 'string' || !value) {
+			return 0;
+		}
+
+		const raw = (this._passwordLabels.strengthFn ?? scorePasswordStrength)(value);
+		return Math.min(Math.max(raw, 0), 4) as HubPasswordStrengthScore;
+	});
+
+	/** Whether the strength meter should render right now. */
+	protected readonly showsStrength = computed<boolean>(() => {
+		const value = this._value();
+		return (
+			this.passwordStrength() && this.type() === this._inputFormats.Password && typeof value === 'string' && value !== ''
+		);
+	});
+
+	/** Level name for the current score; a non-empty value never drops below the weakest label. */
+	protected readonly strengthLabel = computed<string>(
+		() => this._passwordLabels.strengthLabels[Math.max(this.strengthScore(), 1) - 1]
+	);
+
+	/** Segment indexes of the strength bar. */
+	protected readonly _strengthSegments = [1, 2, 3, 4] as const;
 
 	/** Native input type. */
 	readonly type = input<HubInputFormat>(this._inputFormats.Text);
@@ -85,6 +150,9 @@ export class HubInputComponent extends HubFieldControl {
 
 	/** Placeholder text. */
 	readonly placeholder = model<string>('');
+
+	/** Native `autocomplete` attribute (text-like formats), e.g. `current-password` or `new-password`. */
+	readonly autocomplete = input<string>('');
 
 	/** Minimum value (numeric / counter inputs). */
 	readonly min = model<number | undefined>(undefined);
@@ -245,12 +313,14 @@ export class HubInputComponent extends HubFieldControl {
 
 	/** Resolves the actual native `type` attribute, accounting for password reveal. */
 	protected readonly resolvedType = computed<string>(() => {
-		if (this.readonly()) {
-			return this._inputFormats.Text;
+		// Readonly must not auto-expose the secret by falling through to type="text"; an
+		// explicit toggle click may still reveal it.
+		if (this.type() === this._inputFormats.Password) {
+			return this.passwordRevealed() ? 'text' : 'password';
 		}
 
-		if (this.type() === this._inputFormats.Password) {
-			return this.showPassword ? 'text' : 'password';
+		if (this.readonly()) {
+			return this._inputFormats.Text;
 		}
 
 		if (this.type() === this._inputFormats.Counter) {
@@ -371,7 +441,42 @@ export class HubInputComponent extends HubFieldControl {
 	/** Toggles password visibility. */
 	protected togglePassword(): void {
 		if (!this.disabled()) {
-			this.showPassword = !this.showPassword;
+			this.passwordRevealed.update((revealed) => !revealed);
+		}
+	}
+
+	/**
+	 * Tracks the Caps Lock modifier from key events. `getModifierState` is the only reliable
+	 * signal — there is no global Caps Lock state exposed to the page.
+	 */
+	protected updateCapsLock(event: KeyboardEvent): void {
+		if (this.type() !== this._inputFormats.Password || !this.capsLockWarning()) {
+			return;
+		}
+
+		this.capsLockOn.set(event.getModifierState?.('CapsLock') ?? false);
+	}
+
+	/**
+	 * Re-masks the password when focus leaves the whole group. `focusout` fires when focus moves
+	 * onto the toggle too, so the handler ignores transitions that stay inside the group —
+	 * otherwise clicking "hide" would re-mask on blur and immediately re-reveal on click.
+	 */
+	protected handleGroupFocusOut(event: FocusEvent): void {
+		if (this.type() !== this._inputFormats.Password) {
+			return;
+		}
+
+		const group = event.currentTarget as HTMLElement;
+
+		if (group.contains(event.relatedTarget as Node | null)) {
+			return;
+		}
+
+		this.capsLockOn.set(false);
+
+		if (this.hideOnBlur() && this.passwordRevealed()) {
+			this.passwordRevealed.set(false);
 		}
 	}
 

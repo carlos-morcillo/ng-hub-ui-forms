@@ -5,6 +5,30 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.12.0] - 2026-08-04
+
+### Fixed
+
+- **The password reveal toggle never worked**: `resolvedType` is a `computed()` but the reveal flag was a plain class field, so toggling never re-evaluated the native `type`. The state is now the `passwordRevealed` two-way model and the toggle flips `password`/`text` as expected.
+- **Readonly password fields no longer expose the secret**: `readonly` used to force `type="text"`, printing the password in clear. Password fields now stay masked when readonly (an explicit toggle click may still reveal); other formats keep the readonly → text behaviour.
+- The reveal toggle's border now follows the field's invalid/valid state instead of staying neutral.
+
+### Added
+
+- The reveal toggle renders inside the input group as an integrated trailing addon (visually attached to the field), instead of a detached button.
+- `passwordRevealed` two-way model — control or observe the reveal state from outside.
+- `passwordToggle` input (default `true`) — set to `false` to hide the toggle.
+- `hideOnBlur` input (default `true`) — a revealed password re-masks when focus leaves the field.
+- `capsLockWarning` input (default `true`) — hint under the field while Caps Lock is active.
+- `passwordStrength` input (default `false`) — opt-in 4-segment strength meter with a default heuristic (`scorePasswordStrength`, exported) and a global `strengthFn` override (called synchronously per keystroke; result clamped to 0–4).
+- `autocomplete` input for text-like formats (`current-password`, `new-password`, …).
+- `password` section in `HubFormsConfig` (`HubPasswordLabels`): toggle accessible names, Caps Lock hint, strength level labels and the optional `strengthFn` — all localizable via `provideHubForms`.
+- New CSS tokens: `--hub-input-password-toggle-width`, `--hub-input-capslock-color`, `--hub-input-strength-{height,gap,track,1,2,3,4}`.
+
+### Removed
+
+- The broken public `showPassword` field. Migrate to the `passwordRevealed` model (`[(passwordRevealed)]`).
+
 ## [22.11.1] - 2026-07-30
 
 ### Fixed

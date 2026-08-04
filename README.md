@@ -183,6 +183,42 @@ Project a leading / trailing icon **inside** the field, emit a debounced term on
 - Affixes use logical CSS properties, so `start`/`end` follow the writing direction and **flip automatically under `dir="rtl"`**.
 - `(search)` fires `debounceTime` ms after typing stops (`0` = every keystroke); identical consecutive terms are skipped, and `valueChange` stays synchronous.
 
+#### Password fields
+
+`type="password"` renders a masked field with an integrated reveal toggle inside the input group (a trailing addon, not a detached button):
+
+```html
+<hub-input
+	formControlName="password"
+	type="password"
+	label="Password"
+	autocomplete="new-password"
+	passwordStrength
+/>
+```
+
+- `[(passwordRevealed)]` — two-way model for the reveal state; drive it externally or read it.
+- `passwordToggle` (default `true`) — set to `false` to hide the integrated toggle button.
+- `hideOnBlur` (default `true`) — a revealed password re-masks automatically once focus leaves the field.
+- `capsLockWarning` (default `true`) — shows a hint under the field while Caps Lock is active.
+- `passwordStrength` (default `false`) — opt-in 4-segment strength meter, scored by the exported `scorePasswordStrength` heuristic (length ≥ 8, mixed case, digit, symbol) unless overridden.
+- `autocomplete` — native attribute for password managers, e.g. `current-password` / `new-password`.
+- Readonly password fields stay masked (they no longer force `type="text"`); an explicit toggle click can still reveal them.
+
+Labels and the strength scorer are localizable app-wide via `provideHubForms`:
+
+```ts
+provideHubForms({
+	password: {
+		showPasswordLabel: 'Show password',
+		hidePasswordLabel: 'Hide password',
+		capsLockWarning: 'Caps Lock is on',
+		strengthLabels: ['Weak', 'Fair', 'Good', 'Strong'],
+		strengthFn: (value) => myCustomScorer(value) // optional, 0-4
+	}
+});
+```
+
 ### Select
 
 ```html

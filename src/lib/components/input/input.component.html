@@ -130,6 +130,8 @@
 						[class.hub-input__group--floating]="labelType() === _labelTypes.Floating"
 						[class.hub-input__group--has-prefix]="hasPrefix()"
 						[class.hub-input__group--has-suffix]="hasSuffix()"
+						[class.hub-input__group--has-toggle]="showsPasswordToggle()"
+						(focusout)="handleGroupFocusOut($event)"
 					>
 						@for (addon of _prepend(); track $index) {
 							<span class="hub-input__addon hub-input__addon--prepend">{{ addon }}</span>
@@ -148,6 +150,8 @@
 							[ngModel]="_value()"
 							(ngModelChange)="setValue($event)"
 							(keyup.enter)="enter.emit(_value())"
+							(keydown)="updateCapsLock($event)"
+							(keyup)="updateCapsLock($event)"
 							[placeholder]="labelType() === _labelTypes.Floating ? (placeholder() || ' ') : placeholder()"
 							[min]="min() ?? null"
 							[max]="max() ?? null"
@@ -156,6 +160,7 @@
 							[readonly]="readonly()"
 							[required]="!!required()"
 							[attr.aria-invalid]="isInvalid"
+							[attr.autocomplete]="autocomplete() || null"
 						/>
 
 						@if (showClear()) {
@@ -169,6 +174,24 @@
 							<span class="hub-input__addon hub-input__addon--append">{{ addon }}</span>
 						}
 
+						@if (showsPasswordToggle()) {
+							<button
+								type="button"
+								class="hub-input__password-toggle"
+								[disabled]="disabled()"
+								[attr.aria-label]="
+									passwordRevealed() ? _passwordLabels.hidePasswordLabel : _passwordLabels.showPasswordLabel
+								"
+								[attr.aria-pressed]="passwordRevealed()"
+								(click)="togglePassword()"
+							>
+								<span
+									class="hub-input__password-icon"
+									[class.hub-input__password-icon--visible]="passwordRevealed()"
+								></span>
+							</button>
+						}
+
 						@if (labelType() === _labelTypes.Floating && (label() || required())) {
 							<label [for]="id" class="hub-field__label hub-input__label--floating">
 								{{ label() }}
@@ -178,21 +201,26 @@
 							</label>
 						}
 					</div>
-
-					@if (type() === _inputFormats.Password) {
-						<button
-							type="button"
-							class="hub-input__password-toggle"
-							[disabled]="disabled()"
-							[attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
-							[attr.aria-pressed]="showPassword"
-							(click)="togglePassword()"
-						>
-							<span class="hub-input__password-icon" [class.hub-input__password-icon--visible]="showPassword"></span>
-						</button>
-					}
 				}
 			}
+		</div>
+	}
+
+	@if (showsCapsLock()) {
+		<div class="hub-field__form-text hub-input__capslock" role="status">{{ _passwordLabels.capsLockWarning }}</div>
+	}
+
+	@if (showsStrength()) {
+		<div class="hub-input__strength" [attr.data-level]="strengthScore()">
+			<div class="hub-input__strength-bar" role="presentation">
+				@for (segment of _strengthSegments; track segment) {
+					<span
+						class="hub-input__strength-segment"
+						[class.hub-input__strength-segment--active]="strengthScore() >= segment"
+					></span>
+				}
+			</div>
+			<span class="hub-input__strength-label" aria-live="polite">{{ strengthLabel() }}</span>
 		</div>
 	}
 

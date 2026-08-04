@@ -1,6 +1,7 @@
 import { EnvironmentProviders, InjectionToken, makeEnvironmentProviders } from '@angular/core';
 import { defaultHubDatepickerConfig, HubDatepickerConfig } from '../interfaces/datepicker.interface';
 import { defaultHubFileInputLabels, HubFileInputLabels } from '../interfaces/file-input.interface';
+import { defaultHubPasswordLabels, HubPasswordLabels } from '../interfaces/input.interface';
 import { defaultInvalidFeedback } from '../shared/hub-error-display';
 
 /**
@@ -28,6 +29,9 @@ export interface HubFormsConfig {
 
 	/** Global file-input labels (button text, accessible names, size and rejection formatting). */
 	fileInput: HubFileInputLabels;
+
+	/** Global password labels (toggle accessible names, Caps Lock hint, strength levels). */
+	password: HubPasswordLabels;
 }
 
 /**
@@ -37,7 +41,8 @@ export const defaultHubFormsConfig: HubFormsConfig = {
 	invalidFeedbackTemplateFn: defaultInvalidFeedback,
 	showValid: false,
 	datepicker: defaultHubDatepickerConfig,
-	fileInput: defaultHubFileInputLabels
+	fileInput: defaultHubFileInputLabels,
+	password: defaultHubPasswordLabels
 };
 
 /**
@@ -80,10 +85,15 @@ export function provideHubForms(config?: DeepPartial<HubFormsConfig>): Environme
 		...(config?.fileInput as Partial<HubFileInputLabels> | undefined)
 	};
 
+	const password: HubPasswordLabels = {
+		...defaultHubFormsConfig.password,
+		...(config?.password as Partial<HubPasswordLabels> | undefined)
+	};
+
 	return makeEnvironmentProviders([
 		{
 			provide: HUB_FORMS_CONFIG,
-			useValue: { ...defaultHubFormsConfig, ...config, datepicker, fileInput } as HubFormsConfig
+			useValue: { ...defaultHubFormsConfig, ...config, datepicker, fileInput, password } as HubFormsConfig
 		}
 	]);
 }

@@ -160,6 +160,42 @@ Proyecta un icono inicial o final **dentro** del campo, emite el término con _d
 - Los afijos usan propiedades lógicas de CSS, así que `start`/`end` siguen la dirección de escritura y **se voltean solos con `dir="rtl"`**.
 - `(search)` se dispara `debounceTime` ms después de dejar de escribir (`0` = cada pulsación); los términos consecutivos idénticos se omiten y `valueChange` sigue siendo síncrono.
 
+#### Campos de contraseña
+
+`type="password"` renderiza un campo enmascarado con un botón integrado para mostrar/ocultar dentro del input-group (un addon final, no un botón suelto):
+
+```html
+<hub-input
+	formControlName="password"
+	type="password"
+	label="Password"
+	autocomplete="new-password"
+	passwordStrength
+/>
+```
+
+- `[(passwordRevealed)]` — modelo bidireccional del estado de visibilidad; contrólalo desde fuera o léelo.
+- `passwordToggle` (por defecto `true`) — ponlo a `false` para ocultar el botón integrado.
+- `hideOnBlur` (por defecto `true`) — una contraseña revelada se vuelve a ocultar automáticamente al perder el foco el campo.
+- `capsLockWarning` (por defecto `true`) — muestra un aviso bajo el campo mientras Bloq Mayús está activo.
+- `passwordStrength` (por defecto `false`) — medidor de fortaleza opcional de 4 segmentos, calculado con el heurístico exportado `scorePasswordStrength` (longitud ≥ 8, mayúsculas y minúsculas, dígito, símbolo) salvo que se sobrescriba.
+- `autocomplete` — atributo nativo para gestores de contraseñas, p. ej. `current-password` / `new-password`.
+- Los campos de contraseña en modo readonly permanecen enmascarados (ya no fuerzan `type="text"`); un clic explícito en el toggle puede seguir revelándolos.
+
+Las etiquetas y el _scorer_ de fortaleza son localizables a nivel de app mediante `provideHubForms`:
+
+```ts
+provideHubForms({
+	password: {
+		showPasswordLabel: 'Show password',
+		hidePasswordLabel: 'Hide password',
+		capsLockWarning: 'Caps Lock is on',
+		strengthLabels: ['Weak', 'Fair', 'Good', 'Strong'],
+		strengthFn: (value) => myCustomScorer(value) // opcional, 0-4
+	}
+});
+```
+
 ### Select
 
 ```html

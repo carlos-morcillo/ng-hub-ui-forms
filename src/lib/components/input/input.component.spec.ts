@@ -7,6 +7,7 @@ import { HubInputComponent } from './input.component';
 import { HubInputFormat } from '../../interfaces/input.interface';
 import { HubInputPrefixDirective } from '../../directives/input-prefix.directive';
 import { HubInputSuffixDirective } from '../../directives/input-suffix.directive';
+import { provideHubForms } from '../../services/forms-config';
 
 /**
  * Inline host that binds a reactive {@link FormControl} to `<hub-input>` so the
@@ -26,6 +27,11 @@ import { HubInputSuffixDirective } from '../../directives/input-suffix.directive
 			[max]="max"
 			[step]="step"
 			[readonly]="readonly"
+			[passwordToggle]="passwordToggle"
+			[autocomplete]="autocomplete"
+			[hideOnBlur]="hideOnBlur"
+			[capsLockWarning]="capsLockWarning"
+			[passwordStrength]="passwordStrength"
 		/>
 	`
 })
@@ -39,6 +45,11 @@ class InputHostComponent {
     max: number | undefined = undefined;
     step = 1;
     readonly = false;
+    passwordToggle = true;
+    autocomplete = '';
+    hideOnBlur = true;
+    capsLockWarning = true;
+    passwordStrength = false;
 }
 
 describe('HubInputComponent', () => {
@@ -191,19 +202,310 @@ describe('HubInputComponent', () => {
             expect(input.getAttribute('type')).toBe('password');
         });
 
-        it('flips showPassword when the toggle is clicked', () => {
-            const input = fixture.debugElement.query(By.directive(HubInputComponent)).componentInstance as HubInputComponent;
-            expect(input.showPassword).toBe(false);
+        it('reveals the value when the toggle is clicked and re-masks on a second click', () => {
+            const toggle = query('.hub-input__password-toggle') as HTMLButtonElement;
+            const control = (): string | null => (query('input.hub-field__control') as HTMLInputElement).getAttribute('type');
 
+            toggle.click();
+            fixture.detectChanges();
+            expect(control()).toBe('text');
+
+            toggle.click();
+            fixture.detectChanges();
+            expect(control()).toBe('password');
+        });
+
+        it('exposes the reveal state through the passwordRevealed model', () => {
+            const input = fixture.debugElement.query(By.directive(HubInputComponent)).componentInstance as HubInputComponent;
+
+            input.passwordRevealed.set(true);
+            fixture.detectChanges();
+
+            expect((query('input.hub-field__control') as HTMLInputElement).getAttribute('type')).toBe('text');
+        });
+
+        it('renders the toggle inside the input group as its trailing element', () => {
+            const group = query('.hub-input__group') as HTMLElement;
+
+            expect(group.querySelector('.hub-input__password-toggle')).toBeTruthy();
+            expect(group.classList.contains('hub-input__group--has-toggle')).toBe(true);
+        });
+
+        it('hides the toggle when passwordToggle is false', () => {
+            // A fresh fixture (rather than mutating the shared `host` a further time)
+            // so the `passwordToggle=false` binding lands on the very first change-detection
+            // pass after creation, alongside `type`.
+            const localFixture = TestBed.createComponent(InputHostComponent);
+            const localHost = localFixture.componentInstance;
+            localHost.type = 'password';
+            localHost.passwordToggle = false;
+            localFixture.detectChanges();
+
+            const group = localFixture.nativeElement
+                .querySelector('hub-input')
+                .querySelector('.hub-input__group') as HTMLElement;
+
+            expect(group.querySelector('.hub-input__password-toggle')).toBeNull();
+            expect(group.classList.contains('hub-input__group--has-toggle')).toBe(false);
+        });
+
+        it('takes the toggle accessible names from the global config labels', () => {
+            const toggle = query('.hub-input__password-toggle') as HTMLButtonElement;
+            expect(toggle.getAttribute('aria-label')).toBe('Show password');
+
+            toggle.click();
+            fixture.detectChanges();
+            expect(toggle.getAttribute('aria-label')).toBe('Hide password');
+        });
+
+        it('keeps a readonly password masked instead of forcing type=text', () => {
+            // Fresh fixture: `type` and `readonly` are set together before the first
+            // `detectChanges()` (same pattern as `renders the autocomplete attribute only when
+            // provided` below) so the assertion actually exercises the `resolvedType` branch
+            // order instead of silently no-op'ing on a shared-fixture propagation quirk.
+            const localFixture = TestBed.createComponent(InputHostComponent);
+            localFixture.componentInstance.type = 'password';
+            localFixture.componentInstance.readonly = true;
+            localFixture.detectChanges();
+
+            const control = localFixture.nativeElement
+                .querySelector('hub-input')
+                .querySelector('input.hub-field__control') as HTMLInputElement;
+            expect(control.getAttribute('type')).toBe('password');
+        });
+
+        it('still allows an explicit toggle click to reveal a readonly password', () => {
+            // Fresh fixture, same reasoning as the test above: `type` and `readonly` are set
+            // together before the first `detectChanges()`. Readonly only blocks the automatic
+            // fall-through to type="text" — an explicit toggle click must still be able to
+            // reveal the value.
+            const localFixture = TestBed.createComponent(InputHostComponent);
+            localFixture.componentInstance.type = 'password';
+            localFixture.componentInstance.readonly = true;
+            localFixture.detectChanges();
+
+            const root = localFixture.nativeElement.querySelector('hub-input');
+            const control = root.querySelector('input.hub-field__control') as HTMLInputElement;
+            expect(control.getAttribute('type')).toBe('password');
+
+            (root.querySelector('.hub-input__password-toggle') as HTMLButtonElement).click();
+            localFixture.detectChanges();
+
+            expect(control.getAttribute('type')).toBe('text');
+        });
+
+        it('renders the autocomplete attribute only when provided', () => {
+            // Mutating a signal input on the shared `host` a second time, then calling
+            // `detectChanges()` again in the same test, does not reliably propagate in this
+            // harness (reproducible even with a pre-existing input like `label`). As with the
+            // `hides the toggle when passwordToggle is false` test above, each side gets its
+            // own fresh fixture so `autocomplete` lands on the very first change-detection pass.
+            const withoutAutocomplete = TestBed.createComponent(InputHostComponent);
+            withoutAutocomplete.componentInstance.type = 'password';
+            withoutAutocomplete.detectChanges();
+            const controlWithoutAutocomplete = withoutAutocomplete.nativeElement
+                .querySelector('hub-input')
+                .querySelector('input.hub-field__control') as HTMLInputElement;
+            expect(controlWithoutAutocomplete.hasAttribute('autocomplete')).toBe(false);
+
+            const withAutocomplete = TestBed.createComponent(InputHostComponent);
+            withAutocomplete.componentInstance.type = 'password';
+            withAutocomplete.componentInstance.autocomplete = 'current-password';
+            withAutocomplete.detectChanges();
+            const controlWithAutocomplete = withAutocomplete.nativeElement
+                .querySelector('hub-input')
+                .querySelector('input.hub-field__control') as HTMLInputElement;
+            expect(controlWithAutocomplete.getAttribute('autocomplete')).toBe('current-password');
+        });
+
+        it('re-masks a revealed password when focus leaves the field', () => {
+            const control = query('input.hub-field__control') as HTMLInputElement;
+            (query('.hub-input__password-toggle') as HTMLButtonElement).click();
+            fixture.detectChanges();
+            expect(control.getAttribute('type')).toBe('text');
+
+            const group = query('.hub-input__group') as HTMLElement;
+            group.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: document.body }));
+            fixture.detectChanges();
+
+            expect(control.getAttribute('type')).toBe('password');
+        });
+
+        it('keeps the reveal state on blur when hideOnBlur is false', () => {
+            // Fresh fixture: `type` and `hideOnBlur` must land together on the first
+            // `detectChanges()` (see harness quirk noted above for `passwordToggle`/`readonly`).
+            const localFixture = TestBed.createComponent(InputHostComponent);
+            localFixture.componentInstance.type = 'password';
+            localFixture.componentInstance.hideOnBlur = false;
+            localFixture.detectChanges();
+
+            const localRoot = localFixture.nativeElement.querySelector('hub-input');
+            const control = localRoot.querySelector('input.hub-field__control') as HTMLInputElement;
+
+            (localRoot.querySelector('.hub-input__password-toggle') as HTMLButtonElement).click();
+            localFixture.detectChanges();
+            expect(control.getAttribute('type')).toBe('text');
+
+            const group = localRoot.querySelector('.hub-input__group') as HTMLElement;
+            group.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: document.body }));
+            localFixture.detectChanges();
+
+            expect(control.getAttribute('type')).toBe('text');
+        });
+
+        it('does not re-mask when focus moves within the field (e.g. onto the toggle)', () => {
+            const control = query('input.hub-field__control') as HTMLInputElement;
             const toggle = query('.hub-input__password-toggle') as HTMLButtonElement;
             toggle.click();
             fixture.detectChanges();
 
-            // `resolvedType()` is a computed that reads the plain `showPassword` field (not a
-            // signal), so the rendered `type` attribute does not react to the toggle and stays
-            // `password`; only the component flag flips.
-            expect(input.showPassword).toBe(true);
-            expect((query('input.hub-field__control') as HTMLInputElement).getAttribute('type')).toBe('password');
+            const group = query('.hub-input__group') as HTMLElement;
+            group.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: toggle }));
+            fixture.detectChanges();
+
+            expect(control.getAttribute('type')).toBe('text');
+        });
+
+        /** Builds a keyboard event whose CapsLock modifier reports the given state. */
+        const keyEventWithCapsLock = (type: string, on: boolean): KeyboardEvent => {
+            const event = new KeyboardEvent(type, { bubbles: true });
+            Object.defineProperty(event, 'getModifierState', { value: (key: string) => key === 'CapsLock' && on });
+            return event;
+        };
+
+        it('shows the Caps Lock hint while Caps Lock is active and hides it when released', () => {
+            const control = query('input.hub-field__control') as HTMLInputElement;
+
+            control.dispatchEvent(keyEventWithCapsLock('keydown', true));
+            fixture.detectChanges();
+            expect(query('.hub-input__capslock')?.textContent).toContain('Caps Lock is on');
+
+            control.dispatchEvent(keyEventWithCapsLock('keyup', false));
+            fixture.detectChanges();
+            expect(query('.hub-input__capslock')).toBeNull();
+        });
+
+        it('never shows the Caps Lock hint when capsLockWarning is false', () => {
+            // capsLockWarning=false needs the fresh-local-fixture pattern (set type + capsLockWarning
+            // before first detectChanges), then dispatch keydown with CapsLock on and assert the hint is absent.
+            const localFixture = TestBed.createComponent(InputHostComponent);
+            localFixture.componentInstance.type = 'password';
+            localFixture.componentInstance.capsLockWarning = false;
+            localFixture.detectChanges();
+
+            const localRoot = localFixture.nativeElement.querySelector('hub-input');
+            const control = localRoot.querySelector('input.hub-field__control') as HTMLInputElement;
+
+            control.dispatchEvent(keyEventWithCapsLock('keydown', true));
+            localFixture.detectChanges();
+
+            expect(localRoot.querySelector('.hub-input__capslock')).toBeNull();
+        });
+
+        it('clears the Caps Lock hint when focus leaves the field', () => {
+            const control = query('input.hub-field__control') as HTMLInputElement;
+            control.dispatchEvent(keyEventWithCapsLock('keydown', true));
+            fixture.detectChanges();
+            expect(query('.hub-input__capslock')).toBeTruthy();
+
+            const group = query('.hub-input__group') as HTMLElement;
+            group.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: document.body }));
+            fixture.detectChanges();
+
+            expect(query('.hub-input__capslock')).toBeNull();
+        });
+
+        it('renders the strength meter only when enabled and the value is non-empty', async () => {
+            expect(query('.hub-input__strength')).toBeNull();
+
+            const localFixture = TestBed.createComponent(InputHostComponent);
+            localFixture.componentInstance.type = 'password';
+            localFixture.componentInstance.passwordStrength = true;
+            localFixture.detectChanges();
+
+            const root = localFixture.nativeElement.querySelector('hub-input') as HTMLElement;
+            expect(root.querySelector('.hub-input__strength')).toBeNull();
+
+            localFixture.componentInstance.ctrl.setValue('Abcdef1!');
+            localFixture.detectChanges();
+            await localFixture.whenStable();
+            localFixture.detectChanges();
+
+            const meter = root.querySelector('.hub-input__strength') as HTMLElement;
+            expect(meter).toBeTruthy();
+            expect(meter.querySelectorAll('.hub-input__strength-segment--active').length).toBe(4);
+            expect(meter.querySelector('.hub-input__strength-label')?.textContent).toContain('Strong');
+        });
+
+        it('reflects a weak value with a single active segment', async () => {
+            const localFixture = TestBed.createComponent(InputHostComponent);
+            localFixture.componentInstance.type = 'password';
+            localFixture.componentInstance.passwordStrength = true;
+            localFixture.detectChanges();
+
+            localFixture.componentInstance.ctrl.setValue('abcdefgh');
+            localFixture.detectChanges();
+            await localFixture.whenStable();
+            localFixture.detectChanges();
+
+            const meter = localFixture.nativeElement.querySelector('.hub-input__strength') as HTMLElement;
+            expect(meter.querySelectorAll('.hub-input__strength-segment--active').length).toBe(1);
+            expect(meter.querySelector('.hub-input__strength-label')?.textContent).toContain('Weak');
+        });
+    });
+
+    describe('password config overrides', () => {
+        // Own TestBed setup (not the outer `beforeEach`'s) so `provideHubForms` can inject
+        // config overrides. The outer `describe`'s `beforeEach` already instantiated a
+        // component for the previous spec, so the module must be explicitly reset before
+        // it can be reconfigured with different providers.
+        beforeEach(async () => {
+            TestBed.resetTestingModule();
+            await TestBed.configureTestingModule({
+                imports: [InputHostComponent, ReactiveFormsModule],
+                providers: [
+                    provideHubForms({
+                        password: {
+                            showPasswordLabel: 'Ver',
+                            hidePasswordLabel: 'Ocultar',
+                            strengthFn: () => 9 as never
+                        }
+                    })
+                ]
+            }).compileComponents();
+        });
+
+        it('applies config-provided toggle labels', () => {
+            const localFixture = TestBed.createComponent(InputHostComponent);
+            localFixture.componentInstance.type = 'password';
+            localFixture.detectChanges();
+
+            const localRoot = localFixture.nativeElement.querySelector('hub-input');
+            const toggle = localRoot.querySelector('.hub-input__password-toggle') as HTMLButtonElement;
+            expect(toggle.getAttribute('aria-label')).toBe('Ver');
+
+            toggle.click();
+            localFixture.detectChanges();
+            expect(toggle.getAttribute('aria-label')).toBe('Ocultar');
+        });
+
+        it('clamps a custom strengthFn result to the 0-4 range', async () => {
+            const localFixture = TestBed.createComponent(InputHostComponent);
+            localFixture.componentInstance.type = 'password';
+            localFixture.componentInstance.passwordStrength = true;
+            localFixture.detectChanges();
+
+            localFixture.componentInstance.ctrl.setValue('whatever');
+            localFixture.detectChanges();
+            await localFixture.whenStable();
+            localFixture.detectChanges();
+
+            const meter = localFixture.nativeElement.querySelector('.hub-input__strength') as HTMLElement;
+            // The config's strengthFn returns 9 — an out-of-range score. Clamped to 4, it lights
+            // up every segment and resolves the top label (default `strengthLabels`, untouched by
+            // this override) instead of indexing out of bounds.
+            expect(meter.querySelectorAll('.hub-input__strength-segment--active').length).toBe(4);
+            expect(meter.querySelector('.hub-input__strength-label')?.textContent).toContain('Strong');
         });
     });
 
