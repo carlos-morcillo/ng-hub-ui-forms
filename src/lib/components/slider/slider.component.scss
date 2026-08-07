@@ -81,11 +81,19 @@ hub-slider.hidden-control {
 		}
 	}
 
+	// The bubble stays inside the track it belongs to.
+	//
+	// Centring it on the thumb with a flat `translateX(-50%)` puts half of it
+	// outside the component at 0 and at 100, and a component cannot assume its
+	// host does not clip — a scrollable page body is enough to cut the value in
+	// half, which is how it read on a form. Translating by the same percentage
+	// instead pins its left edge at the start, its right edge at the end and
+	// centres it in between, so it never leaves the rail whatever the layout.
 	&__bubble {
 		position: absolute;
 		top: 0;
 		left: calc(var(--hub-slider-percent) * 1%);
-		transform: translateX(-50%);
+		transform: translateX(calc(var(--hub-slider-percent) * -1%));
 		padding: 0.1rem 0.4rem;
 		color: var(--hub-slider-tooltip-color);
 		background: var(--hub-slider-tooltip-bg);
@@ -97,10 +105,12 @@ hub-slider.hidden-control {
 
 		&--lower {
 			left: calc(var(--hub-slider-from) * 1%);
+			transform: translateX(calc(var(--hub-slider-from) * -1%));
 		}
 
 		&--upper {
 			left: calc(var(--hub-slider-to) * 1%);
+			transform: translateX(calc(var(--hub-slider-to) * -1%));
 		}
 	}
 

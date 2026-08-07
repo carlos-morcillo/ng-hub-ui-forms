@@ -5,6 +5,12 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.12.1] - 2026-08-07
+
+### Fixed
+
+- **The slider's value no longer gets cut in half at the ends.** The bubble was centred on the thumb with a flat `translateX(-50%)`, which puts half of it outside the component at 0 and at 100 — and a component cannot assume its host does not clip: a scrollable page body is enough to slice the number in two, which is how it read on an ordinary form. It now translates by the same percentage it is positioned at, so its left edge pins to the start of the rail, its right edge to the end, and it stays centred in between. The two bubbles of a range slider follow the same rule.
+
 ## [22.12.0] - 2026-08-04
 
 ### Fixed
