@@ -5,6 +5,12 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.12.2] - 2026-08-07
+
+### Fixed
+
+- **A disabled select stayed fully usable.** `setDisabledState` set the component's own `disabled` signal, and the template spent it on a `hub-field--disabled` class — the inner select was never told. The field greyed out while its panel still opened and a choice still wrote through to a control the form had explicitly disabled. Greying a field that keeps accepting input is worse than not greying it at all: it promises a protection it does not provide. The disabled state now reaches the inner select, so it refuses interaction like every other field.
+
 ## [22.12.1] - 2026-08-07
 
 ### Fixed

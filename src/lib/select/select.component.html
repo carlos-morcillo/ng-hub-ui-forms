@@ -16,6 +16,9 @@
 	<div class="hub-field__body">
 		@switch (format()) {
 			@case (_selectFormats.Dropdown) {
+				<!-- [disabled] is claimed by the NgModel below (alias of its isDisabled input), not by
+				     ng-select — the engine's own `disabled` is a computed fed by setDisabledState.
+				     Dropping [ngModel] here would silently un-wire the disabled state. -->
 				<ng-select
 					class="hub-select__control"
 					[class.hub-select__control--invalid]="isInvalid"
@@ -31,6 +34,7 @@
 					[fixedPlaceholder]="fixedPlaceholder()"
 					[loading]="loading()"
 					[readonly]="readonly()"
+					[disabled]="disabled()"
 					[placeholder]="placeholder()"
 					[notFoundText]="notFoundText()"
 						[appendTo]="appendTo()"
