@@ -146,3 +146,69 @@
 		color: var(--hub-form-valid-feedback-color);
 	}
 }
+
+/**
+ * Read-only fields.
+ *
+ * Applied from the field's own `readonly` state, so nothing has to be remembered at
+ * the call site: mark a field read-only and it looks read-only.
+ *
+ * The border, the background and the focus ring exist to say "you can type here".
+ * On a field that refuses input they are a promise the field then breaks — and next
+ * to an editable neighbour there was nothing at all to tell the two apart.
+ *
+ * Deliberately not the disabled treatment. Disabled means "not applicable now" and
+ * fades to make that plain; read-only means "this is the value, it is simply not
+ * yours to change here", so the text stays at full contrast and remains selectable —
+ * copying a tax id out of a document is the whole point of showing it.
+ *
+ * The padding stays, so a read-only field keeps the same box and the same baseline
+ * as the editable ones beside it in a grid.
+ */
+.hub-field--readonly {
+	.hub-field__control,
+	.hub-input__control,
+	.hub-textarea__control,
+	.hub-select__control {
+		background-color: var(--hub-input-readonly-bg);
+		border-color: var(--hub-input-readonly-border-color);
+		color: var(--hub-input-readonly-color);
+		cursor: var(--hub-input-readonly-cursor);
+		box-shadow: none;
+	}
+
+	// No focus affordance either: nothing here answers to being focused.
+	.hub-field__control:focus,
+	.hub-field__control:focus-visible,
+	.hub-input__control:focus,
+	.hub-textarea__control:focus,
+	.hub-select__control.ng-select-focused {
+		border-color: var(--hub-input-readonly-border-color);
+		box-shadow: none;
+		outline: none;
+	}
+
+	// A caret, a clear cross and a calendar all promise a choice that is not on
+	// offer. The datepicker already hides its own clear when read-only; the icon it
+	// opens with is the same promise.
+	.hub-select__control {
+		.ng-arrow-wrapper,
+		.ng-clear-wrapper {
+			display: none;
+		}
+	}
+
+	.hub-datepicker__icon {
+		display: none;
+	}
+
+	// The error border survives. Dropping the chrome is about not promising input;
+	// an invalid value is a different message, and one the user still has to see —
+	// the feedback text alone is easy to miss in a long form. Needs the explicit
+	// exception because the rules above outrank `--invalid` on their own.
+	.hub-field__control--invalid,
+	.hub-field__control--invalid:focus,
+	.hub-select__control--invalid {
+		border-color: var(--hub-form-invalid-border-color);
+	}
+}

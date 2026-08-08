@@ -3,6 +3,7 @@
 	[class.hub-field--horizontal]="!isCheckable() && (labelType() === _labelTypes.Horizontal || (!label() && required()))"
 	[class.hub-input--checkable]="isCheckable()"
 	[class.hub-field--disabled]="disabled()"
+	[class.hub-field--readonly]="readonly()"
 	[class.hub-field--invalid]="isInvalid"
 	[class.hub-field--valid]="showsValid"
 >

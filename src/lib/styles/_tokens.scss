@@ -62,6 +62,14 @@
 	--hub-input-focus-border-color: var(--hub-sys-color-primary, #0d6efd);
 	--hub-input-focus-box-shadow: 0 0 0 var(--hub-form-focus-ring-width) var(--hub-form-focus-ring-color);
 	--hub-input-placeholder-color: var(--hub-sys-text-muted, #6c757d);
+
+	// Read-only fields. Not a faded variant of disabled: a read-only value is there
+	// to be read, so it keeps full contrast and loses only the chrome that promises
+	// you can type in it.
+	--hub-input-readonly-bg: transparent;
+	--hub-input-readonly-border-color: transparent;
+	--hub-input-readonly-color: var(--hub-input-color);
+	--hub-input-readonly-cursor: default;
 	--hub-input-transition: var(--hub-form-transition);
 	--hub-input-wrapper-gap: var(--hub-ref-space-2, 0.5rem);
 

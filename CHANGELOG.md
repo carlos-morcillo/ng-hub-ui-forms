@@ -5,6 +5,18 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.13.0] - 2026-08-07
+
+### Added
+
+- **A read-only theme, applied from the field's own state.** `readonly` reached the native attributes and stopped there, so a read-only field went on drawing the border, the background and the focus ring of something you can type in — a promise it then refused, and next to an editable neighbour there was nothing at all to tell the two apart. Marking a field `readonly` now styles it as such, with no class to remember at the call site: `hub-input`, `hub-textarea`, `hub-select` and `hub-datepicker` all reflect it as `hub-field--readonly`.
+
+  The error border survives: dropping the chrome is about not promising input, while an invalid value is a different message and one the user still has to see — the feedback text alone is easy to miss in a long form.
+
+  It is deliberately **not** the disabled treatment. Disabled means "not applicable now" and fades to say so; read-only means "this is the value, it is simply not yours to change here", so the text keeps full contrast and stays selectable — copying a tax id out of a document is the point of showing it. The chrome that offers input goes: background, border, focus ring, the select's caret and clear cross, and the datepicker's calendar icon. The padding stays, so a read-only field keeps the same box and baseline as the editable ones beside it in a grid.
+
+  Four new tokens, so the look can be taken elsewhere: `--hub-input-readonly-bg`, `--hub-input-readonly-border-color`, `--hub-input-readonly-color`, `--hub-input-readonly-cursor`.
+
 ## [22.12.2] - 2026-08-07
 
 ### Fixed

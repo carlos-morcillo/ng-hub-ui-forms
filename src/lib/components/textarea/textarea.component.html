@@ -2,6 +2,7 @@
 	class="hub-field hub-textarea"
 	[class.hub-field--horizontal]="labelType() === _labelTypes.Horizontal || (!label() && required())"
 	[class.hub-field--disabled]="disabled()"
+	[class.hub-field--readonly]="readonly()"
 	[class.hub-field--invalid]="isInvalid"
 	[class.hub-field--valid]="showsValid"
 >
