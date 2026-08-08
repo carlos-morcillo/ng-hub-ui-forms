@@ -9,11 +9,11 @@ entirely through `--hub-*` CSS variables, no Bootstrap required.
 
 ## Documentation and Live Examples
 
-This package is part of [Hub UI](https://hubui.dev/), a collection of Angular component libraries for standalone apps.
+This package is part of [Hub UI](https://hubui.dev/en/), a collection of Angular component libraries for standalone apps.
 
-- Docs: https://hubui.dev/forms/overview/
-- Live examples: https://hubui.dev/forms/examples/
-- Hub UI: https://hubui.dev/
+- Docs: https://hubui.dev/en/forms/overview/
+- Live examples: https://hubui.dev/en/forms/examples/
+- Hub UI: https://hubui.dev/en/
 
 ## 🧩 Library Family `ng-hub-ui`
 
