@@ -10,6 +10,7 @@ export class NgSelectConfig {
 	addTagText = 'Add item';
 	loadingText = 'Loading...';
 	clearAllText = 'Clear all';
+	removeText = 'Remove';
 	ariaLabelDropdown = 'Options List';
 	disableVirtualScroll = true;
 	openOnEnter = true;
