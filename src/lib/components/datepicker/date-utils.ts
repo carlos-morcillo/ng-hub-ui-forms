@@ -16,32 +16,6 @@ export interface CalendarDay {
 }
 
 /**
- * Parses an ISO `YYYY-MM-DD` string (or passes a `Date`) into a local `Date`, or `null`.
- *
- * @param value - ISO string, `Date`, or nullish.
- * @returns A `Date` at local midnight, or `null` when not parseable.
- */
-export function parseDate(value: string | Date | null | undefined): Date | null {
-	if (value == null || value === '') {
-		return null;
-	}
-
-	if (value instanceof Date) {
-		return isNaN(value.getTime()) ? null : new Date(value.getFullYear(), value.getMonth(), value.getDate());
-	}
-
-	const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
-
-	if (match) {
-		return new Date(+match[1], +match[2] - 1, +match[3]);
-	}
-
-	const parsed = new Date(value);
-
-	return isNaN(parsed.getTime()) ? null : new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
-}
-
-/**
  * Formats a `Date` as an ISO `YYYY-MM-DD` string.
  *
  * @param date - The date to format.
@@ -62,13 +36,7 @@ export function formatISO(date: Date): string {
  * @returns `true` when both are non-null and on the same day.
  */
 export function isSameDay(a: Date | null, b: Date | null): boolean {
-	return (
-		!!a &&
-		!!b &&
-		a.getFullYear() === b.getFullYear() &&
-		a.getMonth() === b.getMonth() &&
-		a.getDate() === b.getDate()
-	);
+	return !!a && !!b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
 /**
@@ -154,27 +122,6 @@ export function isBeforeDay(date: Date, ref: Date): boolean {
 /** Whether `date` is strictly after `ref` (day level). */
 export function isAfterDay(date: Date, ref: Date): boolean {
 	return compareDay(date, ref) > 0;
-}
-
-/**
- * Whether a date is selectable given the optional bounds and a disabled predicate.
- *
- * @param date - The candidate date.
- * @param min - Earliest allowed date, or `null`.
- * @param max - Latest allowed date, or `null`.
- * @param disabledFn - Predicate returning `true` for disabled dates, or `null`.
- * @returns `true` when the date cannot be selected.
- */
-export function isDateDisabled(date: Date, min: Date | null, max: Date | null, disabledFn: ((d: Date) => boolean) | null): boolean {
-	if (min && isBeforeDay(date, min)) {
-		return true;
-	}
-
-	if (max && isAfterDay(date, max)) {
-		return true;
-	}
-
-	return disabledFn ? disabledFn(date) : false;
 }
 
 /**

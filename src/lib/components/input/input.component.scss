@@ -46,14 +46,30 @@ hub-input.hidden-control {
 			border-left: 0;
 			border-radius: 0 var(--hub-input-border-radius) var(--hub-input-border-radius) 0;
 		}
+
+		// In a run of addons only the outermost one keeps its outer radius; the inner
+		// joins stay square so the run reads as one piece instead of stacked pills.
+		&--prepend + &--prepend {
+			border-top-left-radius: 0;
+			border-bottom-left-radius: 0;
+		}
+
+		&--append:has(+ &--append) {
+			border-top-right-radius: 0;
+			border-bottom-right-radius: 0;
+		}
 	}
 
-	&__addon--prepend + .hub-field__control {
+	// The control gives up the radius on whichever side meets an addon, so field and
+	// addon fuse into a single piece. Driven by group modifiers rather than sibling
+	// combinators because the affix spans are rendered unconditionally between the
+	// addons and the control: an addon is never the control's adjacent sibling.
+	&__group--has-prepend > .hub-field__control {
 		border-top-left-radius: 0;
 		border-bottom-left-radius: 0;
 	}
 
-	&__group .hub-field__control:has(+ .hub-input__addon--append) {
+	&__group--has-append > .hub-field__control {
 		border-top-right-radius: 0;
 		border-bottom-right-radius: 0;
 	}
@@ -138,7 +154,9 @@ hub-input.hidden-control {
 			font-weight: var(--hub-ref-font-weight-base, 400);
 			pointer-events: none;
 			transform-origin: 0 0;
-			transition: opacity 0.1s ease-in-out, transform 0.1s ease-in-out;
+			transition:
+				opacity 0.1s ease-in-out,
+				transform 0.1s ease-in-out;
 		}
 
 		.hub-field__control:focus ~ .hub-input__label--floating,

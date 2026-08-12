@@ -1,5 +1,5 @@
 import { OverlayModule } from '@angular/cdk/overlay';
-import { KeyValuePipe, NgTemplateOutlet } from '@angular/common';
+import { formatDate, KeyValuePipe, NgTemplateOutlet } from '@angular/common';
 import {
 	booleanAttribute,
 	ChangeDetectionStrategy,
@@ -15,24 +15,30 @@ import {
 } from '@angular/core';
 import { FormTextType, FormTextTypes, HubLabelType, HubLabelTypes } from '../../interfaces/common.interface';
 import {
+	HubDatepickerGranularity,
 	HubDatepickerLabels,
 	HubDatepickerMode,
+	HubDatepickerValueFormat,
 	HubDateRange,
 	HubDateValue
 } from '../../interfaces/datepicker.interface';
 import { HUB_FORMS_CONFIG } from '../../services/forms-config';
 import { HubFieldControl } from '../../shared/hub-field-control';
+import { addMonths, buildCalendarGrid, isInRange, isSameDay, weekdayLabels } from './date-utils';
+import { decadeStart, HubDatepickerPeriodGridComponent } from './period-grid.component';
+import { HubDatepickerTimeFieldComponent } from './time-field.component';
 import {
-	addMonths,
-	buildCalendarGrid,
-	compareDay,
-	formatISO,
-	isDateDisabled,
-	isInRange,
-	isSameDay,
-	parseDate,
-	weekdayLabels
-} from './date-utils';
+	carriesTime,
+	clampToBounds,
+	compareInstant,
+	isPeriodUnit,
+	parseFlexible,
+	resolveHour12,
+	startOfUnit,
+	unitOutOfBounds,
+	withTime
+} from './time-utils';
+import { serializeValue } from './value-format';
 
 /** A calendar cell enriched with its selection / range / disabled / focus state. */
 interface DatepickerCell {
@@ -54,23 +60,39 @@ interface DatepickerCell {
  * label, helper text, `--hub-datepicker-*` theming) and adds:
  *
  * - `single` and `range` selection (`mode`).
- * - `min` / `max` bounds and a `disabledDates` predicate.
- * - Keyboard navigation (arrows, Home/End, PageUp/Down, Enter, Escape).
- * - `Today` and `Clear` shortcuts.
- * - Full i18n: locale-driven month/weekday names plus overridable `labels`, `displayFormat`,
- *   `weekdayFormat`, `firstDayOfWeek` and `rangeSeparator` — per instance or globally via
- *   {@link provideHubForms}.
+ * - A granularity axis from a whole year down to a second (`granularity`), which also selects the
+ *   panel: `year` and `month` render a 12-cell period grid, `day` and finer render the calendar
+ *   (plus a time strip from `hour` onwards).
+ * - Three independent format axes: `parse` (how values come in), `valueFormat` (what the bound
+ *   control holds) and `displayFormat` (what the user reads).
+ * - `min` / `max` bounds — honouring the time, not just the day — and a `disabledDates` predicate.
+ * - Keyboard navigation (arrows, Home/End, PageUp/Down, Enter, Escape) in every panel.
+ * - `Today`, `Clear` and — while picking a time — `Done` shortcuts.
+ * - Full i18n: locale-driven month, weekday and AM/PM names plus overridable `labels`,
+ *   `displayFormat`, `weekdayFormat`, `firstDayOfWeek` and `rangeSeparator` — per instance or
+ *   globally via {@link provideHubForms}.
  *
- * The value is an ISO `YYYY-MM-DD` string (`single`) or a `{ start, end }` range (`range`).
+ * ## The zone of the emitted value
+ *
+ * Every calculation happens in **the reader's local zone, by date parts**. At `day` granularity
+ * and coarser the value is a bare ISO date (`2026-09-01`) with no zone attached, exactly as it has
+ * always been. From `hour` onwards it is a full ISO 8601 timestamp carrying **the local wall clock
+ * and the offset of that very date** — `2026-09-01T09:00:00+02:00` in Madrid in September,
+ * `+01:00` for the same clock in January. A consumer that wants UTC converts losslessly with
+ * `new Date(value).toISOString()`.
  *
  * @example
  * ```html
+ * <!-- unchanged default: a plain YYYY-MM-DD string -->
  * <hub-datepicker formControlName="stay" mode="range" label="Stay" [min]="today" />
+ *
+ * <!-- an access window: each endpoint carries its own time -->
+ * <hub-datepicker formControlName="window" mode="range" granularity="minute" [minuteStep]="15" />
  * ```
  */
 @Component({
 	selector: 'hub-datepicker',
-	imports: [NgTemplateOutlet, KeyValuePipe, OverlayModule],
+	imports: [NgTemplateOutlet, KeyValuePipe, OverlayModule, HubDatepickerTimeFieldComponent, HubDatepickerPeriodGridComponent],
 	templateUrl: './datepicker.component.html',
 	styleUrl: './datepicker.component.scss',
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -86,9 +108,23 @@ export class HubDatepickerComponent extends HubFieldControl {
 
 	protected readonly _labelTypes = HubLabelTypes;
 	protected readonly _formTextTypes = FormTextTypes;
-	protected readonly _value = signal<HubDateValue>(null);
 
-	/** Month currently shown in the calendar panel. */
+	/**
+	 * The selection, as local `Date`s. This — not the serialized value — is the component's single
+	 * source of truth: keeping `Date`s means the emitted shape is derived once, on the way out, and
+	 * a `valueFormat` change never has to round-trip through a string.
+	 */
+	protected readonly _start = signal<Date | null>(null);
+	protected readonly _end = signal<Date | null>(null);
+
+	/**
+	 * Time-of-day held for each endpoint while no day has been picked yet, so the time strip is
+	 * editable from the moment the panel opens and the choice survives the first day click.
+	 */
+	protected readonly _startDraft = signal<Date>(startOfUnit(new Date(), 'day'));
+	protected readonly _endDraft = signal<Date>(startOfUnit(new Date(), 'day'));
+
+	/** Month (or year / block) currently shown in the panel. */
 	protected readonly _viewDate = signal<Date>(new Date());
 
 	/** Date that currently holds keyboard focus inside the grid. */
@@ -101,6 +137,21 @@ export class HubDatepickerComponent extends HubFieldControl {
 
 	/** Selection mode (`single` or `range`). */
 	readonly mode = input<HubDatepickerMode>('single');
+
+	/**
+	 * Precision each picked point carries. Also selects the panel. Defaults to `day`, which is the
+	 * behaviour every existing call site already has.
+	 */
+	readonly granularity = input<HubDatepickerGranularity | undefined>(undefined);
+
+	/** How a picked point is serialized into the bound control. Defaults to `'iso'`. */
+	readonly valueFormat = input<HubDatepickerValueFormat | undefined>(undefined);
+
+	/**
+	 * Consumer-supplied parser for incoming values, overriding the built-in detection (ISO string
+	 * of any width, `Date`, or epoch milliseconds). Applies to `min` and `max` too.
+	 */
+	readonly parse = input<((raw: unknown) => Date | null) | null>(null);
 
 	/** Label text. */
 	readonly label = input<string>('');
@@ -115,22 +166,47 @@ export class HubDatepickerComponent extends HubFieldControl {
 	readonly locale = input<string>(this.#localeId || 'en-US');
 
 	/** First weekday (0 = Sunday, 1 = Monday…). Falls back to the global config. */
-	readonly firstDayOfWeek = input<number | undefined, unknown>(undefined, { transform: (v) => (v == null ? undefined : numberAttribute(v)) });
+	readonly firstDayOfWeek = input<number | undefined, unknown>(undefined, {
+		transform: (v) => (v == null ? undefined : numberAttribute(v))
+	});
 
 	/** Weekday header width. Falls back to the global config. */
 	readonly weekdayFormat = input<'short' | 'narrow' | 'long' | undefined>(undefined);
 
-	/** `Intl` options to format the displayed value. Falls back to the global config. */
-	readonly displayFormat = input<Intl.DateTimeFormatOptions | undefined>(undefined);
+	/**
+	 * How the selected value is displayed in the input. Accepts `Intl` options (the original
+	 * contract), an Angular date pattern such as `'dd/MM/yyyy HH:mm'`, or a formatting function.
+	 * Falls back to the global config.
+	 */
+	readonly displayFormat = input<Intl.DateTimeFormatOptions | string | ((date: Date) => string) | undefined>(undefined);
+
+	/**
+	 * `Intl` options composed **over** {@link displayFormat} once the granularity carries a time, so
+	 * the day part of the display keeps whatever `displayFormat` already said.
+	 */
+	readonly timeDisplayFormat = input<Intl.DateTimeFormatOptions | undefined>(undefined);
+
+	/** Minute increment of the minute spinbutton. Falls back to the global config. */
+	readonly minuteStep = input<number | undefined, unknown>(undefined, {
+		transform: (v) => (v == null ? undefined : numberAttribute(v))
+	});
+
+	/** Second increment of the second spinbutton. Falls back to the global config. */
+	readonly secondStep = input<number | undefined, unknown>(undefined, {
+		transform: (v) => (v == null ? undefined : numberAttribute(v))
+	});
+
+	/** Force a 12- or 24-hour clock. Defaults to whatever the locale wants. */
+	readonly hourFormat = input<'12' | '24' | undefined>(undefined);
 
 	/** Separator between the two dates of a range. Falls back to the global config. */
 	readonly rangeSeparator = input<string | undefined>(undefined);
 
-	/** Earliest selectable date (ISO string or `Date`). */
-	readonly min = input<string | Date | null>(null);
+	/** Earliest selectable instant (ISO string, `Date` or epoch millis). */
+	readonly min = input<string | Date | number | null>(null);
 
-	/** Latest selectable date (ISO string or `Date`). */
-	readonly max = input<string | Date | null>(null);
+	/** Latest selectable instant (ISO string, `Date` or epoch millis). */
+	readonly max = input<string | Date | number | null>(null);
 
 	/** Predicate marking individual dates as non-selectable. */
 	readonly disabledDates = input<((date: Date) => boolean) | null>(null);
@@ -141,7 +217,11 @@ export class HubDatepickerComponent extends HubFieldControl {
 	/** Whether to show the "today" shortcut. */
 	readonly showToday = input(true, { transform: booleanAttribute });
 
-	/** Whether selecting a date closes the calendar (`single` mode only). */
+	/**
+	 * Whether picking closes the calendar. Honoured at `day` granularity and coarser; a
+	 * time-carrying granularity always keeps the panel open, because closing on the day click would
+	 * strand the time controls the user has not reached yet.
+	 */
 	readonly closeOnSelect = input(true, { transform: booleanAttribute });
 
 	/** Per-instance label overrides (merged over the global config). */
@@ -162,7 +242,7 @@ export class HubDatepickerComponent extends HubFieldControl {
 	// ── Outputs ─────────────────────────────────────────────────────────────────
 
 	/** Emits whenever the value changes. */
-	readonly valueChange = output<HubDateValue>();
+	readonly valueChange = output<HubDateValue<any>>();
 
 	/** Emits when the calendar opens. */
 	readonly opened = output<void>();
@@ -182,39 +262,63 @@ export class HubDatepickerComponent extends HubFieldControl {
 	protected readonly _firstDayOfWeek = computed(() => this.firstDayOfWeek() ?? this.#config.firstDayOfWeek);
 	protected readonly _weekdayFormat = computed(() => this.weekdayFormat() ?? this.#config.weekdayFormat);
 	protected readonly _displayFormat = computed(() => this.displayFormat() ?? this.#config.displayFormat);
+	protected readonly _timeDisplayFormat = computed(() => this.timeDisplayFormat() ?? this.#config.timeDisplayFormat);
 	protected readonly _rangeSeparator = computed(() => this.rangeSeparator() ?? this.#config.rangeSeparator);
+	protected readonly _granularity = computed(() => this.granularity() ?? this.#config.granularity);
+	protected readonly _valueFormat = computed(() => this.valueFormat() ?? this.#config.valueFormat);
+	protected readonly _minuteStep = computed(() => this.minuteStep() ?? this.#config.minuteStep);
+	protected readonly _secondStep = computed(() => this.secondStep() ?? this.#config.secondStep);
+	protected readonly _hourFormat = computed(() => this.hourFormat() ?? this.#config.hourFormat);
 
-	protected readonly _minDate = computed(() => parseDate(this.min()));
-	protected readonly _maxDate = computed(() => parseDate(this.max()));
+	protected readonly _minDate = computed(() => parseFlexible(this.min(), this.parse()));
+	protected readonly _maxDate = computed(() => parseFlexible(this.max(), this.parse()));
 
-	// ── Derived selection ─────────────────────────────────────────────────────────
+	// ── Derived panel state ───────────────────────────────────────────────────────
 
-	protected readonly rangeStart = computed<Date | null>(() => {
-		const v = this._value();
-		return this.mode() === 'range' ? parseDate((v as HubDateRange | null)?.start ?? null) : parseDate(v as string | null);
-	});
+	/** Whether the granularity carries a time-of-day, and so shows the time strip. */
+	protected readonly _hasTime = computed(() => carriesTime(this._granularity()));
 
-	protected readonly rangeEnd = computed<Date | null>(() => {
-		const v = this._value();
-		return this.mode() === 'range' ? parseDate((v as HubDateRange | null)?.end ?? null) : null;
-	});
+	/** Whether the granularity is coarser than a day, and so uses the period grid. */
+	protected readonly _isPeriod = computed(() => isPeriodUnit(this._granularity()));
+
+	protected readonly _isRange = computed(() => this.mode() === 'range');
+	protected readonly _hour12 = computed(() => resolveHour12(this.locale(), this._hourFormat()));
+
+	protected readonly rangeStart = computed<Date | null>(() => this._start());
+	protected readonly rangeEnd = computed<Date | null>(() => (this._isRange() ? this._end() : null));
+
+	/**
+	 * Time shown in the start row — the selection when there is one, the draft until then.
+	 *
+	 * The draft is clamped into `[min, max]` before it is shown. Without this it starts at local
+	 * midnight, which a bound like `min="now"` puts out of range from the outset — and since a step
+	 * that would leave the bounds is refused, *every* arrow press would then be refused and the
+	 * spinbuttons would read as dead until a day was picked.
+	 */
+	protected readonly startTimeValue = computed<Date>(
+		() => this._start() ?? clampToBounds(this._startDraft(), this._minDate(), this._maxDate())
+	);
+
+	protected readonly endTimeValue = computed<Date>(
+		() => this._end() ?? clampToBounds(this._endDraft(), this._minDate(), this._maxDate())
+	);
 
 	/** Locale-formatted display string for the input. */
 	protected readonly displayValue = computed<string>(() => {
-		const fmt = (d: Date | null) => (d ? new Intl.DateTimeFormat(this.locale(), this._displayFormat()).format(d) : '');
-		const start = this.rangeStart();
+		const format = this.#resolveDisplay();
+		const start = this._start();
 
-		if (this.mode() !== 'range') {
-			return fmt(start);
+		if (!this._isRange()) {
+			return start ? format(start) : '';
 		}
 
-		const end = this.rangeEnd();
+		const end = this._end();
 
 		if (!start && !end) {
 			return '';
 		}
 
-		return `${fmt(start)}${this._rangeSeparator()}${fmt(end)}`;
+		return `${start ? format(start) : ''}${this._rangeSeparator()}${end ? format(end) : ''}`;
 	});
 
 	protected readonly weekdays = computed<string[]>(() =>
@@ -225,40 +329,64 @@ export class HubDatepickerComponent extends HubFieldControl {
 		new Intl.DateTimeFormat(this.locale(), { month: 'long', year: 'numeric' }).format(this._viewDate())
 	);
 
+	/** Header title of the period panel: the year for months, the decade for years. */
+	protected readonly periodLabel = computed<string>(() => {
+		const year = this._viewDate().getFullYear();
+
+		if (this._granularity() === 'month') {
+			return `${year}`;
+		}
+
+		const start = decadeStart(year);
+
+		// The page renders a padding year at each end; the title names the decade itself.
+		return `${start} – ${start + 9}`;
+	});
+
 	/** Enriched 6×7 grid for the displayed month. */
 	protected readonly grid = computed<DatepickerCell[]>(() => {
-		const start = this.rangeStart();
+		const start = this._start();
 		const end = this.rangeEnd();
 		const focused = this._focusedDate();
 		const min = this._minDate();
 		const max = this._maxDate();
 		const disabledFn = this.disabledDates();
+		const isRange = this._isRange();
 
 		return buildCalendarGrid(this._viewDate(), this._firstDayOfWeek()).map((c) => ({
 			...c,
-			disabled: isDateDisabled(c.date, min, max, disabledFn),
-			selected: this.mode() !== 'range' && isSameDay(c.date, start),
-			rangeStart: this.mode() === 'range' && isSameDay(c.date, start),
-			rangeEnd: this.mode() === 'range' && isSameDay(c.date, end),
-			inRange: this.mode() === 'range' && isInRange(c.date, start, end),
+			disabled: unitOutOfBounds(c.date, min, max, 'day') || (disabledFn ? disabledFn(c.date) : false),
+			selected: !isRange && isSameDay(c.date, start),
+			rangeStart: isRange && isSameDay(c.date, start),
+			rangeEnd: isRange && isSameDay(c.date, end),
+			inRange: isRange && isInRange(c.date, start, end),
 			focused: isSameDay(c.date, focused)
 		}));
 	});
 
 	// ── CVA ───────────────────────────────────────────────────────────────────────
 
-	writeValue(value: HubDateValue | Date): void {
-		if (this.mode() === 'range') {
-			const range = (value ?? {}) as HubDateRange;
-			const start = parseDate(range?.start ?? null);
-			const end = parseDate(range?.end ?? null);
-			this._value.set(start || end ? { start: start ? formatISO(start) : null, end: end ? formatISO(end) : null } : null);
-			this._viewDate.set(start ?? new Date());
-		} else {
-			const date = parseDate(value as string | Date | null);
-			this._value.set(date ? formatISO(date) : null);
-			this._viewDate.set(date ?? new Date());
+	writeValue(value: unknown): void {
+		const granularity = this._granularity();
+		const parse = this.parse();
+
+		if (this._isRange()) {
+			const range = (value ?? {}) as HubDateRange<unknown>;
+			const start = parseFlexible(range?.start ?? null, parse);
+			const end = parseFlexible(range?.end ?? null, parse);
+
+			this._start.set(start ? startOfUnit(start, granularity) : null);
+			this._end.set(end ? startOfUnit(end, granularity) : null);
+			this.#anchor(start ?? new Date());
+
+			return;
 		}
+
+		const date = parseFlexible(value, parse);
+
+		this._start.set(date ? startOfUnit(date, granularity) : null);
+		this._end.set(null);
+		this.#anchor(date ?? new Date());
 	}
 
 	// ── Panel ──────────────────────────────────────────────────────────────────────
@@ -269,9 +397,7 @@ export class HubDatepickerComponent extends HubFieldControl {
 			return;
 		}
 
-		const anchor = this.rangeStart() ?? new Date();
-		this._viewDate.set(anchor);
-		this._focusedDate.set(anchor);
+		this.#anchor(this._start() ?? new Date());
 		this._open.set(true);
 		this.opened.emit();
 	}
@@ -295,6 +421,17 @@ export class HubDatepickerComponent extends HubFieldControl {
 	/** Shifts the displayed month by `delta` and emits {@link viewChange}. */
 	protected shiftMonth(delta: number): void {
 		const next = addMonths(this._viewDate(), delta);
+
+		this._viewDate.set(next);
+		this.viewChange.emit(new Date(next.getFullYear(), next.getMonth(), 1));
+	}
+
+	/** Shifts the period panel by one page: a year for months, a decade for years. */
+	protected shiftPeriod(delta: number): void {
+		const view = this._viewDate();
+		const step = this._granularity() === 'month' ? delta : delta * 10;
+		const next = new Date(view.getFullYear() + step, view.getMonth(), 1);
+
 		this._viewDate.set(next);
 		this.viewChange.emit(new Date(next.getFullYear(), next.getMonth(), 1));
 	}
@@ -302,6 +439,7 @@ export class HubDatepickerComponent extends HubFieldControl {
 	/** Jumps the view to today (and focuses it). */
 	protected goToToday(): void {
 		const today = new Date();
+
 		this._viewDate.set(today);
 		this._focusedDate.set(today);
 		this.viewChange.emit(new Date(today.getFullYear(), today.getMonth(), 1));
@@ -309,9 +447,9 @@ export class HubDatepickerComponent extends HubFieldControl {
 
 	/** Clears the value. */
 	protected clear(): void {
-		this._value.set(null);
-		this.onChange?.(null);
-		this.valueChange.emit(null);
+		this._start.set(null);
+		this._end.set(null);
+		this.#emit();
 		this.cleared.emit();
 	}
 
@@ -329,34 +467,47 @@ export class HubDatepickerComponent extends HubFieldControl {
 		}
 
 		this._focusedDate.set(cell.date);
+		this.#select(cell.date);
+	}
 
-		if (this.mode() !== 'range') {
-			const iso = formatISO(cell.date);
-			this.#emit(iso);
+	/**
+	 * Selects a period cell (a month or a year) from the coarse panel.
+	 *
+	 * @param date - First instant of the picked period.
+	 */
+	protected selectPeriod(date: Date): void {
+		this._focusedDate.set(date);
+		this.#select(date);
+	}
 
-			if (this.closeOnSelect()) {
-				this.close();
-			}
+	/** Writes a new start time, emitting only once a day has actually been picked. */
+	protected onStartTimeChange(next: Date): void {
+		if (this._start()) {
+			this._start.set(next);
+			this.#reorderIfNeeded();
+			this.#emit();
 
 			return;
 		}
 
-		const start = this.rangeStart();
-		const end = this.rangeEnd();
+		this._startDraft.set(next);
+	}
 
-		if (!start || end) {
-			// Begin a new range.
-			this.#emit({ start: formatISO(cell.date), end: null });
-		} else {
-			// Complete the range, ordering the endpoints.
-			const [a, b] = compareDay(cell.date, start) < 0 ? [cell.date, start] : [start, cell.date];
-			this.#emit({ start: formatISO(a), end: formatISO(b) });
-			this.close();
+	/** Writes a new end time, emitting only once the range end has actually been picked. */
+	protected onEndTimeChange(next: Date): void {
+		if (this._end()) {
+			this._end.set(next);
+			this.#reorderIfNeeded();
+			this.#emit();
+
+			return;
 		}
+
+		this._endDraft.set(next);
 	}
 
 	/**
-	 * Keyboard navigation within the grid.
+	 * Keyboard navigation within the day grid.
 	 *
 	 * @param event - The originating keyboard event (handled on the grid container).
 	 */
@@ -418,13 +569,178 @@ export class HubDatepickerComponent extends HubFieldControl {
 		setTimeout(() => grid.querySelector<HTMLElement>(`[data-time="${time}"]`)?.focus(), 0);
 	}
 
+	/** Moves the period grid's focus without selecting. */
+	protected onPeriodFocusMove(date: Date): void {
+		this._focusedDate.set(date);
+
+		if (date.getFullYear() !== this._viewDate().getFullYear()) {
+			this._viewDate.set(date);
+			this.viewChange.emit(new Date(date.getFullYear(), date.getMonth(), 1));
+		}
+	}
+
+	// ── Internals ─────────────────────────────────────────────────────────────────
+
+	/**
+	 * Applies a picked calendar point to the selection, attaching the working time-of-day and
+	 * ordering the range endpoints **by instant** — which is what makes a same-day 21:00 → 09:00
+	 * pair reorder itself instead of being kept in click order.
+	 */
+	#select(picked: Date): void {
+		const granularity = this._granularity();
+		const min = this._minDate();
+		const max = this._maxDate();
+		const compose = (time: Date): Date =>
+			startOfUnit(
+				clampToBounds(
+					this._hasTime() ? withTime(picked, time.getHours(), time.getMinutes(), time.getSeconds()) : picked,
+					min,
+					max
+				),
+				granularity
+			);
+
+		if (!this._isRange()) {
+			this._start.set(compose(this.startTimeValue()));
+			this.#emit();
+
+			if (this.closeOnSelect() && !this._hasTime()) {
+				this.close();
+			}
+
+			return;
+		}
+
+		const start = this._start();
+		const end = this._end();
+
+		if (!start || end) {
+			// Begin a new range.
+			this._start.set(compose(this.startTimeValue()));
+			this._end.set(null);
+			this.#emit();
+
+			return;
+		}
+
+		const candidate = compose(this.endTimeValue());
+		const [a, b] = compareInstant(candidate, start) < 0 ? [candidate, start] : [start, candidate];
+
+		this._start.set(a);
+		this._end.set(b);
+		this.#emit();
+
+		if (!this._hasTime()) {
+			this.close();
+		}
+	}
+
+	/** Keeps the two endpoints ordered after a time edit has moved one past the other. */
+	#reorderIfNeeded(): void {
+		const start = this._start();
+		const end = this._end();
+
+		if (start && end && compareInstant(start, end) > 0) {
+			this._start.set(end);
+			this._end.set(start);
+		}
+	}
+
+	/** Points the view and the keyboard focus at a date. */
+	#anchor(date: Date): void {
+		this._viewDate.set(date);
+		this._focusedDate.set(date);
+	}
+
 	#addDays(date: Date, days: number): Date {
 		return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
 	}
 
-	#emit(value: HubDateValue): void {
-		this._value.set(value);
+	/**
+	 * Resolves {@link displayFormat} into a formatting function, narrowed to the granularity: the
+	 * time options are composed over it once a time is carried, and the parts finer than the unit
+	 * are dropped when it is coarser than a day.
+	 *
+	 * The narrowing matters because the default `displayFormat` names a day. Without it a month
+	 * picker emitting `2026-09` would read `09/01/2026` in the field — showing a day nobody chose.
+	 *
+	 * An explicit pattern string or function is never narrowed: the caller said exactly what they
+	 * wanted.
+	 */
+	#resolveDisplay(): (date: Date) => string {
+		const format = this._displayFormat();
+		const locale = this.locale();
+
+		if (typeof format === 'function') {
+			return format;
+		}
+
+		if (typeof format === 'string') {
+			return (date: Date) => formatDate(date, format, locale);
+		}
+
+		const formatter = new Intl.DateTimeFormat(locale, this.#narrowOptions(format));
+
+		return (date: Date) => formatter.format(date);
+	}
+
+	/**
+	 * Fits `Intl` options to the current granularity, adding the time parts or removing the ones
+	 * finer than the picked unit.
+	 *
+	 * @param format - The resolved `Intl` options.
+	 * @returns Options describing exactly the precision the picker offers.
+	 */
+	#narrowOptions(format: Intl.DateTimeFormatOptions): Intl.DateTimeFormatOptions {
+		const granularity = this._granularity();
+
+		if (granularity === 'year') {
+			return { year: format.year ?? 'numeric' };
+		}
+
+		if (granularity === 'month') {
+			return { year: format.year ?? 'numeric', month: format.month ?? '2-digit' };
+		}
+
+		if (!this._hasTime()) {
+			return format;
+		}
+
+		// `hour12` is threaded through so the input cannot read `02:30 PM` while the panel that
+		// produced it reads `14:30`.
+		return {
+			...format,
+			...this._timeDisplayFormat(),
+			...(granularity === 'second' ? { second: '2-digit' } : {}),
+			hour12: this._hour12()
+		};
+	}
+
+	/** Serializes the current selection and pushes it to the control and to {@link valueChange}. */
+	#emit(): void {
+		const granularity = this._granularity();
+		const valueFormat = this._valueFormat();
+		const start = this._start();
+
+		if (this._isRange()) {
+			const end = this._end();
+			const value =
+				start || end
+					? {
+							start: serializeValue(start, granularity, valueFormat),
+							end: serializeValue(end, granularity, valueFormat)
+						}
+					: null;
+
+			this.onChange?.(value);
+			this.valueChange.emit(value as HubDateValue<any>);
+
+			return;
+		}
+
+		const value = serializeValue(start, granularity, valueFormat);
+
 		this.onChange?.(value);
-		this.valueChange.emit(value);
+		this.valueChange.emit(value as HubDateValue<any>);
 	}
 }

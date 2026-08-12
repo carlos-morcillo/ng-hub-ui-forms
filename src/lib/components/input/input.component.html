@@ -121,7 +121,9 @@
 						</button>
 						<span class="hub-input__file-name">{{ fileLabel() || placeholder() }}</span>
 						@if (fileLabel() && !disabled() && !readonly()) {
-							<button type="button" class="hub-input__file-clear" aria-label="Clear" (click)="clearFile()">&times;</button>
+							<button type="button" class="hub-input__file-clear" aria-label="Clear" (click)="clearFile()">
+								&times;
+							</button>
 						}
 					</div>
 				}
@@ -131,6 +133,8 @@
 						[class.hub-input__group--floating]="labelType() === _labelTypes.Floating"
 						[class.hub-input__group--has-prefix]="hasPrefix()"
 						[class.hub-input__group--has-suffix]="hasSuffix()"
+						[class.hub-input__group--has-prepend]="hasPrepend()"
+						[class.hub-input__group--has-append]="hasAppend()"
 						[class.hub-input__group--has-toggle]="showsPasswordToggle()"
 						(focusout)="handleGroupFocusOut($event)"
 					>
@@ -153,7 +157,7 @@
 							(keyup.enter)="enter.emit(_value())"
 							(keydown)="updateCapsLock($event)"
 							(keyup)="updateCapsLock($event)"
-							[placeholder]="labelType() === _labelTypes.Floating ? (placeholder() || ' ') : placeholder()"
+							[placeholder]="labelType() === _labelTypes.Floating ? placeholder() || ' ' : placeholder()"
 							[min]="min() ?? null"
 							[max]="max() ?? null"
 							[step]="step()"
@@ -245,7 +249,10 @@
 							[ngTemplateOutletContext]="{ $implicit: error.value, value: error.value }"
 						></ng-container>
 						<ng-template #defaultErrorTpt>
-							<span class="hub-field__feedback-text" [innerHTML]="getInvalidFeedbackTemplate(error.key, error.value)"></span>
+							<span
+								class="hub-field__feedback-text"
+								[innerHTML]="getInvalidFeedbackTemplate(error.key, error.value)"
+							></span>
 						</ng-template>
 					</li>
 				}

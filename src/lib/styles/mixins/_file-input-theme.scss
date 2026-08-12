@@ -34,47 +34,82 @@
 // scss-docs-start hub-file-input-theme
 @mixin hub-file-input-theme(
 	// ── Dropzone surface ──
-	$bg: null,                        // dropzone background
-	$color: null,                     // dropzone text colour
-	$border-width: null,              // dropzone border width
-	$border-style: null,              // dropzone border style (defaults to `dashed`)
-	$border-color: null,              // dropzone border colour at rest
-	$border-radius: null,             // dropzone corner radius
-	$padding-x: null,                 // dropzone horizontal padding
-	$padding-y: null,                 // dropzone vertical padding
-	$min-height: null,                // dropzone minimum height
-	$gap: null,                       // gutter between icon, prompt and hint
+	$bg: null,
+	// dropzone background
+	$color: null,
+	// dropzone text colour
+	$border-width: null,
+	// dropzone border width
+	$border-style: null,
+	// dropzone border style (defaults to `dashed`)
+	$border-color: null,
+	// dropzone border colour at rest
+	$border-radius: null,
+	// dropzone corner radius
+	$padding-x: null,
+	// dropzone horizontal padding
+	$padding-y: null,
+	// dropzone vertical padding
+	$min-height: null,
+	// dropzone minimum height
+	$gap: null,
+	// gutter between icon, prompt and hint
 	// ── States ──
-	$hover-bg: null,                  // background on hover
-	$hover-border-color: null,        // border colour on hover
-	$dragover-bg: null,               // background while a drag hovers the zone
-	$dragover-border-color: null,     // border colour while a drag hovers the zone
+	$hover-bg: null,
+	// background on hover
+	$hover-border-color: null,
+	// border colour on hover
+	$dragover-bg: null,
+	// background while a drag hovers the zone
+	$dragover-border-color: null,
+	// border colour while a drag hovers the zone
 	// ── Copy ──
-	$prompt-color: null,              // "drag files here" colour
-	$browse-color: null,              // "browse files" colour
-	$hint-color: null,                // constraints-hint colour
+	$prompt-color: null,
+	// "drag files here" colour
+	$browse-color: null,
+	// "browse files" colour
+	$hint-color: null,
+	// constraints-hint colour
 	// ── Glyphs (CSS masks) ──
-	$icon: null,                      // upload glyph shown in the dropzone
-	$icon-size: null,                 // upload glyph size
-	$icon-color: null,                // upload glyph tint
-	$file-icon: null,                 // per-file glyph, for files with no thumbnail
-	$file-icon-color: null,           // per-file glyph tint
-	$remove-icon: null,               // remove-button glyph
-	$cancel-icon: null,               // cancel-upload glyph
-	$retry-icon: null,                // retry-upload glyph
-	$done-icon: null,                 // finished-upload tick
-	$done-color: null,                // finished-upload tick + item border colour
+	$icon: null,
+	// upload glyph shown in the dropzone
+	$icon-size: null,
+	// upload glyph size
+	$icon-color: null,
+	// upload glyph tint
+	$file-icon: null,
+	// per-file glyph, for files with no thumbnail
+	$file-icon-color: null,
+	// per-file glyph tint
+	$remove-icon: null,
+	// remove-button glyph
+	$cancel-icon: null,
+	// cancel-upload glyph
+	$retry-icon: null,
+	// retry-upload glyph
+	$done-icon: null,
+	// finished-upload tick
+	$done-color: null,
+	// finished-upload tick + item border colour
 	// ── File list ──
-	$item-bg: null,                   // background of a file row / tile
-	$item-border-color: null,         // border of a file row / tile
-	$item-border-radius: null,        // corner radius of a file row / tile
-	$thumb-size: null,                // thumbnail size in list preview
-	$grid-min-width: null,            // minimum tile width in grid preview
-	$grid-thumb-height: null,         // thumbnail height in grid preview
+	$item-bg: null,
+	// background of a file row / tile
+	$item-border-color: null,
+	// border of a file row / tile
+	$item-border-radius: null,
+	// corner radius of a file row / tile
+	$thumb-size: null,
+	// thumbnail size in list preview
+	$grid-min-width: null,
+	// minimum tile width in grid preview
+	$grid-thumb-height: null,
+	// thumbnail height in grid preview
 	// ── Upload progress ──
-	$progress-height: null,           // progress-bar thickness
-	$progress-track-bg: null,         // progress-bar track colour
-	$progress-bar-bg: null            // progress-bar fill colour
+	$progress-height: null,
+	// progress-bar thickness
+	$progress-track-bg: null,
+	// progress-bar track colour
+	$progress-bar-bg: null // progress-bar fill colour
 ) {
 	// Dropzone surface
 	@if $bg != null {

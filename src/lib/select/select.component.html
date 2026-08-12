@@ -38,7 +38,7 @@
 					[disabled]="disabled()"
 					[placeholder]="placeholder()"
 					[notFoundText]="notFoundText()"
-						[appendTo]="appendTo()"
+					[appendTo]="appendTo()"
 					[addTag]="$any(addTag())"
 					[addTagText]="addTagText()"
 					[minTermLength]="minTermLength()"
@@ -59,41 +59,59 @@
 					(scrollToEnd)="scrollToEnd.emit($event)"
 				>
 					@if (_optionTpl(); as tpl) {
-							<ng-template ng-option-tmp let-item="item" let-item$="item$" let-index="index" let-searchTerm="searchTerm">
-								<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ item, item$, index, searchTerm }" />
-							</ng-template>
-						}
-						@if (_optgroupTpl(); as tpl) {
-							<ng-template ng-optgroup-tmp let-item="item" let-item$="item$" let-index="index" let-searchTerm="searchTerm">
-								<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ item, item$, index, searchTerm }" />
-							</ng-template>
-						}
-						@if (_labelTpl(); as tpl) {
-							<ng-template ng-label-tmp let-item="item" let-clear="clear" let-label="label">
-								<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ item, clear, label }" />
-							</ng-template>
-						}
-						@if (_multiLabelTpl(); as tpl) {
-							<ng-template ng-multi-label-tmp let-items="items" let-clear="clear">
-								<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ items, clear }" />
-							</ng-template>
-						}
-						@if (_headerTpl(); as tpl) {
-							<ng-template ng-header-tmp let-searchTerm="searchTerm">
-								<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ searchTerm }" />
-							</ng-template>
-						}
-						@if (_footerTpl(); as tpl) {
-							<ng-template ng-footer-tmp let-searchTerm="searchTerm">
-								<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ searchTerm }" />
-							</ng-template>
-						}
-						@if (_notFoundTpl(); as tpl) {
-							<ng-template ng-notfound-tmp let-searchTerm="searchTerm">
-								<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ searchTerm }" />
-							</ng-template>
-						}
-						<ng-content></ng-content>
+						<ng-template
+							ng-option-tmp
+							let-item="item"
+							let-item$="item$"
+							let-index="index"
+							let-searchTerm="searchTerm"
+						>
+							<ng-container
+								[ngTemplateOutlet]="tpl"
+								[ngTemplateOutletContext]="{ item, item$, index, searchTerm }"
+							/>
+						</ng-template>
+					}
+					@if (_optgroupTpl(); as tpl) {
+						<ng-template
+							ng-optgroup-tmp
+							let-item="item"
+							let-item$="item$"
+							let-index="index"
+							let-searchTerm="searchTerm"
+						>
+							<ng-container
+								[ngTemplateOutlet]="tpl"
+								[ngTemplateOutletContext]="{ item, item$, index, searchTerm }"
+							/>
+						</ng-template>
+					}
+					@if (_labelTpl(); as tpl) {
+						<ng-template ng-label-tmp let-item="item" let-clear="clear" let-label="label">
+							<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ item, clear, label }" />
+						</ng-template>
+					}
+					@if (_multiLabelTpl(); as tpl) {
+						<ng-template ng-multi-label-tmp let-items="items" let-clear="clear">
+							<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ items, clear }" />
+						</ng-template>
+					}
+					@if (_headerTpl(); as tpl) {
+						<ng-template ng-header-tmp let-searchTerm="searchTerm">
+							<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ searchTerm }" />
+						</ng-template>
+					}
+					@if (_footerTpl(); as tpl) {
+						<ng-template ng-footer-tmp let-searchTerm="searchTerm">
+							<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ searchTerm }" />
+						</ng-template>
+					}
+					@if (_notFoundTpl(); as tpl) {
+						<ng-template ng-notfound-tmp let-searchTerm="searchTerm">
+							<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ searchTerm }" />
+						</ng-template>
+					}
+					<ng-content></ng-content>
 				</ng-select>
 			}
 			@case (_selectFormats.Buttons) {
@@ -162,7 +180,10 @@
 							[ngTemplateOutletContext]="{ $implicit: error.value, value: error.value }"
 						></ng-container>
 						<ng-template #defaultErrorTpt>
-							<span class="hub-field__feedback-text" [innerHTML]="getInvalidFeedbackTemplate(error.key, error.value)"></span>
+							<span
+								class="hub-field__feedback-text"
+								[innerHTML]="getInvalidFeedbackTemplate(error.key, error.value)"
+							></span>
 						</ng-template>
 					</li>
 				}

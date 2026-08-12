@@ -39,9 +39,8 @@ describe('hub-select disabled state', () => {
 		const fixture = TestBed.createComponent(DisabledHostComponent);
 		await fixture.whenStable();
 
-		const inner = fixture.debugElement.query(
-			(node) => node.componentInstance instanceof NgSelectComponent
-		).componentInstance as NgSelectComponent;
+		const inner = fixture.debugElement.query((node) => node.componentInstance instanceof NgSelectComponent)
+			.componentInstance as NgSelectComponent;
 
 		expect(inner.disabled()).toBe(false);
 
@@ -56,9 +55,8 @@ describe('hub-select disabled state', () => {
 		fixture.componentInstance.ctrl.disable();
 		await fixture.whenStable();
 
-		const inner = fixture.debugElement.query(
-			(node) => node.componentInstance instanceof NgSelectComponent
-		).componentInstance as NgSelectComponent;
+		const inner = fixture.debugElement.query((node) => node.componentInstance instanceof NgSelectComponent)
+			.componentInstance as NgSelectComponent;
 
 		expect(inner.disabled()).toBe(true);
 

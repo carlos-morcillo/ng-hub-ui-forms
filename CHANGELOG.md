@@ -5,6 +5,46 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.14.0] - 2026-08-12
+
+### Added
+
+- **`<hub-datepicker>` can pick a time, and a granularity anywhere from a year to a second.** The picker only ever yielded calendar days, so a validity window with an hour — a building access code valid "today from 9 to 21" — had to be rounded up to a whole day. A single-use code for a courier ended up opening the door around the clock. The remaining option was hand-rolling a control around `<input type="datetime-local">`, which is the thing this library exists to avoid.
+
+  The new `granularity` input takes `'year' | 'month' | 'day' | 'hour' | 'minute' | 'second'` and also selects the panel: `year` and `month` render a 12-cell period grid, `day` the calendar as before, and anything finer adds a time strip beneath it. It is orthogonal to `mode` — `mode` says how many points are picked, `granularity` how precise each one is — so `mode="range" granularity="month"` yields `{ start: "2026-01", end: "2026-06" }`, and both endpoints of a time range carry their own hour.
+
+  **The default is `'day'`, which emits the same bare `YYYY-MM-DD` string it always has.** Nothing that exists today changes behaviour; a named block of tests states that guarantee explicitly rather than leaving it to inspection.
+
+  From `hour` onwards the value is a full ISO 8601 timestamp carrying **the reader's local wall clock and the offset of that very date** — `2026-09-01T09:00:00+02:00` in Madrid in September, `+01:00` for the same clock in January. Local-with-offset over UTC on purpose: every calculation in the component already happens in the reader's zone by date parts, so this is the honest serialization of what was computed rather than a conversion the value no longer shows. It still denotes an unambiguous instant, and a consumer who wants UTC converts losslessly with `new Date(value).toISOString()`.
+
+- **Three format axes, where before only display was configurable.** The value format was hardcoded inside `formatISO()` and the input format inside `parseDate()`, so a form model that had to hold `Date` objects, or an API that sent epoch millis, meant translating on both sides of the control.
+
+  `valueFormat` says what the bound control holds — `'iso'` (default), `'date'` for a native `Date`, `'timestamp'` for epoch milliseconds, or a function for anything else. `parse` says how an incoming value is read, overriding the built-in detection of ISO strings of any width, `Date` instances and epoch milliseconds, and it applies to `min` and `max` too. `displayFormat` keeps its current meaning and now additionally accepts an Angular pattern such as `'dd/MM/yyyy HH:mm'` or a formatting function.
+
+  The asymmetry is deliberate. A pattern *parser* would mean writing a locale-aware date parser inside a library that advertises having no date dependency, and `01/02/2026` is two different days depending on who reads it. Formatting is cheap — `formatDate()` from `@angular/common` is already a dependency — so patterns are offered where they are free and refused where they would cost a parser.
+
+- **`minuteStep`, `secondStep`, `hourFormat` and `timeDisplayFormat`**, each with a global default in `provideHubForms`. `hourFormat` is derived from the locale unless forced, and it governs the field's own display as well as the panel — otherwise a picker set to a 24-hour clock would show `14:30` in the panel and `02:30 PM` in the input, the same value contradicting itself.
+
+- **The display is fitted to the granularity.** The default `displayFormat` names a day, so a month picker emitting `2026-09` would otherwise read `09/01/2026` in the field — showing a day nobody chose. `Intl` options now gain the time parts once a time is carried and lose the parts finer than the unit when it is coarser than a day (`2026` for a year, `09/2026` for a month). An explicit pattern string or function is never touched: the caller said exactly what they wanted.
+
+- **New translatable labels** in `HubDatepickerLabels`: `done`, `hour`, `minute`, `second`, `meridiem`, `time`, `startTime` and `endTime`. AM/PM comes from `Intl`, like month and weekday names, so it needs no entry.
+
+### Changed
+
+- **`min` and `max` now honour the time, not just the day.** A day is disabled only when no instant of it is allowed, so `min = 2026-09-01T14:00` leaves 1 September clickable and the time controls refuse the earlier hours. A step that would leave the bounds is refused rather than clamped: clamping a held-down arrow key pins the value to the bound and reads as the control being stuck. At `day` granularity the comparison stays day-level, exactly as before.
+
+- **Range endpoints are ordered by instant rather than by day.** The trap was never the range that crosses midnight — day-level ordering already handled `1 Sep 22:00 → 2 Sep 06:00`. It was the second click landing on the *same* day: `compareDay()` returned 0 and the endpoints were left in click order, producing an end before its start. Picking 21:00 and then 09:00 on one day now reorders itself.
+
+- **A time-carrying granularity keeps the panel open on select**, since closing on the day click would strand time controls the user has not reached yet. `closeOnSelect` is honoured at `day` and coarser; finer than that, a **Done** action appears in the footer. `Escape` and a backdrop click close as always.
+
+- **`HubDateRange` and `HubDateValue` take an optional type parameter defaulting to `string`.** Every existing annotation keeps compiling and keeps meaning what it meant; consumers using `valueFormat="date"` write `HubDateValue<Date>`.
+
+### Fixed
+
+- **An input with `prepend` or `append` drew two boxes instead of one field.** The control kept its four rounded corners and the addon drew its own rounded box right against it, so `<hub-input append="€">` read as a field with a separate pill parked behind it rather than as an amount with its unit. The rules meant to flatten the joining corners were already written and had never once matched: both hung off the adjacent-sibling combinator, and the prefix and suffix affix spans are rendered unconditionally — an addon is never the control's adjacent sibling, so `+` reached an affix and stopped. Silent, because a selector that matches nothing costs nothing.
+  The flattening is now driven by `hub-input__group--has-prepend` / `hub-input__group--has-append` on the group, the same shape the password toggle already used for the same job, so it no longer depends on what happens to sit between the addon and the control. Both sides are covered, including a field with an addon at each end, and the password toggle still keeps the end corner when it is present.
+  A run of several addons on one side had the same seam: only the outermost addon of the run now rounds its outer corners, so `[prepend]="['$', 'US']"` reads as one piece instead of stacked pills.
+
 ## [22.13.0] - 2026-08-07
 
 ### Added

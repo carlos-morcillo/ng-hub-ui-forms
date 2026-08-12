@@ -308,8 +308,11 @@ export class HubInputComponent extends HubFieldControl {
 	/** Normalized list of append addons. */
 	protected readonly _append = computed<string[]>(() => this.#toAddonList(this.append()));
 
-	/** Whether the control is wrapped in an input group (has addons). */
-	protected readonly hasGroup = computed<boolean>(() => this._prepend().length > 0 || this._append().length > 0);
+	/** Whether a leading addon is present. */
+	protected readonly hasPrepend = computed<boolean>(() => this._prepend().length > 0);
+
+	/** Whether a trailing addon is present. */
+	protected readonly hasAppend = computed<boolean>(() => this._append().length > 0);
 
 	/** Resolves the actual native `type` attribute, accounting for password reveal. */
 	protected readonly resolvedType = computed<string>(() => {

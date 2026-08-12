@@ -50,7 +50,16 @@
 	// ── Input ─────────────────────────────────────────────────────────────────
 	--hub-input-color: var(--hub-sys-text-primary, #212529);
 	--hub-input-bg: var(--hub-sys-surface-page, #fff);
-	--hub-input-font-family: var(--hub-ref-font-family-base, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif);
+	--hub-input-font-family: var(
+		--hub-ref-font-family-base,
+		system-ui,
+		-apple-system,
+		'Segoe UI',
+		Roboto,
+		'Helvetica Neue',
+		Arial,
+		sans-serif
+	);
 	--hub-input-font-size: var(--hub-ref-font-size-base, 1rem);
 	--hub-input-font-weight: var(--hub-ref-font-weight-base, 400);
 	--hub-input-line-height: var(--hub-ref-line-height-base, 1.5);

@@ -194,9 +194,7 @@ export abstract class HubFieldControl extends HubFormControl implements ControlV
 
 		if (!el || !('validity' in el)) {
 			el = this._elementRef.nativeElement.querySelector(`[id="${this.id}"]`) as
-				| HTMLInputElement
-				| HTMLTextAreaElement
-				| null;
+				HTMLInputElement | HTMLTextAreaElement | null;
 		}
 
 		if (!el || !('validity' in el)) {

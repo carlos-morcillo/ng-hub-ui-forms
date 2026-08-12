@@ -30,8 +30,12 @@ hub-slider.hidden-control {
 		// Layer the fill <image> (sized to the current percentage) over the base track
 		// colour, so `--hub-slider-track-fill` can be a gradient that renders intact
 		// clipped to the filled width — instead of a single colour-stop in a gradient.
-		background: var(--hub-slider-track-fill) no-repeat, var(--hub-slider-track-bg);
-		background-size: calc(var(--hub-slider-percent) * 1%) 100%, 100% 100%;
+		background:
+			var(--hub-slider-track-fill) no-repeat,
+			var(--hub-slider-track-bg);
+		background-size:
+			calc(var(--hub-slider-percent) * 1%) 100%,
+			100% 100%;
 		border-radius: var(--hub-slider-track-border-radius);
 		cursor: pointer;
 
@@ -137,12 +141,14 @@ hub-slider.hidden-control {
 			// the free space (container − image), so `from%` is divided by that free fraction;
 			// `max(…, 1)` guards the full-range case (from 0 → to 100) where the band fills the
 			// whole track and any position collapses to the left edge anyway.
-			background: var(--hub-slider-track-fill) no-repeat, var(--hub-slider-track-bg);
-			background-size: calc((var(--hub-slider-to) - var(--hub-slider-from)) * 1%) 100%, 100% 100%;
-			background-position: calc(
-					var(--hub-slider-from) / max(100 - var(--hub-slider-to) + var(--hub-slider-from), 1) * 100%
-				)
-				center,
+			background:
+				var(--hub-slider-track-fill) no-repeat,
+				var(--hub-slider-track-bg);
+			background-size:
+				calc((var(--hub-slider-to) - var(--hub-slider-from)) * 1%) 100%,
+				100% 100%;
+			background-position:
+				calc(var(--hub-slider-from) / max(100 - var(--hub-slider-to) + var(--hub-slider-from), 1) * 100%) center,
 				0 0;
 			pointer-events: none;
 		}

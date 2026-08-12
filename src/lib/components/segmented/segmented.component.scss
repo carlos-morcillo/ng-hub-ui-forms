@@ -32,8 +32,11 @@ hub-segmented.hidden-control {
 		border-radius: calc(var(--hub-segmented-radius) - var(--hub-segmented-gap));
 		box-shadow: var(--hub-sys-shadow-sm, 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075));
 		pointer-events: none;
-		transition: left var(--hub-segmented-indicator-transition), top var(--hub-segmented-indicator-transition),
-			width var(--hub-segmented-indicator-transition), height var(--hub-segmented-indicator-transition);
+		transition:
+			left var(--hub-segmented-indicator-transition),
+			top var(--hub-segmented-indicator-transition),
+			width var(--hub-segmented-indicator-transition),
+			height var(--hub-segmented-indicator-transition);
 	}
 
 	@media (prefers-reduced-motion: reduce) {
@@ -80,7 +83,10 @@ hub-segmented.hidden-control {
 		white-space: nowrap;
 		border-radius: calc(var(--hub-segmented-radius) - var(--hub-segmented-gap));
 		cursor: pointer;
-		transition: var(--hub-form-transition), color 0.15s ease-in-out, background-color 0.15s ease-in-out;
+		transition:
+			var(--hub-form-transition),
+			color 0.15s ease-in-out,
+			background-color 0.15s ease-in-out;
 
 		&:focus-visible {
 			outline: 0;

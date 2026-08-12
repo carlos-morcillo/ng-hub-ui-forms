@@ -26,15 +26,20 @@
 // scss-docs-start hub-forms-theme
 @mixin hub-forms-theme(
 	// ── Focus ring (shared by every control) ──
-	$focus-ring-color: null,   // focus-ring colour
-	$focus-ring-width: null,   // focus-ring width
+	$focus-ring-color: null,
+	// focus-ring colour
+	$focus-ring-width: null,
+	// focus-ring width
 	// ── Validation accents ──
-	$invalid-color: null,      // invalid text + border colour
-	$valid-color: null,        // valid text + border colour
+	$invalid-color: null,
+	// invalid text + border colour
+	$valid-color: null,
+	// valid text + border colour
 	// ── State ──
-	$disabled-opacity: null,   // opacity applied to a disabled control
+	$disabled-opacity: null,
+	// opacity applied to a disabled control
 	// ── Motion ──
-	$transition: null          // border/box-shadow transition shared by inputs
+	$transition: null // border/box-shadow transition shared by inputs
 ) {
 	// Focus ring
 	@if $focus-ring-color != null {

@@ -83,8 +83,7 @@ export abstract class HubFormControl implements OnInit, AfterContentInit, OnDest
 		// Derive `required` from the reactive control's validators for BOTH reactive
 		// bindings (`formControlName` and `[formControl]`); template-driven bindings
 		// (ngModel) keep honoring the inline `required` input instead.
-		const isReactiveBinding =
-			this._control instanceof FormControlName || this._control instanceof FormControlDirective;
+		const isReactiveBinding = this._control instanceof FormControlName || this._control instanceof FormControlDirective;
 
 		if (this._control?.control && isReactiveBinding) {
 			const control = this._control.control;

@@ -21,13 +21,7 @@ import { HubSelectComponent } from '../select/select.component';
  */
 @Component({
 	standalone: true,
-	imports: [
-		HubInputComponent,
-		HubTextareaComponent,
-		HubSelectComponent,
-		HubDatepickerComponent,
-		ReactiveFormsModule
-	],
+	imports: [HubInputComponent, HubTextareaComponent, HubSelectComponent, HubDatepickerComponent, ReactiveFormsModule],
 	template: `
 		<hub-input [formControl]="ctrl" [readonly]="ro()" label="Text" />
 		<hub-textarea [formControl]="ctrl" [readonly]="ro()" label="Notes" />
@@ -54,31 +48,24 @@ describe('read-only field theme', () => {
 		await fixture.whenStable();
 	});
 
-	const roots = (): HTMLElement[] =>
-		Array.from(fixture.nativeElement.querySelectorAll('.hub-field'));
+	const roots = (): HTMLElement[] => Array.from(fixture.nativeElement.querySelectorAll('.hub-field'));
 
 	it('marks nothing while the fields are editable', () => {
 		expect(roots().length).toBe(4);
-		expect(
-			roots().every((el) => !el.classList.contains('hub-field--readonly'))
-		).toBe(true);
+		expect(roots().every((el) => !el.classList.contains('hub-field--readonly'))).toBe(true);
 	});
 
 	it('marks every field when it turns read-only', async () => {
 		fixture.componentInstance.ro.set(true);
 		await fixture.whenStable();
 
-		expect(
-			roots().every((el) => el.classList.contains('hub-field--readonly'))
-		).toBe(true);
+		expect(roots().every((el) => el.classList.contains('hub-field--readonly'))).toBe(true);
 	});
 
 	it('does not confuse read-only with disabled', async () => {
 		fixture.componentInstance.ro.set(true);
 		await fixture.whenStable();
 
-		expect(
-			roots().some((el) => el.classList.contains('hub-field--disabled'))
-		).toBe(false);
+		expect(roots().some((el) => el.classList.contains('hub-field--disabled'))).toBe(false);
 	});
 });

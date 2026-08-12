@@ -35,7 +35,9 @@
 			(blur)="handleBlur($event)"
 		/>
 		@if (clearable() && displayValue() && !disabled() && !readonly()) {
-			<button type="button" class="hub-datepicker__clear" [attr.aria-label]="_labels().clear" (click)="clear()">&times;</button>
+			<button type="button" class="hub-datepicker__clear" [attr.aria-label]="_labels().clear" (click)="clear()">
+				&times;
+			</button>
 		}
 		<button
 			type="button"
@@ -67,7 +69,10 @@
 							[ngTemplateOutletContext]="{ $implicit: error.value, value: error.value }"
 						></ng-container>
 						<ng-template #defaultErrorTpt>
-							<span class="hub-field__feedback-text" [innerHTML]="getInvalidFeedbackTemplate(error.key, error.value)"></span>
+							<span
+								class="hub-field__feedback-text"
+								[innerHTML]="getInvalidFeedbackTemplate(error.key, error.value)"
+							></span>
 						</ng-template>
 					</li>
 				}
@@ -92,55 +97,160 @@
 	(backdropClick)="close()"
 	(detach)="close()"
 >
-	<div class="hub-datepicker__panel" role="dialog" [attr.aria-label]="monthYearLabel()">
-		<header class="hub-datepicker__header">
-			<div class="hub-datepicker__nav-group">
-				<button type="button" class="hub-datepicker__nav" [attr.aria-label]="_labels().previousYear" (click)="shiftMonth(-12)">«</button>
-				<button type="button" class="hub-datepicker__nav" [attr.aria-label]="_labels().previousMonth" (click)="shiftMonth(-1)">‹</button>
-			</div>
-			<span class="hub-datepicker__title" aria-live="polite">{{ monthYearLabel() }}</span>
-			<div class="hub-datepicker__nav-group">
-				<button type="button" class="hub-datepicker__nav" [attr.aria-label]="_labels().nextMonth" (click)="shiftMonth(1)">›</button>
-				<button type="button" class="hub-datepicker__nav" [attr.aria-label]="_labels().nextYear" (click)="shiftMonth(12)">»</button>
-			</div>
-		</header>
-
-		<div class="hub-datepicker__weekdays" aria-hidden="true">
-			@for (wd of weekdays(); track $index) {
-				<span class="hub-datepicker__weekday">{{ wd }}</span>
-			}
-		</div>
-
-		<div class="hub-datepicker__grid" role="grid" (keydown)="onGridKeydown($event)">
-			@for (cell of grid(); track cell.date.getTime()) {
+	<div class="hub-datepicker__panel" role="dialog" [attr.aria-label]="_isPeriod() ? periodLabel() : monthYearLabel()">
+		@if (_isPeriod()) {
+			<header class="hub-datepicker__header">
 				<button
 					type="button"
-					role="gridcell"
-					class="hub-datepicker__cell"
-					[class.hub-datepicker__cell--outside]="!cell.currentMonth"
-					[class.hub-datepicker__cell--today]="cell.today"
-					[class.hub-datepicker__cell--selected]="cell.selected || cell.rangeStart || cell.rangeEnd"
-					[class.hub-datepicker__cell--range-start]="cell.rangeStart"
-					[class.hub-datepicker__cell--range-end]="cell.rangeEnd"
-					[class.hub-datepicker__cell--in-range]="cell.inRange"
-					[attr.data-time]="cell.date.getTime()"
-					[attr.tabindex]="cell.focused ? 0 : -1"
-					[attr.aria-selected]="cell.selected || cell.rangeStart || cell.rangeEnd"
-					[disabled]="cell.disabled"
-					(click)="selectDay(cell)"
+					class="hub-datepicker__nav"
+					[attr.aria-label]="_labels().previousYear"
+					(click)="shiftPeriod(-1)"
 				>
-					{{ cell.day }}
+					‹
 				</button>
-			}
-		</div>
+				<span class="hub-datepicker__title" aria-live="polite">{{ periodLabel() }}</span>
+				<button
+					type="button"
+					class="hub-datepicker__nav"
+					[attr.aria-label]="_labels().nextYear"
+					(click)="shiftPeriod(1)"
+				>
+					›
+				</button>
+			</header>
 
-		@if (showToday() || clearable()) {
+			<hub-datepicker-period
+				[granularity]="$any(_granularity())"
+				[viewDate]="_viewDate()"
+				[focusedDate]="_focusedDate()"
+				[selectionStart]="rangeStart()"
+				[selectionEnd]="rangeEnd()"
+				[range]="_isRange()"
+				[locale]="locale()"
+				[min]="_minDate()"
+				[max]="_maxDate()"
+				[labels]="_labels()"
+				(pick)="selectPeriod($event)"
+				(focusMove)="onPeriodFocusMove($event)"
+				(dismiss)="close()"
+			/>
+		} @else {
+			<header class="hub-datepicker__header">
+				<div class="hub-datepicker__nav-group">
+					<button
+						type="button"
+						class="hub-datepicker__nav"
+						[attr.aria-label]="_labels().previousYear"
+						(click)="shiftMonth(-12)"
+					>
+						«
+					</button>
+					<button
+						type="button"
+						class="hub-datepicker__nav"
+						[attr.aria-label]="_labels().previousMonth"
+						(click)="shiftMonth(-1)"
+					>
+						‹
+					</button>
+				</div>
+				<span class="hub-datepicker__title" aria-live="polite">{{ monthYearLabel() }}</span>
+				<div class="hub-datepicker__nav-group">
+					<button
+						type="button"
+						class="hub-datepicker__nav"
+						[attr.aria-label]="_labels().nextMonth"
+						(click)="shiftMonth(1)"
+					>
+						›
+					</button>
+					<button
+						type="button"
+						class="hub-datepicker__nav"
+						[attr.aria-label]="_labels().nextYear"
+						(click)="shiftMonth(12)"
+					>
+						»
+					</button>
+				</div>
+			</header>
+
+			<div class="hub-datepicker__weekdays" aria-hidden="true">
+				@for (wd of weekdays(); track $index) {
+					<span class="hub-datepicker__weekday">{{ wd }}</span>
+				}
+			</div>
+
+			<div class="hub-datepicker__grid" role="grid" (keydown)="onGridKeydown($event)">
+				@for (cell of grid(); track cell.date.getTime()) {
+					<button
+						type="button"
+						role="gridcell"
+						class="hub-datepicker__cell"
+						[class.hub-datepicker__cell--outside]="!cell.currentMonth"
+						[class.hub-datepicker__cell--today]="cell.today"
+						[class.hub-datepicker__cell--selected]="cell.selected || cell.rangeStart || cell.rangeEnd"
+						[class.hub-datepicker__cell--range-start]="cell.rangeStart"
+						[class.hub-datepicker__cell--range-end]="cell.rangeEnd"
+						[class.hub-datepicker__cell--in-range]="cell.inRange"
+						[attr.data-time]="cell.date.getTime()"
+						[attr.tabindex]="cell.focused ? 0 : -1"
+						[attr.aria-selected]="cell.selected || cell.rangeStart || cell.rangeEnd"
+						[disabled]="cell.disabled"
+						(click)="selectDay(cell)"
+					>
+						{{ cell.day }}
+					</button>
+				}
+			</div>
+		}
+
+		@if (_hasTime()) {
+			<div class="hub-datepicker__times">
+				<hub-datepicker-time
+					[value]="startTimeValue()"
+					(valueChange)="onStartTimeChange($event)"
+					[label]="_isRange() ? _labels().startTime : _labels().time"
+					[granularity]="_granularity()"
+					[locale]="locale()"
+					[hour12]="_hour12()"
+					[minuteStep]="_minuteStep()"
+					[secondStep]="_secondStep()"
+					[min]="_minDate()"
+					[max]="_maxDate()"
+					[labels]="_labels()"
+				/>
+
+				@if (_isRange()) {
+					<hub-datepicker-time
+						[value]="endTimeValue()"
+						(valueChange)="onEndTimeChange($event)"
+						[label]="_labels().endTime"
+						[granularity]="_granularity()"
+						[locale]="locale()"
+						[hour12]="_hour12()"
+						[minuteStep]="_minuteStep()"
+						[secondStep]="_secondStep()"
+						[min]="_minDate()"
+						[max]="_maxDate()"
+						[labels]="_labels()"
+					/>
+				}
+			</div>
+		}
+
+		@if (showToday() || clearable() || _hasTime()) {
 			<footer class="hub-datepicker__footer">
 				@if (showToday()) {
 					<button type="button" class="hub-datepicker__action" (click)="goToToday()">{{ _labels().today }}</button>
 				}
 				@if (clearable()) {
 					<button type="button" class="hub-datepicker__action" (click)="clear()">{{ _labels().clear }}</button>
+				}
+				@if (_hasTime()) {
+					<button type="button" class="hub-datepicker__action hub-datepicker__action--primary" (click)="close()">
+						{{ _labels().done }}
+					</button>
 				}
 			</footer>
 		}

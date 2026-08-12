@@ -55,7 +55,10 @@ export const hubFormControlAdapter: HubFormControlAdapter = {
 	create(container: ViewContainerRef, config: HubFormControlConfig): HubFormControlHandle {
 		if (config.kind === 'select') {
 			const ref = container.createComponent(HubSelectComponent);
-			ref.setInput('items', (config.options ?? []).map((option) => ({ ...option })));
+			ref.setInput(
+				'items',
+				(config.options ?? []).map((option) => ({ ...option }))
+			);
 			ref.setInput('bindLabel', 'label');
 			ref.setInput('bindValue', 'value');
 			ref.setInput('clearable', false);

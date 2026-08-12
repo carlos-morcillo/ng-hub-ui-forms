@@ -12,7 +12,8 @@ hub-fieldset.hidden-control {
 .hub-fieldset {
 	min-width: 0;
 	margin: 0;
-	padding: var(--hub-form-fieldset-padding-y, var(--hub-ref-space-3, 1rem)) var(--hub-form-fieldset-padding-x, var(--hub-ref-space-3, 1rem));
+	padding: var(--hub-form-fieldset-padding-y, var(--hub-ref-space-3, 1rem))
+		var(--hub-form-fieldset-padding-x, var(--hub-ref-space-3, 1rem));
 	background: var(--hub-form-fieldset-bg, transparent);
 	border: var(--hub-form-fieldset-border-width, var(--hub-ref-border-width, 1px)) solid
 		var(--hub-form-fieldset-border-color, var(--hub-sys-border-color-default, #dee2e6));

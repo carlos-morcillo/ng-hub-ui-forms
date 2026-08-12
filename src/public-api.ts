@@ -87,7 +87,15 @@ export type { HubInputFormat, HubPasswordLabels, HubPasswordStrengthScore } from
 export { HubInputFormats, defaultHubPasswordLabels } from './lib/interfaces/input.interface';
 export type { HubSelectFormat } from './lib/interfaces/select.interface';
 export { HubSelectFormats } from './lib/interfaces/select.interface';
-export type { HubDatepickerMode, HubDateRange, HubDateValue, HubDatepickerLabels, HubDatepickerConfig } from './lib/interfaces/datepicker.interface';
+export type {
+	HubDatepickerMode,
+	HubDatepickerGranularity,
+	HubDatepickerValueFormat,
+	HubDateRange,
+	HubDateValue,
+	HubDatepickerLabels,
+	HubDatepickerConfig
+} from './lib/interfaces/datepicker.interface';
 export { defaultHubDatepickerConfig, defaultHubDatepickerLabels } from './lib/interfaces/datepicker.interface';
 export type {
 	HubFileConstraints,

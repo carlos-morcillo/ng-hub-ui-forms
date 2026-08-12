@@ -175,7 +175,10 @@
 							[ngTemplateOutletContext]="{ $implicit: error.value, value: error.value }"
 						></ng-container>
 						<ng-template #defaultErrorTpt>
-							<span class="hub-field__feedback-text" [innerHTML]="getInvalidFeedbackTemplate(error.key, error.value)"></span>
+							<span
+								class="hub-field__feedback-text"
+								[innerHTML]="getInvalidFeedbackTemplate(error.key, error.value)"
+							></span>
 						</ng-template>
 					</li>
 				}

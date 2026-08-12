@@ -92,7 +92,7 @@ mode — no Bootstrap dependency.
 
 ## 🎯 Features
 
-- **Fields** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, with input-group addons & masks, projected in-field affixes, a built-in `clearable` button and debounced typeahead `search`; the `file` format is **deprecated** → use `hub-file-input`), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider` (single / dual thumb, gradient fill), `hub-segmented` (segmented control field — single & multiple selection, horizontal & vertical, with label + validation), `hub-select` (dropdown format, grouping, client-side search via `searchable` **and** server-side async typeahead via a `typeahead` Subject, tag creation with `addTag`, custom templates; the `buttons` / `checkbox` / `radio` formats are **deprecated** → use `hub-segmented`), `hub-datepicker` (single & range, keyboard nav, i18n), `hub-file-input` (drag & drop, clipboard paste, type/size limits, previews, optional upload progress).
+- **Fields** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, with input-group addons & masks, projected in-field affixes, a built-in `clearable` button and debounced typeahead `search`; the `file` format is **deprecated** → use `hub-file-input`), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider` (single / dual thumb, gradient fill), `hub-segmented` (segmented control field — single & multiple selection, horizontal & vertical, with label + validation), `hub-select` (dropdown format, grouping, client-side search via `searchable` **and** server-side async typeahead via a `typeahead` Subject, tag creation with `addTag`, custom templates; the `buttons` / `checkbox` / `radio` formats are **deprecated** → use `hub-segmented`), `hub-datepicker` (single & range at any granularity from a year to a second, time picking, min/max down to the minute, keyboard nav, i18n), `hub-file-input` (drag & drop, clipboard paste, type/size limits, previews, optional upload progress).
 - **Automatic error display** — bind a field and its control errors render below it; `hub-fieldset`, `form[hubForm]` and `hub-legend` surface group- and form-level (cross-field) errors the same way, with zero wiring.
 - **Containers** — `hub-fieldset` / `form[hubForm]` group fields and show their group errors; `hub-legend` renders an accessible legend.
 - **Configurable** — `provideHubForms({ … })` sets the invalid-feedback templates, datepicker locale/labels, file-input labels and more, app-wide or per instance.
@@ -295,6 +295,51 @@ A projected `hubSegmentedOption` template replaces each segment's content (icons
 <hub-datepicker formControlName="date" label="Date" />
 <hub-datepicker formControlName="range" mode="range" label="Stay" />
 ```
+
+`granularity` sets how precise each picked point is, and selects the panel with it. It is
+orthogonal to `mode`: `mode` says how many points are picked, `granularity` how precise each
+one is.
+
+```html
+<!-- a validity window: each endpoint carries its own time -->
+<hub-datepicker formControlName="window" mode="range" granularity="minute" [minuteStep]="15" />
+
+<!-- coarse units get a 12-cell period grid instead of the calendar -->
+<hub-datepicker formControlName="billingPeriod" granularity="month" />
+```
+
+| `granularity` | Panel | Value (default `valueFormat`) |
+| --- | --- | --- |
+| `year` | Decade grid | `"2026"` |
+| `month` | 12-month grid | `"2026-09"` |
+| `day` *(default)* | Calendar | `"2026-09-01"` |
+| `hour` / `minute` / `second` | Calendar + time strip | `"2026-09-01T09:30:00+02:00"` |
+
+**The value's timezone.** At `day` and coarser it is a bare calendar date with no zone attached,
+exactly as before. From `hour` onwards it is a full ISO 8601 timestamp carrying **the reader's
+local wall clock and the offset of that very date** — `+02:00` in Madrid in September, `+01:00`
+for the same clock in January. It denotes an unambiguous instant; convert with
+`new Date(value).toISOString()` if you need UTC.
+
+`min` and `max` honour the time too: a day is disabled only when no instant of it is allowed, so
+`min="2026-09-01T14:00"` leaves 1 September clickable and the time controls refuse the earlier
+hours.
+
+Three independent axes control the formats:
+
+```html
+<!-- what the control holds: 'iso' (default) | 'date' | 'timestamp' | (date) => unknown -->
+<hub-datepicker formControlName="due" valueFormat="date" />
+
+<!-- what the user reads: Intl options | an Angular pattern | (date) => string -->
+<hub-datepicker formControlName="due" displayFormat="dd/MM/yyyy HH:mm" />
+
+<!-- how an incoming value is read; also applies to min/max -->
+<hub-datepicker formControlName="due" [parse]="parseLegacyDate" />
+```
+
+ISO strings of any width, `Date` instances and epoch milliseconds are detected automatically, so
+`parse` is only needed for dialects outside that set.
 
 ### File input
 

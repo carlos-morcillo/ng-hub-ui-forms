@@ -5,56 +5,12 @@ import {
 	formatISO,
 	isAfterDay,
 	isBeforeDay,
-	isDateDisabled,
 	isInRange,
 	isSameDay,
-	parseDate,
 	weekdayLabels
 } from './date-utils';
 
 describe('date-utils', () => {
-	describe('parseDate', () => {
-		it('returns null for nullish or empty values', () => {
-			expect(parseDate(null)).toBeNull();
-			expect(parseDate(undefined)).toBeNull();
-			expect(parseDate('')).toBeNull();
-		});
-
-		it('parses an ISO YYYY-MM-DD string at local midnight', () => {
-			const date = parseDate('2026-06-15')!;
-
-			expect(date.getFullYear()).toBe(2026);
-			expect(date.getMonth()).toBe(5);
-			expect(date.getDate()).toBe(15);
-			expect(date.getHours()).toBe(0);
-		});
-
-		it('parses an ISO string with a trailing time portion (date only)', () => {
-			const date = parseDate('2026-06-15T14:30:00')!;
-
-			expect(date.getFullYear()).toBe(2026);
-			expect(date.getMonth()).toBe(5);
-			expect(date.getDate()).toBe(15);
-		});
-
-		it('normalizes a Date instance to local midnight', () => {
-			const date = parseDate(new Date(2026, 5, 15, 18, 45))!;
-
-			expect(date.getFullYear()).toBe(2026);
-			expect(date.getMonth()).toBe(5);
-			expect(date.getDate()).toBe(15);
-			expect(date.getHours()).toBe(0);
-		});
-
-		it('returns null for an invalid Date instance', () => {
-			expect(parseDate(new Date('not-a-date'))).toBeNull();
-		});
-
-		it('returns null for an unparseable string', () => {
-			expect(parseDate('totally invalid')).toBeNull();
-		});
-	});
-
 	describe('formatISO', () => {
 		it('formats a date as zero-padded YYYY-MM-DD', () => {
 			expect(formatISO(new Date(2026, 5, 15))).toBe('2026-06-15');
@@ -189,35 +145,6 @@ describe('date-utils', () => {
 			expect(isAfterDay(new Date(2026, 5, 16), ref)).toBe(true);
 			expect(isAfterDay(new Date(2026, 5, 15), ref)).toBe(false);
 			expect(isAfterDay(new Date(2026, 5, 14), ref)).toBe(false);
-		});
-	});
-
-	describe('isDateDisabled', () => {
-		const date = new Date(2026, 5, 15);
-
-		it('returns false with no bounds and no predicate', () => {
-			expect(isDateDisabled(date, null, null, null)).toBe(false);
-		});
-
-		it('disables dates before the min bound', () => {
-			expect(isDateDisabled(date, new Date(2026, 5, 16), null, null)).toBe(true);
-		});
-
-		it('allows the min bound itself', () => {
-			expect(isDateDisabled(date, new Date(2026, 5, 15), null, null)).toBe(false);
-		});
-
-		it('disables dates after the max bound', () => {
-			expect(isDateDisabled(date, null, new Date(2026, 5, 14), null)).toBe(true);
-		});
-
-		it('allows the max bound itself', () => {
-			expect(isDateDisabled(date, null, new Date(2026, 5, 15), null)).toBe(false);
-		});
-
-		it('delegates to the disabled predicate when within bounds', () => {
-			expect(isDateDisabled(date, null, null, () => true)).toBe(true);
-			expect(isDateDisabled(date, null, null, () => false)).toBe(false);
 		});
 	});
 

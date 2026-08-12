@@ -1,5 +1,17 @@
 import { KeyValuePipe } from '@angular/common';
-import { booleanAttribute, ChangeDetectionStrategy, Component, computed, ElementRef, input, numberAttribute, output, signal, viewChildren, ViewEncapsulation } from '@angular/core';
+import {
+	booleanAttribute,
+	ChangeDetectionStrategy,
+	Component,
+	computed,
+	ElementRef,
+	input,
+	numberAttribute,
+	output,
+	signal,
+	viewChildren,
+	ViewEncapsulation
+} from '@angular/core';
 import { FormTextType, FormTextTypes, HubLabelType, HubLabelTypes } from '../../interfaces/common.interface';
 import { HubFieldControl } from '../../shared/hub-field-control';
 
@@ -80,7 +92,9 @@ export type HubOtpMode = 'numeric' | 'alphanumeric' | 'alpha';
 						<ul>
 							@for (error of errors | keyvalue; track error.key) {
 								<li>
-									<span class="hub-field__feedback-text">{{ getInvalidFeedbackTemplate(error.key, error.value) }}</span>
+									<span class="hub-field__feedback-text">{{
+										getInvalidFeedbackTemplate(error.key, error.value)
+									}}</span>
 								</li>
 							}
 						</ul>

@@ -26,15 +26,21 @@
 // scss-docs-start hub-segmented-theme
 @mixin hub-segmented-theme(
 	// ── Colour ──
-	$bg: null,                // the bar (track) surface
-	$selected-bg: null,       // selected pill / sliding-indicator fill
-	$selected-color: null,    // selected option text colour
+	$bg: null,
+	// the bar (track) surface
+	$selected-bg: null,
+	// selected pill / sliding-indicator fill
+	$selected-color: null,
+	// selected option text colour
 	// ── Shape ──
-	$radius: null,            // bar corner radius (pill radius derives from it)
+	$radius: null,
+	// bar corner radius (pill radius derives from it)
 	// ── Density / spacing ──
-	$gap: null,               // padding around, and gutter between, the options
-	$padding-x: null,         // option horizontal padding
-	$padding-y: null          // option vertical padding
+	$gap: null,
+	// padding around, and gutter between, the options
+	$padding-x: null,
+	// option horizontal padding
+	$padding-y: null // option vertical padding
 ) {
 	// Colour
 	@if $bg != null {
