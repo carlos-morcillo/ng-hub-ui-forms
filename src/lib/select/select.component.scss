@@ -84,17 +84,33 @@ hub-select.hidden-control {
 	}
 }
 
-.hub-select__affix--suffix {
+// The doubled class is deliberate. What is projected here brings chrome from its own
+// package — `hubButton` sets a 1.5px border, its own radius and its own vertical padding
+// — and that stylesheet loads after this one, so a single class ties on specificity and
+// loses on order. Attached means attached: the action wears the field's border and the
+// field's height, or the seam shows as a thicker, darker line and the two boxes sit at
+// different heights, which is exactly what a group is supposed to hide.
+.hub-select__affix--suffix.hub-select__affix--suffix {
 	display: flex;
 	align-items: stretch;
 	flex: 0 0 auto;
 
-	// Whatever is projected fills the field's height, so the two line up however tall
-	// the control grows — a multiselect with three chips included.
 	> * {
-		height: 100%;
+		// Vertical padding surrendered to the group: it is what made the action taller
+		// than the field it is attached to. The inline padding is the control's own and
+		// stays, so an icon keeps its breathing room.
+		padding-block: 0;
+		height: auto;
+		align-self: stretch;
+		min-height: var(--hub-select-min-height);
+
+		// The field's border, not the action's, so the seam is one line of one colour.
+		border: var(--hub-select-border-width) solid var(--hub-select-border-color);
 		border-start-start-radius: 0;
 		border-end-start-radius: 0;
+		border-start-end-radius: var(--hub-select-border-radius);
+		border-end-end-radius: var(--hub-select-border-radius);
+
 		// Pulled onto the control's border so the seam is one line, not two.
 		margin-inline-start: calc(-1 * var(--hub-select-border-width));
 	}

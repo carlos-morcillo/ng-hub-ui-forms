@@ -5,6 +5,20 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.15.1] - 2026-08-12
+
+### Fixed
+
+- **An action attached with `[hubSelectSuffix]` did not wear the field's chrome.** 22.15.0 shipped it looking like two boxes stuck together: the seam was the action's own 1.5px dark border against the field's 1px light one, and the action stood about seven pixels taller than the control it is attached to.
+
+  The cause is that what gets projected brings chrome from its own package — `hubButton` sets a border width, a radius and vertical padding — through a single-class rule in a stylesheet that loads *after* this one. A single class here ties on specificity and loses on order, so every declaration meant to normalise the action was silently overridden.
+
+  The rule now doubles its own class to outrank that, and the action takes the field's border, the field's radii and the field's height: its vertical padding is surrendered to the group and it stretches into the row instead of setting its own height. Inline padding stays, so a projected icon keeps its breathing room.
+
+  A regression test asserts the shipped rule rather than the rendered pixels — jsdom loads the stylesheet but resolves neither `var()` nor logical properties like `padding-block`, so measuring there would report an unstyled page and pass whatever it was handed. It catches the rule being weakened, which is exactly what shipped; the pixels are checked in a browser before release.
+
+  Worth naming why the existing tests stayed green through it: they assert that the action renders, that it stays out of the dropdown engine and that it follows the control in the DOM. All three were true the whole time. Nothing asserted anything about how it looked.
+
 ## [22.15.0] - 2026-08-12
 
 ### Added
