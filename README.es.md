@@ -93,7 +93,7 @@ en tiempo de ejecución — sin dependencia de Bootstrap.
 
 ## 🎯 Características
 
-- **Campos** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, con addons de input-group y máscaras, afijos de icono dentro del campo y `search` typeahead con debounce; el formato `file` está **deprecado** → usa `hub-file-input`), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider` (uno / dos thumbs, relleno con degradado), `hub-segmented` (campo de control segmentado — selección simple y múltiple, horizontal y vertical, con label + validación), `hub-select` (formato dropdown, agrupación, búsqueda en cliente vía `searchable` **y** typeahead asíncrono en servidor vía un Subject `typeahead`, creación de tags con `addTag`, templates personalizados; los formatos `buttons` / `checkbox` / `radio` están **deprecados** → usa `hub-segmented`), `hub-datepicker` (simple y rango en cualquier granularidad, del año al segundo, selección de hora, min/max al minuto, navegación por teclado, i18n), `hub-file-input` (arrastrar y soltar, pegado desde el portapapeles, límites de tipo y tamaño, previsualización, progreso de subida opcional).
+- **Campos** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, con addons de input-group y máscaras, afijos de icono dentro del campo y `search` typeahead con debounce; el formato `file` está **deprecado** → usa `hub-file-input`), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider` (uno / dos thumbs, relleno con degradado), `hub-segmented` (campo de control segmentado — selección simple y múltiple, horizontal y vertical, con label + validación), `hub-select` (formato dropdown, agrupación, búsqueda en cliente vía `searchable` **y** typeahead asíncrono en servidor vía un Subject `typeahead`, creación de tags con `addTag`, templates personalizados, addons de grupo `prepend` / `append` y acción acoplada vía `hubSelectSuffix`; los formatos `buttons` / `checkbox` / `radio` están **deprecados** → usa `hub-segmented`), `hub-datepicker` (simple y rango en cualquier granularidad, del año al segundo, selección de hora, min/max al minuto, navegación por teclado, i18n), `hub-file-input` (arrastrar y soltar, pegado desde el portapapeles, límites de tipo y tamaño, previsualización, progreso de subida opcional).
 - **Visualización automática de errores** — vinculas un campo y sus errores de control se renderizan debajo; `hub-fieldset`, `form[hubForm]` y `hub-legend` muestran los errores de grupo y de formulario (cross-field) igual, sin cableado.
 - **Contenedores** — `hub-fieldset` / `form[hubForm]` agrupan campos y muestran sus errores de grupo; `hub-legend` renderiza una leyenda accesible.
 - **Configurable** — `provideHubForms({ … })` define las plantillas de invalid-feedback, locale/labels del datepicker, los textos del file input y más, a nivel de app o por instancia.
@@ -208,6 +208,35 @@ provideHubForms({
 <!-- agrupado -->
 <hub-select formControlName="city" label="City" [items]="cities" bindLabel="name" bindValue="id" groupBy="country" />
 ```
+
+#### Addons y acciones acopladas
+
+`prepend` / `append` son los mismos addons de grupo que ya tenía `hub-input`: un string es un
+addon, un array una serie de ellos. Comparten el borde del campo y no son enfocables.
+
+```html
+<hub-select formControlName="budget" label="Budget" prepend="€" append="/ month" [items]="tiers" />
+<hub-select formControlName="endpoint" [prepend]="['https://', 'api.']" [items]="regions" />
+```
+
+Para un control **interactivo** acoplado al borde —un botón que actúa sobre lo seleccionado—
+se proyecta una plantilla `hubSelectSuffix`. Es plantilla y no contenido proyectado porque el
+`<ng-content>` genérico del select transporta los `<ng-option>` hasta el motor y se lo tragaría;
+renderizar desde plantilla mantiene además la acción después del control en el DOM, así que el
+tabulador llega al campo antes que al botón que actúa sobre él.
+
+```html
+<hub-select formControlName="product" label="Product" [items]="products" bindLabel="name">
+	<ng-template hubSelectSuffix>
+		<button type="button" aria-label="Configurar el producto seleccionado" (click)="configure()">
+			<hub-icon name="fa:solid:gear" />
+		</button>
+	</ng-template>
+</hub-select>
+```
+
+> Importa `HubSelectSuffixDirective` de `ng-hub-ui-forms`. Ambos mecanismos se combinan; con un
+> addon de append y una acción presentes, la acción queda en el extremo.
 
 Los templates de opción/etiqueta se proyectan directamente al motor:
 

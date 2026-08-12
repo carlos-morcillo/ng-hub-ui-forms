@@ -16,6 +16,7 @@ import { Subject } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { FormTextType, FormTextTypes, HubLabelType, HubLabelTypes } from '../interfaces/common.interface';
 import { HubSelectFormat, HubSelectFormats } from '../interfaces/select.interface';
+import { HubSelectSuffixDirective } from '../directives/select-suffix.directive';
 import { HubFieldControl } from '../shared/hub-field-control';
 import { areEqual, get } from '../utils/utils';
 import { NgSelectComponent } from './vendor/lib/ng-select.component';
@@ -88,6 +89,37 @@ export class HubSelectComponent extends HubFieldControl {
 	protected readonly _headerTpl = contentChild(NgHeaderTemplateDirective, { read: TemplateRef });
 	protected readonly _footerTpl = contentChild(NgFooterTemplateDirective, { read: TemplateRef });
 	protected readonly _notFoundTpl = contentChild(NgNotFoundTemplateDirective, { read: TemplateRef });
+
+	/** Inline-end action (`[hubSelectSuffix]`), attached to the control's edge. */
+	protected readonly _suffixTpl = contentChild(HubSelectSuffixDirective, { read: TemplateRef });
+
+	/** Whether an action is attached to the control, which squares off that edge. */
+	protected readonly hasSuffix = computed<boolean>(() => !!this._suffixTpl());
+
+	/**
+	 * Text shown before the control as a group addon — the same contract as `hub-input`, so a
+	 * currency, a unit or a protocol reads identically whichever field carries it. A single
+	 * string is one addon; an array is a run of them.
+	 *
+	 * Distinct from `[hubSelectSuffix]`: an addon is a static label sharing the field's border,
+	 * while the suffix is an interactive control. Both can be present.
+	 */
+	readonly prepend = input<string | string[]>('');
+
+	/** Text shown after the control as a group addon. See {@link prepend}. */
+	readonly append = input<string | string[]>('');
+
+	/** Normalized list of prepend addons. */
+	protected readonly _prepend = computed<string[]>(() => this.#toAddonList(this.prepend()));
+
+	/** Normalized list of append addons. */
+	protected readonly _append = computed<string[]>(() => this.#toAddonList(this.append()));
+
+	/** Whether a leading addon is present. */
+	protected readonly hasPrepend = computed<boolean>(() => this._prepend().length > 0);
+
+	/** Whether a trailing addon is present. */
+	protected readonly hasAppend = computed<boolean>(() => this._append().length > 0);
 
 	/**
 	 * Rendering format (`dropdown`, `buttons`, `checkbox`, `radio`).
@@ -345,5 +377,20 @@ export class HubSelectComponent extends HubFieldControl {
 		} else {
 			this.setValue(value);
 		}
+	}
+
+	/**
+	 * Normalizes an addon input to a list, dropping empties so `prepend=""` renders nothing
+	 * rather than an empty box.
+	 *
+	 * @param value - A single addon or a run of them.
+	 * @returns The addons to render, in order.
+	 */
+	#toAddonList(value: string | string[]): string[] {
+		if (Array.isArray(value)) {
+			return value.filter((item) => item != null && item !== '');
+		}
+
+		return value ? [value] : [];
 	}
 }

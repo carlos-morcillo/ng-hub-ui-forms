@@ -5,6 +5,24 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.15.0] - 2026-08-12
+
+### Added
+
+- **`<hub-select>` takes `prepend` and `append` group addons**, the same contract `hub-input` has had all along. A currency, a unit, a protocol: a string is one addon, an array is a run of them, and empty entries are dropped rather than drawn as an empty box. The field and its addons share one border and round only their outer corners, so `prepend="€" append="/ month"` reads as one control instead of three boxes parked together.
+
+  Three tokens, chained to the input's so the same addon looks the same whichever field carries it, and still overridable on their own: `--hub-select-group-addon-bg`, `--hub-select-group-addon-color`, `--hub-select-group-addon-border-color`.
+
+  The corner flattening is driven by `hub-select__group--has-prepend` / `--has-append` on the group rather than by adjacent-sibling selectors. That is the lesson 22.14.0 paid for on the input, where the equivalent rules hung off `+`, never once matched because an affix span always sat in between, and cost nothing to be wrong — a selector that matches nothing raises no error.
+
+- **`[hubSelectSuffix]` attaches an interactive control to the select's inline-end edge** — a button acting on whatever is selected: configure it, look it up, create a new one.
+
+  Deliberately not the same slot as an addon. An addon is a static label sharing the field's border; this is focusable and sits outside the box, so it never competes for the corner the dropdown arrow and the clear cross already share, where a click landing on the wrong one of three opens a panel when somebody meant to open a dialog.
+
+  It is a `<ng-template>` rather than projected content because the select's catch-all `<ng-content>` carries `<ng-option>` through to the engine and is declared first, so anything projected plainly would land inside the dropdown. Rendering from a template also keeps the action after the control in the DOM, so tabbing reaches the field before the button that acts on it.
+
+  Both mechanisms compose: with an append addon and an action present, the action is always the outermost element — the same order `hub-input` uses for its password toggle.
+
 ## [22.14.0] - 2026-08-12
 
 ### Added

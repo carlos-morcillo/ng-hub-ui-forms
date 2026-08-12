@@ -20,99 +20,126 @@
 				<!-- [disabled] is claimed by the NgModel below (alias of its isDisabled input), not by
 				     ng-select — the engine's own `disabled` is a computed fed by setDisabledState.
 				     Dropping [ngModel] here would silently un-wire the disabled state. -->
-				<ng-select
-					class="hub-select__control"
-					[class.hub-select__control--invalid]="isInvalid"
-					[labelForId]="$any(id)"
-					[items]="items()"
-					[bindLabel]="$any(bindLabel())"
-					[bindValue]="$any(bindValue())"
-					[groupBy]="$any(groupBy())"
-					[multiple]="multiple()"
-					[searchable]="searchable()"
-					[clearable]="clearable()"
-					[closeOnSelect]="closeOnSelect()"
-					[fixedPlaceholder]="fixedPlaceholder()"
-					[loading]="loading()"
-					[readonly]="readonly()"
-					[disabled]="disabled()"
-					[placeholder]="placeholder()"
-					[notFoundText]="notFoundText()"
-					[appendTo]="appendTo()"
-					[addTag]="$any(addTag())"
-					[addTagText]="addTagText()"
-					[minTermLength]="minTermLength()"
-					[typeahead]="$any(typeahead())"
-					[compareWith]="$any(compareWith())"
-					[inputAttrs]="a11yInputAttrs()"
-					[ngModel]="_value()"
-					(ngModelChange)="setValue($event)"
-					(focus)="onFocus.emit($event)"
-					(blur)="onBlur.emit($event)"
-					(open)="onOpen.emit()"
-					(close)="onClose.emit()"
-					(clear)="onClear.emit()"
-					(search)="onSearch.emit($event)"
-					(add)="onAdd.emit($event)"
-					(remove)="onRemove.emit($event)"
-					(scroll)="scroll.emit($event)"
-					(scrollToEnd)="scrollToEnd.emit($event)"
+				<!--
+					The control and its attached action are one field: the group is what makes
+					them share a line and a border, so a select with a button beside it does not
+					read as two unrelated things that happen to be adjacent.
+				-->
+				<div
+					class="hub-select__group"
+					[class.hub-select__group--has-suffix]="hasSuffix()"
+					[class.hub-select__group--has-prepend]="hasPrepend()"
+					[class.hub-select__group--has-append]="hasAppend()"
 				>
-					@if (_optionTpl(); as tpl) {
-						<ng-template
-							ng-option-tmp
-							let-item="item"
-							let-item$="item$"
-							let-index="index"
-							let-searchTerm="searchTerm"
-						>
-							<ng-container
-								[ngTemplateOutlet]="tpl"
-								[ngTemplateOutletContext]="{ item, item$, index, searchTerm }"
-							/>
-						</ng-template>
+					@for (addon of _prepend(); track $index) {
+						<span class="hub-select__addon hub-select__addon--prepend">{{ addon }}</span>
 					}
-					@if (_optgroupTpl(); as tpl) {
-						<ng-template
-							ng-optgroup-tmp
-							let-item="item"
-							let-item$="item$"
-							let-index="index"
-							let-searchTerm="searchTerm"
-						>
-							<ng-container
-								[ngTemplateOutlet]="tpl"
-								[ngTemplateOutletContext]="{ item, item$, index, searchTerm }"
-							/>
-						</ng-template>
+					<ng-select
+						class="hub-select__control"
+						[class.hub-select__control--invalid]="isInvalid"
+						[labelForId]="$any(id)"
+						[items]="items()"
+						[bindLabel]="$any(bindLabel())"
+						[bindValue]="$any(bindValue())"
+						[groupBy]="$any(groupBy())"
+						[multiple]="multiple()"
+						[searchable]="searchable()"
+						[clearable]="clearable()"
+						[closeOnSelect]="closeOnSelect()"
+						[fixedPlaceholder]="fixedPlaceholder()"
+						[loading]="loading()"
+						[readonly]="readonly()"
+						[disabled]="disabled()"
+						[placeholder]="placeholder()"
+						[notFoundText]="notFoundText()"
+						[appendTo]="appendTo()"
+						[addTag]="$any(addTag())"
+						[addTagText]="addTagText()"
+						[minTermLength]="minTermLength()"
+						[typeahead]="$any(typeahead())"
+						[compareWith]="$any(compareWith())"
+						[inputAttrs]="a11yInputAttrs()"
+						[ngModel]="_value()"
+						(ngModelChange)="setValue($event)"
+						(focus)="onFocus.emit($event)"
+						(blur)="onBlur.emit($event)"
+						(open)="onOpen.emit()"
+						(close)="onClose.emit()"
+						(clear)="onClear.emit()"
+						(search)="onSearch.emit($event)"
+						(add)="onAdd.emit($event)"
+						(remove)="onRemove.emit($event)"
+						(scroll)="scroll.emit($event)"
+						(scrollToEnd)="scrollToEnd.emit($event)"
+					>
+						@if (_optionTpl(); as tpl) {
+							<ng-template
+								ng-option-tmp
+								let-item="item"
+								let-item$="item$"
+								let-index="index"
+								let-searchTerm="searchTerm"
+							>
+								<ng-container
+									[ngTemplateOutlet]="tpl"
+									[ngTemplateOutletContext]="{ item, item$, index, searchTerm }"
+								/>
+							</ng-template>
+						}
+						@if (_optgroupTpl(); as tpl) {
+							<ng-template
+								ng-optgroup-tmp
+								let-item="item"
+								let-item$="item$"
+								let-index="index"
+								let-searchTerm="searchTerm"
+							>
+								<ng-container
+									[ngTemplateOutlet]="tpl"
+									[ngTemplateOutletContext]="{ item, item$, index, searchTerm }"
+								/>
+							</ng-template>
+						}
+						@if (_labelTpl(); as tpl) {
+							<ng-template ng-label-tmp let-item="item" let-clear="clear" let-label="label">
+								<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ item, clear, label }" />
+							</ng-template>
+						}
+						@if (_multiLabelTpl(); as tpl) {
+							<ng-template ng-multi-label-tmp let-items="items" let-clear="clear">
+								<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ items, clear }" />
+							</ng-template>
+						}
+						@if (_headerTpl(); as tpl) {
+							<ng-template ng-header-tmp let-searchTerm="searchTerm">
+								<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ searchTerm }" />
+							</ng-template>
+						}
+						@if (_footerTpl(); as tpl) {
+							<ng-template ng-footer-tmp let-searchTerm="searchTerm">
+								<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ searchTerm }" />
+							</ng-template>
+						}
+						@if (_notFoundTpl(); as tpl) {
+							<ng-template ng-notfound-tmp let-searchTerm="searchTerm">
+								<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ searchTerm }" />
+							</ng-template>
+						}
+						<ng-content></ng-content>
+					</ng-select>
+					@for (addon of _append(); track $index) {
+						<span class="hub-select__addon hub-select__addon--append">{{ addon }}</span>
 					}
-					@if (_labelTpl(); as tpl) {
-						<ng-template ng-label-tmp let-item="item" let-clear="clear" let-label="label">
-							<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ item, clear, label }" />
-						</ng-template>
+					<!--
+						The action goes last, after any append addon, mirroring where hub-input puts
+						its password toggle: addons label the field, the action acts on it.
+					-->
+					@if (_suffixTpl(); as tpl) {
+						<span class="hub-select__affix hub-select__affix--suffix">
+							<ng-container [ngTemplateOutlet]="tpl" />
+						</span>
 					}
-					@if (_multiLabelTpl(); as tpl) {
-						<ng-template ng-multi-label-tmp let-items="items" let-clear="clear">
-							<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ items, clear }" />
-						</ng-template>
-					}
-					@if (_headerTpl(); as tpl) {
-						<ng-template ng-header-tmp let-searchTerm="searchTerm">
-							<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ searchTerm }" />
-						</ng-template>
-					}
-					@if (_footerTpl(); as tpl) {
-						<ng-template ng-footer-tmp let-searchTerm="searchTerm">
-							<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ searchTerm }" />
-						</ng-template>
-					}
-					@if (_notFoundTpl(); as tpl) {
-						<ng-template ng-notfound-tmp let-searchTerm="searchTerm">
-							<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ searchTerm }" />
-						</ng-template>
-					}
-					<ng-content></ng-content>
-				</ng-select>
+				</div>
 			}
 			@case (_selectFormats.Buttons) {
 				<div

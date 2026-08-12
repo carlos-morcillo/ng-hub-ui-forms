@@ -299,6 +299,12 @@
 	--hub-select-placeholder-color: var(--hub-input-placeholder-color);
 	--hub-select-padding-x: var(--hub-input-padding-x);
 	--hub-select-min-height: 2.5rem;
+	// Group addons (`prepend` / `append`), chained to the input's so a currency or a
+	// unit looks the same whichever field it is attached to — and still overridable
+	// on its own when a select needs to differ.
+	--hub-select-group-addon-bg: var(--hub-input-group-addon-bg);
+	--hub-select-group-addon-color: var(--hub-input-group-addon-color);
+	--hub-select-group-addon-border-color: var(--hub-input-group-addon-border-color);
 	--hub-select-arrow-color: var(--hub-sys-text-muted, #6c757d);
 	// Caret geometry — the border of the CSS triangle and the wrapper's inline
 	// padding (clearance from the value and from the field edge). Tune both to

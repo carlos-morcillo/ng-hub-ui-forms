@@ -92,7 +92,7 @@ mode — no Bootstrap dependency.
 
 ## 🎯 Features
 
-- **Fields** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, with input-group addons & masks, projected in-field affixes, a built-in `clearable` button and debounced typeahead `search`; the `file` format is **deprecated** → use `hub-file-input`), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider` (single / dual thumb, gradient fill), `hub-segmented` (segmented control field — single & multiple selection, horizontal & vertical, with label + validation), `hub-select` (dropdown format, grouping, client-side search via `searchable` **and** server-side async typeahead via a `typeahead` Subject, tag creation with `addTag`, custom templates; the `buttons` / `checkbox` / `radio` formats are **deprecated** → use `hub-segmented`), `hub-datepicker` (single & range at any granularity from a year to a second, time picking, min/max down to the minute, keyboard nav, i18n), `hub-file-input` (drag & drop, clipboard paste, type/size limits, previews, optional upload progress).
+- **Fields** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, with input-group addons & masks, projected in-field affixes, a built-in `clearable` button and debounced typeahead `search`; the `file` format is **deprecated** → use `hub-file-input`), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider` (single / dual thumb, gradient fill), `hub-segmented` (segmented control field — single & multiple selection, horizontal & vertical, with label + validation), `hub-select` (dropdown format, grouping, client-side search via `searchable` **and** server-side async typeahead via a `typeahead` Subject, tag creation with `addTag`, custom templates, `prepend` / `append` group addons and an attached action via `hubSelectSuffix`; the `buttons` / `checkbox` / `radio` formats are **deprecated** → use `hub-segmented`), `hub-datepicker` (single & range at any granularity from a year to a second, time picking, min/max down to the minute, keyboard nav, i18n), `hub-file-input` (drag & drop, clipboard paste, type/size limits, previews, optional upload progress).
 - **Automatic error display** — bind a field and its control errors render below it; `hub-fieldset`, `form[hubForm]` and `hub-legend` surface group- and form-level (cross-field) errors the same way, with zero wiring.
 - **Containers** — `hub-fieldset` / `form[hubForm]` group fields and show their group errors; `hub-legend` renders an accessible legend.
 - **Configurable** — `provideHubForms({ … })` sets the invalid-feedback templates, datepicker locale/labels, file-input labels and more, app-wide or per instance.
@@ -231,6 +231,35 @@ provideHubForms({
 <!-- grouped -->
 <hub-select formControlName="city" label="City" [items]="cities" bindLabel="name" bindValue="id" groupBy="country" />
 ```
+
+#### Addons and attached actions
+
+`prepend` / `append` are the same group addons `hub-input` has: a string is one addon, an array
+a run of them. They share the field's border and are not focusable.
+
+```html
+<hub-select formControlName="budget" label="Budget" prepend="€" append="/ month" [items]="tiers" />
+<hub-select formControlName="endpoint" [prepend]="['https://', 'api.']" [items]="regions" />
+```
+
+For an **interactive** control attached to the edge — a button acting on whatever is selected —
+project a `hubSelectSuffix` template. It is a template rather than plain content because the
+select's catch-all `<ng-content>` carries `<ng-option>` through to the engine and would swallow
+it; rendering from a template also keeps the action after the control in the DOM, so tabbing
+reaches the field before the button acting on it.
+
+```html
+<hub-select formControlName="product" label="Product" [items]="products" bindLabel="name">
+	<ng-template hubSelectSuffix>
+		<button type="button" aria-label="Configure the selected product" (click)="configure()">
+			<hub-icon name="fa:solid:gear" />
+		</button>
+	</ng-template>
+</hub-select>
+```
+
+> Import `HubSelectSuffixDirective` from `ng-hub-ui-forms`. Both mechanisms compose; with an
+> append addon and an action present, the action is the outermost element.
 
 Custom option/label templates are projected straight through to the engine:
 

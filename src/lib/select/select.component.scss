@@ -10,6 +10,96 @@ hub-select.hidden-control {
 	display: none !important;
 }
 
+// ── Attached inline-end action (`[hubSelectSuffix]`) ────────────────────────
+// The control and its action are one field, so the seam between them is a single
+// border rather than two: the control gives up its trailing radius, the action gives
+// up its leading one, and they meet on a shared edge.
+.hub-select__group {
+	display: flex;
+	align-items: stretch;
+	min-width: 0;
+
+	// The control takes the room; the action takes only what it needs.
+	> .hub-select__control {
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+
+	// The seam between the control and whatever is attached to it is one border, not two:
+	// each side gives up the radius on the edge they meet. Driven by classes on the group
+	// rather than by sibling combinators — that is the lesson 22.14.0 paid for on the
+	// input, where the flattening rules hung off `+` and never once matched because an
+	// affix span always sat in between.
+	&--has-prepend > .hub-select__control.ng-select .ng-select-container {
+		border-start-start-radius: 0;
+		border-end-start-radius: 0;
+	}
+
+	&--has-append > .hub-select__control.ng-select .ng-select-container,
+	&--has-suffix > .hub-select__control.ng-select .ng-select-container {
+		border-start-end-radius: 0;
+		border-end-end-radius: 0;
+	}
+
+	// A run of addons on one side reads as one piece, so only the outermost rounds its
+	// outer corners. `:not(:last-child)` also covers the append addon that is followed by
+	// an attached action, which has to hand its corners over to it.
+	> .hub-select__addon--prepend:not(:first-child) {
+		border-start-start-radius: 0;
+		border-end-start-radius: 0;
+	}
+
+	> .hub-select__addon--append:not(:last-child) {
+		border-start-end-radius: 0;
+		border-end-end-radius: 0;
+	}
+}
+
+// ── Group addons (`prepend` / `append`) ─────────────────────────────────────
+// Same contract and look as the input's, so a currency or a unit reads identically
+// whichever field carries it.
+.hub-select__addon {
+	display: flex;
+	align-items: center;
+	flex: 0 0 auto;
+	padding: 0 var(--hub-select-padding-x);
+	color: var(--hub-select-group-addon-color);
+	background: var(--hub-select-group-addon-bg);
+	border: var(--hub-select-border-width) solid var(--hub-select-group-addon-border-color);
+	border-radius: var(--hub-select-border-radius);
+	font-size: var(--hub-select-font-size);
+	white-space: nowrap;
+
+	// The shared edge belongs to the control, so the addon drops its own on that side.
+	&--prepend {
+		border-inline-end: 0;
+		border-start-end-radius: 0;
+		border-end-end-radius: 0;
+	}
+
+	&--append {
+		border-inline-start: 0;
+		border-start-start-radius: 0;
+		border-end-start-radius: 0;
+	}
+}
+
+.hub-select__affix--suffix {
+	display: flex;
+	align-items: stretch;
+	flex: 0 0 auto;
+
+	// Whatever is projected fills the field's height, so the two line up however tall
+	// the control grows — a multiselect with three chips included.
+	> * {
+		height: 100%;
+		border-start-start-radius: 0;
+		border-end-start-radius: 0;
+		// Pulled onto the control's border so the seam is one line, not two.
+		margin-inline-start: calc(-1 * var(--hub-select-border-width));
+	}
+}
+
 // ── In-place theme of the ng-select engine ──────────────────────────────────
 .hub-select__control.ng-select {
 	font-size: var(--hub-select-font-size);

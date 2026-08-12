@@ -55,6 +55,7 @@ export { HubLegendDirective } from './lib/directives/legend.directive';
 export { HubAutoresizeDirective } from './lib/directives/autoresize.directive';
 export { HubInputPrefixDirective } from './lib/directives/input-prefix.directive';
 export { HubInputSuffixDirective } from './lib/directives/input-suffix.directive';
+export { HubSelectSuffixDirective } from './lib/directives/select-suffix.directive';
 export { HubFileIconDirective } from './lib/directives/file-icon.directive';
 export type { HubFileIconContext } from './lib/directives/file-icon.directive';
 export { HubFilePreviewDirective } from './lib/directives/file-preview.directive';
