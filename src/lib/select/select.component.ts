@@ -5,6 +5,7 @@ import {
 	Component,
 	computed,
 	contentChild,
+	inject,
 	input,
 	numberAttribute,
 	output,
@@ -22,6 +23,7 @@ import { HubPrependDirective } from '../directives/prepend.directive';
 import { HubFieldControl } from '../shared/hub-field-control';
 import { areEqual, get } from '../utils/utils';
 import { NgSelectComponent } from './vendor/lib/ng-select.component';
+import { NgSelectConfig } from './vendor/lib/config.service';
 import { NgOptionComponent } from './vendor/lib/ng-option.component';
 import {
 	NgFooterTemplateDirective,
@@ -73,6 +75,13 @@ import {
 	}
 })
 export class HubSelectComponent extends HubFieldControl {
+	/**
+	 * The app's global select configuration, read here rather than left to the engine: the
+	 * vendored source is re-synced from upstream, so a fallback that lives in its template is
+	 * one sync away from disappearing. See {@link placeholder}.
+	 */
+	protected readonly _ngSelectConfig = inject(NgSelectConfig);
+
 	protected readonly _labelTypes = HubLabelTypes;
 	protected readonly _formTextTypes = FormTextTypes;
 	protected readonly _selectFormats = HubSelectFormats;
@@ -172,8 +181,11 @@ export class HubSelectComponent extends HubFieldControl {
 	/** Label display type (`stacked`, `horizontal`). */
 	readonly labelType = input<HubLabelType>(this._labelTypes.Stacked);
 
-	/** Placeholder text. */
-	readonly placeholder = input<string>('');
+	/**
+	 * Placeholder text. Left undefined so the engine falls back to the app's `NgSelectConfig`,
+	 * which carries no placeholder of its own unless the app sets one. See {@link notFoundText}.
+	 */
+	readonly placeholder = input<string | undefined>(undefined);
 
 	/** Whether multiple selection is allowed. */
 	readonly multiple = input(false, { transform: booleanAttribute });

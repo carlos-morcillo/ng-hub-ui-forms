@@ -54,7 +54,7 @@
 						[loading]="loading()"
 						[readonly]="readonly()"
 						[disabled]="disabled()"
-						[placeholder]="placeholder()"
+						[placeholder]="placeholder() ?? _ngSelectConfig.placeholder"
 						[notFoundText]="notFoundText()"
 						[appendTo]="appendTo()"
 						[addTag]="$any(addTag())"

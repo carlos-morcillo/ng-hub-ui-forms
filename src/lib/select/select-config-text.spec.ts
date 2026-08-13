@@ -43,6 +43,28 @@ class OverrideHostComponent {
 	readonly items = signal<unknown[]>([]);
 }
 
+/** Same, for the placeholder — the one string a call site sets far more often than the config. */
+@Component({
+	standalone: true,
+	imports: [HubSelectComponent, ReactiveFormsModule],
+	template: `<hub-select [formControl]="ctrl" [items]="items()" placeholder="Elige una opción" label="Pick" />`
+})
+class PlaceholderHostComponent {
+	readonly ctrl = new FormControl<unknown>(null);
+	readonly items = signal<unknown[]>([]);
+}
+
+/** Born with a value already selected, so the placeholder's hide-on-selection rule is observable. */
+@Component({
+	standalone: true,
+	imports: [HubSelectComponent, ReactiveFormsModule],
+	template: `<hub-select [formControl]="ctrl" [items]="items()" label="Pick" />`
+})
+class SelectedHostComponent {
+	readonly items = signal<unknown[]>(['Rojo', 'Verde']);
+	readonly ctrl = new FormControl<unknown>('Rojo');
+}
+
 async function render<T>(host: Type<T>, configure: (config: NgSelectConfig) => void) {
 	TestBed.resetTestingModule();
 	await TestBed.configureTestingModule({
@@ -67,7 +89,9 @@ async function render<T>(host: Type<T>, configure: (config: NgSelectConfig) => v
 	return {
 		fixture,
 		// The panel renders into the body, so it is read off the document rather than the fixture.
-		emptyText: () => document.querySelector('.ng-option-disabled')?.textContent?.trim() ?? null
+		emptyText: () => document.querySelector('.ng-option-disabled')?.textContent?.trim() ?? null,
+		placeholder: () =>
+			(fixture.nativeElement.querySelector('.ng-placeholder') as HTMLElement | null)?.textContent?.trim() ?? null
 	};
 }
 
@@ -86,6 +110,33 @@ describe('HubSelectComponent dropdown text', () => {
 		const { emptyText } = await render(OverrideHostComponent, (c) => (c.notFoundText = 'No hay resultados'));
 
 		expect(emptyText()).toBe('Sin coincidencias');
+	});
+
+	it('takes the placeholder from NgSelectConfig', async () => {
+		const { placeholder } = await render(SilentHostComponent, (c) => (c.placeholder = 'Elige…'));
+
+		expect(placeholder()).toBe('Elige…');
+	});
+
+	it('lets an explicit placeholder override the config', async () => {
+		const { placeholder } = await render(PlaceholderHostComponent, (c) => (c.placeholder = 'Elige…'));
+
+		expect(placeholder()).toBe('Elige una opción');
+	});
+
+	/**
+	 * Deliberately NOT config-driven. NgSelectConfig defaults fixedPlaceholder to true, which keeps
+	 * the placeholder visible next to a selected value; this library overrides it to the
+	 * conventional behaviour on purpose. Pinned so the next pass at "make the config reachable"
+	 * does not sweep it up with the genuine clobbers.
+	 */
+	it('keeps the placeholder hidden once a value is selected, whatever the config says', async () => {
+		const { placeholder } = await render(SelectedHostComponent, (c) => {
+			c.placeholder = 'Elige…';
+			c.fixedPlaceholder = true;
+		});
+
+		expect(placeholder()).toBeNull();
 	});
 
 	it('takes the add-item text from NgSelectConfig', async () => {

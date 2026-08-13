@@ -5,6 +5,16 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.16.1] - 2026-08-13
+
+### Fixed
+
+- **`<hub-select>` ignored a placeholder set globally in `NgSelectConfig`.** The last of the three inputs that overwrote the app's configuration with a value of this component's own — here an empty string, which is every bit as present as a sentence and just as effective at winning a `??`.
+
+    Nothing changes for an app that does not configure one: `NgSelectConfig.placeholder` carries no default, so a select with no placeholder anywhere still renders none. The fallback now lives in this component rather than in the engine's template — the vendored source is re-synced from upstream, and a fallback that lives there is one sync away from disappearing.
+
+    `fixedPlaceholder` and `appendTo` also differ from the engine's configured defaults and are **left alone**: both are deliberate, both say so in their JSDoc, and `fixedPlaceholder` in particular would change how every select in every app renders a selected value. A test now pins that decision so the next pass at this does not sweep it up with the genuine defects.
+
 ## [22.16.0] - 2026-08-13
 
 ### Added
