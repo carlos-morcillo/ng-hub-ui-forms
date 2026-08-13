@@ -133,20 +133,31 @@ describe('HubSelectComponent group addons', () => {
 
 		const children = Array.from(group().children);
 		const addon = children.findIndex((el) => el.classList.contains('hub-select__addon--append'));
-		const action = children.findIndex((el) => el.classList.contains('hub-select__affix--suffix'));
+		const action = children.findIndex((el) => el.classList.contains('hub-select__attached--append'));
 
 		// Addons label the field; the action acts on it — same order as the input's toggle.
 		expect(action).toBeGreaterThan(addon);
 		expect(action).toBe(children.length - 1);
 	});
 
-	it('marks the group for both an append addon and an action independently', () => {
+	it('marks the group for both an append addon and an action', () => {
 		host.append.set('EUR');
 		host.withAction.set(true);
 		fixture.detectChanges();
 
 		expect(group().classList.contains('hub-select__group--has-append')).toBe(true);
-		expect(group().classList.contains('hub-select__group--has-suffix')).toBe(true);
+	});
+
+	/**
+	 * The modifier is what squares the control's trailing corner, so an action on its own has to
+	 * set it. Reading it off the string addons alone leaves a rounded corner under the button.
+	 */
+	it('marks the group from an action alone, with no string addon', () => {
+		host.withAction.set(true);
+		fixture.detectChanges();
+
+		expect(group().classList.contains('hub-select__group--has-append')).toBe(true);
+		expect(fixture.debugElement.query(By.css('.hub-select__addon--append'))).toBeNull();
 	});
 
 	it('reacts to an addon being added and removed at runtime', () => {

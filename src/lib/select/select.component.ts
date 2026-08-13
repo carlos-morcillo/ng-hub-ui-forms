@@ -17,6 +17,8 @@ import { FormsModule } from '@angular/forms';
 import { FormTextType, FormTextTypes, HubLabelType, HubLabelTypes } from '../interfaces/common.interface';
 import { HubSelectFormat, HubSelectFormats } from '../interfaces/select.interface';
 import { HubSelectSuffixDirective } from '../directives/select-suffix.directive';
+import { HubAppendDirective } from '../directives/append.directive';
+import { HubPrependDirective } from '../directives/prepend.directive';
 import { HubFieldControl } from '../shared/hub-field-control';
 import { areEqual, get } from '../utils/utils';
 import { NgSelectComponent } from './vendor/lib/ng-select.component';
@@ -90,11 +92,23 @@ export class HubSelectComponent extends HubFieldControl {
 	protected readonly _footerTpl = contentChild(NgFooterTemplateDirective, { read: TemplateRef });
 	protected readonly _notFoundTpl = contentChild(NgNotFoundTemplateDirective, { read: TemplateRef });
 
-	/** Inline-end action (`[hubSelectSuffix]`), attached to the control's edge. */
-	protected readonly _suffixTpl = contentChild(HubSelectSuffixDirective, { read: TemplateRef });
+	/** Deprecated select-only slot, superseded by `[hubAppend]`. */
+	protected readonly _legacySuffixTpl = contentChild(HubSelectSuffixDirective, { read: TemplateRef });
 
-	/** Whether an action is attached to the control, which squares off that edge. */
-	protected readonly hasSuffix = computed<boolean>(() => !!this._suffixTpl());
+	/** Projected inline-start content (`[hubPrepend]`). */
+	protected readonly _prependTpl = contentChild(HubPrependDirective, { read: TemplateRef });
+
+	/** Projected inline-end content (`[hubAppend]`), falling back to the deprecated slot. */
+	protected readonly _appendTpl = computed(() => this._genericAppendTpl() ?? this._legacySuffixTpl());
+
+	/** The generic slot on its own, so `[hubAppend]` wins when both are declared. */
+	private readonly _genericAppendTpl = contentChild(HubAppendDirective, { read: TemplateRef });
+
+	/** Whether content is attached to the trailing edge. */
+	protected readonly hasAppendTpl = computed<boolean>(() => !!this._appendTpl());
+
+	/** Whether content is attached to the leading edge. */
+	protected readonly hasPrependTpl = computed<boolean>(() => !!this._prependTpl());
 
 	/**
 	 * Text shown before the control as a group addon — the same contract as `hub-input`, so a
@@ -186,8 +200,11 @@ export class HubSelectComponent extends HubFieldControl {
 	/** Whether the control is read-only. */
 	readonly readonly = input(false, { transform: booleanAttribute });
 
-	/** Text shown when no items match. */
-	readonly notFoundText = input<string>('No items found');
+	/**
+	 * Text shown when no items match. Left undefined so the engine falls back to the app's
+	 * `NgSelectConfig`, which is where a translated build sets it once for every select.
+	 */
+	readonly notFoundText = input<string | undefined>(undefined);
 
 	/**
 	 * Where the dropdown panel is rendered, as a CSS selector. Defaults to
@@ -204,8 +221,11 @@ export class HubSelectComponent extends HubFieldControl {
 	 */
 	readonly addTag = input<boolean | ((term: string) => any | Promise<any>)>(false);
 
-	/** Label of the "add item" row shown while typing when `addTag` is enabled. */
-	readonly addTagText = input<string>('Add item');
+	/**
+	 * Label of the "add item" row shown while typing when `addTag` is enabled. Left undefined
+	 * so the engine falls back to the app's `NgSelectConfig`. See {@link notFoundText}.
+	 */
+	readonly addTagText = input<string | undefined>(undefined);
 
 	/** Minimum search-term length before filtering (or `typeahead`) kicks in. */
 	readonly minTermLength = input(0, { transform: numberAttribute });

@@ -14,6 +14,7 @@ import {
 	numberAttribute,
 	output,
 	signal,
+	TemplateRef,
 	viewChild,
 	ViewEncapsulation
 } from '@angular/core';
@@ -22,6 +23,8 @@ import { FormTextType, FormTextTypes, HubLabelType, HubLabelTypes } from '../../
 import { HubInputFormat, HubInputFormats, HubPasswordStrengthScore } from '../../interfaces/input.interface';
 import { HubInputPrefixDirective } from '../../directives/input-prefix.directive';
 import { HubInputSuffixDirective } from '../../directives/input-suffix.directive';
+import { HubAppendDirective } from '../../directives/append.directive';
+import { HubPrependDirective } from '../../directives/prepend.directive';
 import { HubFieldControl } from '../../shared/hub-field-control';
 import { controlHasMinOrMaxValidator, isDefined } from '../../utils/utils';
 import { applyMask, isMaskActive } from '../../utils/mask';
@@ -183,6 +186,18 @@ export class HubInputComponent extends HubFieldControl {
 
 	/** Projected inline-end affix (`[hubInputSuffix]`) — e.g. a `<hub-icon>`, when present. */
 	protected readonly suffixDir = contentChild(HubInputSuffixDirective);
+
+	/** Projected content attached to the leading edge (`[hubPrepend]`). */
+	protected readonly _prependTpl = contentChild(HubPrependDirective, { read: TemplateRef });
+
+	/** Projected content attached to the trailing edge (`[hubAppend]`). */
+	protected readonly _appendTpl = contentChild(HubAppendDirective, { read: TemplateRef });
+
+	/** Whether content is attached to the leading edge, which squares off that corner. */
+	protected readonly hasPrependTpl = computed<boolean>(() => !!this._prependTpl());
+
+	/** Whether content is attached to the trailing edge. */
+	protected readonly hasAppendTpl = computed<boolean>(() => !!this._appendTpl());
 
 	/**
 	 * When true, a clear (✕) button is rendered inside the field once it holds a

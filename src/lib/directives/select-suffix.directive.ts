@@ -26,6 +26,12 @@ import { Directive } from '@angular/core';
  *   </ng-template>
  * </hub-select>
  * ```
+ *
+ * @deprecated since 22.16.0 — use `[hubAppend]`, which does the same thing on every field that
+ * takes one rather than only on the select. Shipped in 22.15.0 and superseded one release later:
+ * generalising the slot left the select with two names for one concept, and retiring the narrower
+ * one now costs less than documenting the difference forever. This keeps working and renders
+ * through the same slot; `[hubAppend]` wins if both are present.
  */
 @Directive({ selector: '[hubSelectSuffix]' })
 export class HubSelectSuffixDirective {}

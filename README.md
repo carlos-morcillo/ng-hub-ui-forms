@@ -92,7 +92,7 @@ mode — no Bootstrap dependency.
 
 ## 🎯 Features
 
-- **Fields** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, with input-group addons & masks, projected in-field affixes, a built-in `clearable` button and debounced typeahead `search`; the `file` format is **deprecated** → use `hub-file-input`), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider` (single / dual thumb, gradient fill), `hub-segmented` (segmented control field — single & multiple selection, horizontal & vertical, with label + validation), `hub-select` (dropdown format, grouping, client-side search via `searchable` **and** server-side async typeahead via a `typeahead` Subject, tag creation with `addTag`, custom templates, `prepend` / `append` group addons and an attached action via `hubSelectSuffix`; the `buttons` / `checkbox` / `radio` formats are **deprecated** → use `hub-segmented`), `hub-datepicker` (single & range at any granularity from a year to a second, time picking, min/max down to the minute, keyboard nav, i18n), `hub-file-input` (drag & drop, clipboard paste, type/size limits, previews, optional upload progress).
+- **Fields** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, with input-group addons & masks, projected in-field affixes, a built-in `clearable` button and debounced typeahead `search`; the `file` format is **deprecated** → use `hub-file-input`), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider` (single / dual thumb, gradient fill), `hub-segmented` (segmented control field — single & multiple selection, horizontal & vertical, with label + validation), `hub-select` (dropdown format, grouping, client-side search via `searchable` **and** server-side async typeahead via a `typeahead` Subject, tag creation with `addTag`, custom templates, `prepend` / `append` group addons and attached icons/buttons via `hubPrepend` / `hubAppend`; the `buttons` / `checkbox` / `radio` formats are **deprecated** → use `hub-segmented`), `hub-datepicker` (single & range at any granularity from a year to a second, time picking, min/max down to the minute, keyboard nav, i18n), `hub-file-input` (drag & drop, clipboard paste, type/size limits, previews, optional upload progress).
 - **Automatic error display** — bind a field and its control errors render below it; `hub-fieldset`, `form[hubForm]` and `hub-legend` surface group- and form-level (cross-field) errors the same way, with zero wiring.
 - **Containers** — `hub-fieldset` / `form[hubForm]` group fields and show their group errors; `hub-legend` renders an accessible legend.
 - **Configurable** — `provideHubForms({ … })` sets the invalid-feedback templates, datepicker locale/labels, file-input labels and more, app-wide or per instance.
@@ -232,91 +232,37 @@ provideHubForms({
 <hub-select formControlName="city" label="City" [items]="cities" bindLabel="name" bindValue="id" groupBy="country" />
 ```
 
-#### Addons and attached actions
+#### Addons and attached content
 
-`prepend` / `append` are the same group addons `hub-input` has: a string is one addon, an array
-a run of them. They share the field's border and are not focusable.
+`prepend` / `append` are group addons carrying **text** — a currency, a unit, a protocol.
+Available on `hub-input`, `hub-select`, `hub-textarea` and `hub-datepicker`: every field that
+renders as a box with a value.
 
 ```html
-<hub-select formControlName="budget" label="Budget" prepend="€" append="/ month" [items]="tiers" />
-<hub-select formControlName="endpoint" [prepend]="['https://', 'api.']" [items]="regions" />
+<hub-input formControlName="amount" label="Amount" prepend="€" append=".00" />
+<hub-textarea formControlName="notes" label="Notes" append="Markdown" />
 ```
 
-For an **interactive** control attached to the edge — a button acting on whatever is selected —
-project a `hubSelectSuffix` template. It is a template rather than plain content because the
-select's catch-all `<ng-content>` carries `<ng-option>` through to the engine and would swallow
-it; rendering from a template also keeps the action after the control in the DOM, so tabbing
-reaches the field before the button acting on it.
+For an **icon or a button** — anything richer than text — project a `[hubPrepend]` /
+`[hubAppend]` template. Both compose: the strings render first, so projected content is always
+outermost on its side. A unit labels the field; the action sits beyond it.
 
 ```html
-<hub-select formControlName="product" label="Product" [items]="products" bindLabel="name">
-	<ng-template hubSelectSuffix>
-		<button type="button" aria-label="Configure the selected product" (click)="configure()">
-			<hub-icon name="fa:solid:gear" />
+<hub-input formControlName="query" label="Search">
+	<ng-template hubAppend>
+		<button type="button" aria-label="Run the search" (click)="search()">
+			<hub-icon name="fa:solid:magnifying-glass" />
 		</button>
 	</ng-template>
-</hub-select>
+</hub-input>
 ```
 
-> Import `HubSelectSuffixDirective` from `ng-hub-ui-forms`. Both mechanisms compose; with an
-> append addon and an action present, the action is the outermost element.
+Whatever is projected wears the field's border, radius and height rather than its own, so a
+button does not draw a second, thicker seam beside the control.
 
-Custom option/label templates are projected straight through to the engine:
-
-```html
-<hub-select formControlName="assignee" [items]="people" bindLabel="name">
-	<ng-template ng-label-tmp let-item="item">{{ item.emoji }} {{ item.name }}</ng-template>
-	<ng-template ng-option-tmp let-item="item"><strong>{{ item.name }}</strong> — {{ item.role }}</ng-template>
-</hub-select>
-```
-
-> Import `NgOptionTemplateDirective` / `NgLabelTemplateDirective` from `ng-hub-ui-forms`.
-> The dropdown panel renders to `body` by default (`appendTo`) so it is never clipped by cards or scroll containers.
-
-#### Async typeahead & tags
-
-`searchable` filters the already-loaded `items` client-side. For **server-side** loading, pass a `typeahead` Subject instead — the control stops filtering locally, pushes each term to the Subject, and you feed the results back through `[items]`:
-
-```html
-<hub-select
-	formControlName="city"
-	label="City"
-	[items]="cities()"
-	bindLabel="name"
-	bindValue="code"
-	[typeahead]="citySearch$"
-	[minTermLength]="2"
-	[loading]="loading()"
-/>
-
-<!-- tagging: create items from the typed term -->
-<hub-select formControlName="tags" [items]="tags" [multiple]="true" [addTag]="true" addTagText="Create tag" />
-```
-
-- `typeahead` (`Subject<string> | undefined`, default `undefined`) — receives every search-term change for async loading; pair with the `onSearch` output if you also need the matched items.
-- `minTermLength` (`number`, default `0`) — minimum term length before filtering (or the `typeahead` Subject) kicks in.
-- `addTag` (`boolean | (term: string) => any | Promise<any>`, default `false`) — `true` adds the term as-is; a function maps the term to a new item (sync or `Promise`).
-- `addTagText` (`string`, default `'Add item'`) — label of the "add item" row shown while typing.
-- `compareWith` (`(a, b) => boolean | undefined`, default `undefined`) — custom item/value equality (e.g. objects compared by id); when omitted, the engine's built-in comparison (including `bindValue` matching) applies.
-
-### Segmented
-
-```html
-<hub-segmented formControlName="view" label="View" [options]="viewOptions" />
-```
-
-A projected `hubSegmentedOption` template replaces each segment's content (icons, badges, rich markup) while the component keeps owning selection, keyboard navigation and ARIA. Context: the option (implicit), `selected` and `index`:
-
-```html
-<hub-segmented formControlName="view" label="View" [options]="viewOptions">
-	<ng-template hubSegmentedOption let-option let-selected="selected" let-index="index">
-		<hub-icon [name]="option.value" />
-		{{ option.label }}
-	</ng-template>
-</hub-segmented>
-```
-
-> Import `HubSegmentedOptionDirective` from `ng-hub-ui-forms`; the context is typed as `HubSegmentedOptionContext`.
+> Import `HubPrependDirective` / `HubAppendDirective` from `ng-hub-ui-forms`.
+> `[hubSelectSuffix]` is **deprecated** in favour of `[hubAppend]`, which does the same on every
+> field rather than only on the select.
 
 ### Datepicker
 

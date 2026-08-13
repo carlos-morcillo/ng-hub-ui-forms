@@ -2,6 +2,8 @@
 // come from the global `styles/_field.scss` + `_tokens.scss`. The panel is
 // rendered in a CDK overlay (outside the component), so its rules are global.
 
+@use '../../styles/group-addons';
+
 hub-datepicker {
 	display: block;
 }
@@ -375,4 +377,13 @@ hub-datepicker.hidden-control {
 			}
 		}
 	}
+}
+
+// Shared group/addon structure. The trigger keeps its own relative positioning for the
+// calendar icon and the clear cross, so the group wraps it rather than replacing it.
+@include group-addons.group-addons('datepicker');
+
+.hub-datepicker__group > .hub-datepicker__trigger {
+	flex: 1 1 auto;
+	min-width: 0;
 }

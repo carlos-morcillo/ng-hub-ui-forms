@@ -47,7 +47,7 @@ describe('HubSelectComponent attached suffix', () => {
 
 		const action = fixture.debugElement.query(By.css('.projected-action'));
 		expect(action).toBeTruthy();
-		expect(action.nativeElement.closest('.hub-select__affix--suffix')).toBeTruthy();
+		expect(action.nativeElement.closest('.hub-select__attached--append')).toBeTruthy();
 	});
 
 	/** Inside the dropdown is exactly where it must not be. */
@@ -70,7 +70,7 @@ describe('HubSelectComponent attached suffix', () => {
 
 		const group = fixture.debugElement.query(By.css('.hub-select__group')).nativeElement as HTMLElement;
 		const control = group.querySelector('.hub-select__control');
-		const affix = group.querySelector('.hub-select__affix--suffix');
+		const affix = group.querySelector('.hub-select__attached--append');
 
 		expect(control!.compareDocumentPosition(affix!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 	});
@@ -85,7 +85,7 @@ describe('HubSelectComponent attached suffix', () => {
 		expect(
 			withSuffix.debugElement
 				.query(By.css('.hub-select__group'))
-				.nativeElement.classList.contains('hub-select__group--has-suffix')
+				.nativeElement.classList.contains('hub-select__group--has-append')
 		).toBe(true);
 
 		TestBed.resetTestingModule();
@@ -98,8 +98,8 @@ describe('HubSelectComponent attached suffix', () => {
 		expect(
 			plain.debugElement
 				.query(By.css('.hub-select__group'))
-				.nativeElement.classList.contains('hub-select__group--has-suffix')
+				.nativeElement.classList.contains('hub-select__group--has-append')
 		).toBe(false);
-		expect(plain.debugElement.query(By.css('.hub-select__affix--suffix'))).toBeNull();
+		expect(plain.debugElement.query(By.css('.hub-select__attached--append'))).toBeNull();
 	});
 });

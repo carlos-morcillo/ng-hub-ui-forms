@@ -27,10 +27,14 @@
 				-->
 				<div
 					class="hub-select__group"
-					[class.hub-select__group--has-suffix]="hasSuffix()"
-					[class.hub-select__group--has-prepend]="hasPrepend()"
-					[class.hub-select__group--has-append]="hasAppend()"
+					[class.hub-select__group--has-prepend]="hasPrepend() || hasPrependTpl()"
+					[class.hub-select__group--has-append]="hasAppend() || hasAppendTpl()"
 				>
+					@if (_prependTpl(); as tpl) {
+						<span class="hub-select__attached hub-select__attached--prepend">
+							<ng-container [ngTemplateOutlet]="tpl" />
+						</span>
+					}
 					@for (addon of _prepend(); track $index) {
 						<span class="hub-select__addon hub-select__addon--prepend">{{ addon }}</span>
 					}
@@ -134,8 +138,8 @@
 						The action goes last, after any append addon, mirroring where hub-input puts
 						its password toggle: addons label the field, the action acts on it.
 					-->
-					@if (_suffixTpl(); as tpl) {
-						<span class="hub-select__affix hub-select__affix--suffix">
+					@if (_appendTpl(); as tpl) {
+						<span class="hub-select__attached hub-select__attached--append">
 							<ng-container [ngTemplateOutlet]="tpl" />
 						</span>
 					}

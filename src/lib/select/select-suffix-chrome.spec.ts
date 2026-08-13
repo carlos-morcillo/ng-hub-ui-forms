@@ -50,12 +50,15 @@ function attachedActionRule(): string {
 		}
 	});
 
-	const rule = rules.find((text) => text.includes('.hub-select__affix--suffix') && text.includes('> *'));
+	// The shared mixin splits this across a base rule and one per side, so join them:
+	// what matters is the chrome the attached element ends up with, not which rule
+	// happened to declare it.
+	const matching = rules.filter((text) => text.includes('.hub-select__attached') && text.includes('> *'));
 
-	// Missing means the rule was renamed or removed, and everything below is vacuous.
-	expect(rule).toBeTruthy();
+	// Empty means the rules were renamed or removed, and everything below is vacuous.
+	expect(matching.length).toBeGreaterThan(0);
 
-	return rule ?? '';
+	return matching.join('\n');
 }
 
 describe('the chrome of an attached action', () => {
@@ -68,14 +71,15 @@ describe('the chrome of an attached action', () => {
 	it('outranks a single-class rule from another package', () => {
 		const rule = attachedActionRule();
 		const selector = rule.slice(0, rule.indexOf('{'));
-		const classes = selector.match(/\.hub-select__affix--suffix/g) ?? [];
+		const classes = selector.match(/\.hub-select__attached/g) ?? [];
 
 		expect(classes.length).toBeGreaterThanOrEqual(2);
 	});
 
 	/** One seam, one line: the action takes the field's border, not its own. */
 	it('takes the field border rather than whatever the action brought', () => {
-		expect(attachedActionRule()).toContain('border: var(--hub-select-border-width) solid var(--hub-select-border-color)');
+		// The shared mixin carries a fallback to the input's token for fields without their own.
+		expect(attachedActionRule()).toContain('border: var(--hub-select-border-width');
 	});
 
 	/** Each side gives up the corner it shares, and keeps the outer one. */
@@ -84,8 +88,8 @@ describe('the chrome of an attached action', () => {
 
 		expect(rule).toContain('border-start-start-radius: 0');
 		expect(rule).toContain('border-end-start-radius: 0');
-		expect(rule).toContain('border-start-end-radius: var(--hub-select-border-radius)');
-		expect(rule).toContain('border-end-end-radius: var(--hub-select-border-radius)');
+		// The outer corners come from the shorthand; only the shared ones are zeroed.
+		expect(rule).toContain('border-radius: var(--hub-select-border-radius');
 	});
 
 	/**
@@ -97,11 +101,12 @@ describe('the chrome of an attached action', () => {
 
 		expect(rule).toContain('padding-block: 0');
 		expect(rule).toContain('align-self: stretch');
-		expect(rule).toContain('min-height: var(--hub-select-min-height)');
+		// The shared mixin carries a fallback chain for fields with no min-height token.
+		expect(rule).toContain('min-height: var(--hub-select-min-height');
 	});
 
 	/** Pulled onto the control's border, so the shared edge is drawn once. */
 	it('sits on the field border rather than beside it', () => {
-		expect(attachedActionRule()).toContain('margin-inline-start: calc(-1 * var(--hub-select-border-width))');
+		expect(attachedActionRule()).toContain('margin-inline: calc(-1 * var(--hub-select-border-width');
 	});
 });

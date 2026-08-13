@@ -16,7 +16,20 @@
 	}
 
 	<div class="hub-field__body">
-		<textarea
+		<div
+			class="hub-textarea__group"
+			[class.hub-textarea__group--has-prepend]="hasPrepend()"
+			[class.hub-textarea__group--has-append]="hasAppend()"
+		>
+			@if (_prependTpl(); as tpl) {
+				<span class="hub-textarea__attached hub-textarea__attached--prepend">
+					<ng-container [ngTemplateOutlet]="tpl" />
+				</span>
+			}
+			@for (addon of _prepend(); track $index) {
+				<span class="hub-textarea__addon hub-textarea__addon--prepend">{{ addon }}</span>
+			}
+			<textarea
 			class="hub-field__control hub-textarea__control"
 			[class.hub-field__control--invalid]="isInvalid"
 			[class.hub-field__control--valid]="showsValid"
@@ -33,7 +46,16 @@
 			[required]="!!required()"
 			[attr.aria-invalid]="isInvalid"
 			[style.width]="cols() ? 'auto' : '100%'"
-		></textarea>
+			></textarea>
+			@for (addon of _append(); track $index) {
+				<span class="hub-textarea__addon hub-textarea__addon--append">{{ addon }}</span>
+			}
+			@if (_appendTpl(); as tpl) {
+				<span class="hub-textarea__attached hub-textarea__attached--append">
+					<ng-container [ngTemplateOutlet]="tpl" />
+				</span>
+			}
+		</div>
 	</div>
 
 	@if (counter()) {

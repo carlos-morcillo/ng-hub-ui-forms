@@ -15,8 +15,22 @@
 		</label>
 	}
 
-	<div class="hub-field__body hub-datepicker__trigger" cdkOverlayOrigin #trigger="cdkOverlayOrigin">
-		<input
+	<div class="hub-field__body">
+		<div
+			class="hub-datepicker__group"
+			[class.hub-datepicker__group--has-prepend]="hasPrepend()"
+			[class.hub-datepicker__group--has-append]="hasAppend()"
+		>
+			@if (_prependTpl(); as tpl) {
+				<span class="hub-datepicker__attached hub-datepicker__attached--prepend">
+					<ng-container [ngTemplateOutlet]="tpl" />
+				</span>
+			}
+			@for (addon of _prependAddons(); track $index) {
+				<span class="hub-datepicker__addon hub-datepicker__addon--prepend">{{ addon }}</span>
+			}
+			<div class="hub-datepicker__trigger" cdkOverlayOrigin #trigger="cdkOverlayOrigin">
+			<input
 			class="hub-field__control hub-datepicker__input"
 			[class.hub-field__control--invalid]="isInvalid"
 			[class.hub-field__control--valid]="showsValid"
@@ -47,6 +61,16 @@
 			[disabled]="disabled() || readonly()"
 			(click)="toggleCalendar()"
 		></button>
+			</div>
+			@for (addon of _appendAddons(); track $index) {
+				<span class="hub-datepicker__addon hub-datepicker__addon--append">{{ addon }}</span>
+			}
+			@if (_appendTpl(); as tpl) {
+				<span class="hub-datepicker__attached hub-datepicker__attached--append">
+					<ng-container [ngTemplateOutlet]="tpl" />
+				</span>
+			}
+		</div>
 	</div>
 
 	@if (formText() || formTextTmp()) {

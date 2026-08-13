@@ -8,9 +8,11 @@ import {
 	inject,
 	input,
 	LOCALE_ID,
+	contentChild,
 	numberAttribute,
 	output,
 	signal,
+	TemplateRef,
 	ViewEncapsulation
 } from '@angular/core';
 import { FormTextType, FormTextTypes, HubLabelType, HubLabelTypes } from '../../interfaces/common.interface';
@@ -23,6 +25,8 @@ import {
 	HubDateValue
 } from '../../interfaces/datepicker.interface';
 import { HUB_FORMS_CONFIG } from '../../services/forms-config';
+import { HubAppendDirective } from '../../directives/append.directive';
+import { HubPrependDirective } from '../../directives/prepend.directive';
 import { HubFieldControl } from '../../shared/hub-field-control';
 import { addMonths, buildCalendarGrid, isInRange, isSameDay, weekdayLabels } from './date-utils';
 import { decadeStart, HubDatepickerPeriodGridComponent } from './period-grid.component';
@@ -238,6 +242,26 @@ export class HubDatepickerComponent extends HubFieldControl {
 
 	/** Extra CSS classes applied to the host element. */
 	readonly classlist = input<string>('');
+
+	/** Text shown before the control as a group addon. A string is one; an array a run. */
+	readonly prepend = input<string | string[]>('');
+
+	/** Text shown after the control as a group addon. See {@link prepend}. */
+	readonly append = input<string | string[]>('');
+
+	/** Projected content attached to the leading edge (`[hubPrepend]`). */
+	protected readonly _prependTpl = contentChild(HubPrependDirective, { read: TemplateRef });
+
+	/** Projected content attached to the trailing edge (`[hubAppend]`). */
+	protected readonly _appendTpl = contentChild(HubAppendDirective, { read: TemplateRef });
+
+	/** Normalized addon lists. */
+	protected readonly _prependAddons = computed<string[]>(() => this.#toAddonList(this.prepend()));
+	protected readonly _appendAddons = computed<string[]>(() => this.#toAddonList(this.append()));
+
+	/** Whether anything is attached to each edge, which squares off that side. */
+	protected readonly hasPrepend = computed<boolean>(() => this._prependAddons().length > 0 || !!this._prependTpl());
+	protected readonly hasAppend = computed<boolean>(() => this._appendAddons().length > 0 || !!this._appendTpl());
 
 	// ── Outputs ─────────────────────────────────────────────────────────────────
 
@@ -650,6 +674,11 @@ export class HubDatepickerComponent extends HubFieldControl {
 	#anchor(date: Date): void {
 		this._viewDate.set(date);
 		this._focusedDate.set(date);
+	}
+
+	/** Drops empty entries so `prepend=""` renders nothing rather than an empty box. */
+	#toAddonList(value: string | string[]): string[] {
+		return Array.isArray(value) ? value.filter((item) => item != null && item !== '') : value ? [value] : [];
 	}
 
 	#addDays(date: Date, days: number): Date {

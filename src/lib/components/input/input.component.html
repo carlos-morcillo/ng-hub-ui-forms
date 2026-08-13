@@ -133,11 +133,16 @@
 						[class.hub-input__group--floating]="labelType() === _labelTypes.Floating"
 						[class.hub-input__group--has-prefix]="hasPrefix()"
 						[class.hub-input__group--has-suffix]="hasSuffix()"
-						[class.hub-input__group--has-prepend]="hasPrepend()"
-						[class.hub-input__group--has-append]="hasAppend()"
+						[class.hub-input__group--has-prepend]="hasPrepend() || hasPrependTpl()"
+						[class.hub-input__group--has-append]="hasAppend() || hasAppendTpl()"
 						[class.hub-input__group--has-toggle]="showsPasswordToggle()"
 						(focusout)="handleGroupFocusOut($event)"
 					>
+						@if (_prependTpl(); as tpl) {
+							<span class="hub-input__attached hub-input__attached--prepend">
+								<ng-container [ngTemplateOutlet]="tpl" />
+							</span>
+						}
 						@for (addon of _prepend(); track $index) {
 							<span class="hub-input__addon hub-input__addon--prepend">{{ addon }}</span>
 						}
@@ -177,6 +182,12 @@
 
 						@for (addon of _append(); track $index) {
 							<span class="hub-input__addon hub-input__addon--append">{{ addon }}</span>
+						}
+						<!-- Attached content goes last: addons label the field, an action acts on it. -->
+						@if (_appendTpl(); as tpl) {
+							<span class="hub-input__attached hub-input__attached--append">
+								<ng-container [ngTemplateOutlet]="tpl" />
+							</span>
 						}
 
 						@if (showsPasswordToggle()) {

@@ -2,6 +2,8 @@
 // Shared chrome (label, control skin, feedback, form-text) lives in the global
 // `styles/_field.scss`; tokens in `styles/_tokens.scss`.
 
+@use '../../styles/group-addons';
+
 hub-input {
 	display: block;
 	font-family: var(--hub-input-font-family);
@@ -19,59 +21,12 @@ hub-input.hidden-control {
 		gap: var(--hub-ref-space-2, 0.5rem);
 	}
 
-	// Input group: control surrounded by addons.
+	// Input group: control surrounded by addons. Structure comes from the shared
+	// mixin (see `styles/_group-addons.scss`) so the box-shaped fields cannot drift
+	// apart; only what is specific to the input stays here.
 	&__group {
-		display: flex;
-		align-items: stretch;
 		flex: 1 1 auto;
-		min-width: 0;
 		position: relative;
-	}
-
-	&__addon {
-		display: flex;
-		align-items: center;
-		padding: 0 var(--hub-input-padding-x);
-		color: var(--hub-input-group-addon-color);
-		background: var(--hub-input-group-addon-bg);
-		border: var(--hub-input-border-width) solid var(--hub-input-group-addon-border-color);
-		white-space: nowrap;
-
-		&--prepend {
-			border-right: 0;
-			border-radius: var(--hub-input-border-radius) 0 0 var(--hub-input-border-radius);
-		}
-
-		&--append {
-			border-left: 0;
-			border-radius: 0 var(--hub-input-border-radius) var(--hub-input-border-radius) 0;
-		}
-
-		// In a run of addons only the outermost one keeps its outer radius; the inner
-		// joins stay square so the run reads as one piece instead of stacked pills.
-		&--prepend + &--prepend {
-			border-top-left-radius: 0;
-			border-bottom-left-radius: 0;
-		}
-
-		&--append:has(+ &--append) {
-			border-top-right-radius: 0;
-			border-bottom-right-radius: 0;
-		}
-	}
-
-	// The control gives up the radius on whichever side meets an addon, so field and
-	// addon fuse into a single piece. Driven by group modifiers rather than sibling
-	// combinators because the affix spans are rendered unconditionally between the
-	// addons and the control: an addon is never the control's adjacent sibling.
-	&__group--has-prepend > .hub-field__control {
-		border-top-left-radius: 0;
-		border-bottom-left-radius: 0;
-	}
-
-	&__group--has-append > .hub-field__control {
-		border-top-right-radius: 0;
-		border-bottom-right-radius: 0;
 	}
 
 	// Icon affix: a leading / trailing glyph rendered inside the field (e.g. a search
@@ -495,3 +450,6 @@ hub-input.hidden-control {
 		opacity: var(--hub-form-disabled-opacity);
 	}
 }
+
+// Shared group/addon structure, emitted for this field's prefix.
+@include group-addons.group-addons('input');

@@ -5,19 +5,57 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.16.0] - 2026-08-13
+
+### Added
+
+- **`[hubPrepend]` / `[hubAppend]` attach an icon or a button to a field's edge** — anything richer than the text a `prepend` / `append` string can carry. A search box with a pulsable magnifier, an amount with a "calculate", a token with a "copy".
+
+    Available on every field that renders as a box with a value: `<hub-input>`, `<hub-select>`, `<hub-textarea>` and `<hub-datepicker>`. The other four fields are deliberately left out — a slider is a rail, a segmented control is already a row of buttons, a file input is a dropzone and an OTP is a run of separate boxes, and "attached to the edge" would have to be invented for each.
+
+    They **compose** with the string addons rather than replacing them. The strings render first, so projected content is always the outermost element on its side: a unit labels the field, the action sits beyond it — the same order `hub-input` already used for its password toggle.
+
+    Declared as templates because a field's `<ng-content>` is already spoken for: the select's carries `<ng-option>` through to its engine, the input projects its in-field affixes. Rendering from a template also fixes the DOM order, so tabbing reaches the field before the button acting on it.
+
+- **`<hub-textarea>` and `<hub-datepicker>` gain `prepend` / `append` group addons**, the contract `hub-input` and `hub-select` already had. No new tokens were needed: the shared structure falls back to the input's `--hub-input-*` tokens, so a field only declares its own when it wants to differ — and a consumer can still theme one field alone by setting `--hub-textarea-group-addon-bg` and friends.
+
+### Changed
+
+- **The group and addon structure of all four fields now comes from one shared SCSS mixin** (`styles/_group-addons.scss`) instead of a copy each. The input and the select had already drifted apart — the input on physical properties (`border-right`, shorthand radii) and adjacent-sibling selectors, the select on logical properties and positional ones — which is the divergence that produced both of the seam bugs this library has shipped.
+
+    Both lessons are now written into the single place that can prevent them: the corner flattening hangs off classes on the group and never off sibling combinators (22.13.1, where the input's rules never once matched because an affix span always sat in between), and projected content wears the field's chrome rather than its own (22.15.1). The input gains correct RTL behaviour as a side effect.
+
+    Attached content is marked `hub-<field>__attached`. The input keeps `__affix` for the glyphs it positions _inside_ the box — that is a different thing and now has a different word.
+
+### Deprecated
+
+- **`[hubSelectSuffix]`** — use `[hubAppend]`, which does the same on every field that takes one rather than only on the select. Shipped in 22.15.0 and superseded one release later: generalising the slot left the select with two names for one concept, and retiring the narrower one a day after it shipped costs less than documenting the difference forever. It keeps working and renders through the same slot; `[hubAppend]` wins if both are present.
+
+### Fixed
+
+- **`<hub-select>` rendered "No items found" and "Add item" in English no matter what the app configured.** `NgSelectConfig` is the one place an app translates the dropdown's own strings, and the engine reads it as a fallback (`notFoundText() ?? config.notFoundText`). A fallback only fires on a missing value — and this component handed down its own default of `'No items found'`, a perfectly good string, so the config was unreachable from every select in the app.
+
+    Both inputs now default to undefined and the fallback does its job. An explicit `notFoundText` / `addTagText` still wins, so the handful of call sites that were passing the text by hand to work around this keep working and can drop it.
+
+    Reported downstream, where the tell was that "type to search" _did_ translate: that string is not forwarded at all, so nothing overwrote it.
+
+- **A `<hub-select>` carrying only an attached action kept its trailing corner rounded under it.** The select marked that case with `--has-suffix` while the shared flattening rule keys off `--has-append`, which it set from the string addons alone — so a select with a button and no `append=""` never squared the corner the button sits against. The other three fields already read both sources; the select now does too, and `--has-suffix` is gone rather than left as a second name for the same state.
+
+    It survived the test suite because the assertion paired an action _with_ a string addon, where the string set the flag on its own and the action's contribution was never actually observed. The regression test drops the string and asserts the action alone.
+
 ## [22.15.1] - 2026-08-12
 
 ### Fixed
 
 - **An action attached with `[hubSelectSuffix]` did not wear the field's chrome.** 22.15.0 shipped it looking like two boxes stuck together: the seam was the action's own 1.5px dark border against the field's 1px light one, and the action stood about seven pixels taller than the control it is attached to.
 
-  The cause is that what gets projected brings chrome from its own package — `hubButton` sets a border width, a radius and vertical padding — through a single-class rule in a stylesheet that loads *after* this one. A single class here ties on specificity and loses on order, so every declaration meant to normalise the action was silently overridden.
+    The cause is that what gets projected brings chrome from its own package — `hubButton` sets a border width, a radius and vertical padding — through a single-class rule in a stylesheet that loads _after_ this one. A single class here ties on specificity and loses on order, so every declaration meant to normalise the action was silently overridden.
 
-  The rule now doubles its own class to outrank that, and the action takes the field's border, the field's radii and the field's height: its vertical padding is surrendered to the group and it stretches into the row instead of setting its own height. Inline padding stays, so a projected icon keeps its breathing room.
+    The rule now doubles its own class to outrank that, and the action takes the field's border, the field's radii and the field's height: its vertical padding is surrendered to the group and it stretches into the row instead of setting its own height. Inline padding stays, so a projected icon keeps its breathing room.
 
-  A regression test asserts the shipped rule rather than the rendered pixels — jsdom loads the stylesheet but resolves neither `var()` nor logical properties like `padding-block`, so measuring there would report an unstyled page and pass whatever it was handed. It catches the rule being weakened, which is exactly what shipped; the pixels are checked in a browser before release.
+    A regression test asserts the shipped rule rather than the rendered pixels — jsdom loads the stylesheet but resolves neither `var()` nor logical properties like `padding-block`, so measuring there would report an unstyled page and pass whatever it was handed. It catches the rule being weakened, which is exactly what shipped; the pixels are checked in a browser before release.
 
-  Worth naming why the existing tests stayed green through it: they assert that the action renders, that it stays out of the dropdown engine and that it follows the control in the DOM. All three were true the whole time. Nothing asserted anything about how it looked.
+    Worth naming why the existing tests stayed green through it: they assert that the action renders, that it stays out of the dropdown engine and that it follows the control in the DOM. All three were true the whole time. Nothing asserted anything about how it looked.
 
 ## [22.15.0] - 2026-08-12
 
@@ -25,17 +63,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`<hub-select>` takes `prepend` and `append` group addons**, the same contract `hub-input` has had all along. A currency, a unit, a protocol: a string is one addon, an array is a run of them, and empty entries are dropped rather than drawn as an empty box. The field and its addons share one border and round only their outer corners, so `prepend="€" append="/ month"` reads as one control instead of three boxes parked together.
 
-  Three tokens, chained to the input's so the same addon looks the same whichever field carries it, and still overridable on their own: `--hub-select-group-addon-bg`, `--hub-select-group-addon-color`, `--hub-select-group-addon-border-color`.
+    Three tokens, chained to the input's so the same addon looks the same whichever field carries it, and still overridable on their own: `--hub-select-group-addon-bg`, `--hub-select-group-addon-color`, `--hub-select-group-addon-border-color`.
 
-  The corner flattening is driven by `hub-select__group--has-prepend` / `--has-append` on the group rather than by adjacent-sibling selectors. That is the lesson 22.14.0 paid for on the input, where the equivalent rules hung off `+`, never once matched because an affix span always sat in between, and cost nothing to be wrong — a selector that matches nothing raises no error.
+    The corner flattening is driven by `hub-select__group--has-prepend` / `--has-append` on the group rather than by adjacent-sibling selectors. That is the lesson 22.14.0 paid for on the input, where the equivalent rules hung off `+`, never once matched because an affix span always sat in between, and cost nothing to be wrong — a selector that matches nothing raises no error.
 
 - **`[hubSelectSuffix]` attaches an interactive control to the select's inline-end edge** — a button acting on whatever is selected: configure it, look it up, create a new one.
 
-  Deliberately not the same slot as an addon. An addon is a static label sharing the field's border; this is focusable and sits outside the box, so it never competes for the corner the dropdown arrow and the clear cross already share, where a click landing on the wrong one of three opens a panel when somebody meant to open a dialog.
+    Deliberately not the same slot as an addon. An addon is a static label sharing the field's border; this is focusable and sits outside the box, so it never competes for the corner the dropdown arrow and the clear cross already share, where a click landing on the wrong one of three opens a panel when somebody meant to open a dialog.
 
-  It is a `<ng-template>` rather than projected content because the select's catch-all `<ng-content>` carries `<ng-option>` through to the engine and is declared first, so anything projected plainly would land inside the dropdown. Rendering from a template also keeps the action after the control in the DOM, so tabbing reaches the field before the button that acts on it.
+    It is a `<ng-template>` rather than projected content because the select's catch-all `<ng-content>` carries `<ng-option>` through to the engine and is declared first, so anything projected plainly would land inside the dropdown. Rendering from a template also keeps the action after the control in the DOM, so tabbing reaches the field before the button that acts on it.
 
-  Both mechanisms compose: with an append addon and an action present, the action is always the outermost element — the same order `hub-input` uses for its password toggle.
+    Both mechanisms compose: with an append addon and an action present, the action is always the outermost element — the same order `hub-input` uses for its password toggle.
 
 ## [22.14.0] - 2026-08-12
 
@@ -43,17 +81,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`<hub-datepicker>` can pick a time, and a granularity anywhere from a year to a second.** The picker only ever yielded calendar days, so a validity window with an hour — a building access code valid "today from 9 to 21" — had to be rounded up to a whole day. A single-use code for a courier ended up opening the door around the clock. The remaining option was hand-rolling a control around `<input type="datetime-local">`, which is the thing this library exists to avoid.
 
-  The new `granularity` input takes `'year' | 'month' | 'day' | 'hour' | 'minute' | 'second'` and also selects the panel: `year` and `month` render a 12-cell period grid, `day` the calendar as before, and anything finer adds a time strip beneath it. It is orthogonal to `mode` — `mode` says how many points are picked, `granularity` how precise each one is — so `mode="range" granularity="month"` yields `{ start: "2026-01", end: "2026-06" }`, and both endpoints of a time range carry their own hour.
+    The new `granularity` input takes `'year' | 'month' | 'day' | 'hour' | 'minute' | 'second'` and also selects the panel: `year` and `month` render a 12-cell period grid, `day` the calendar as before, and anything finer adds a time strip beneath it. It is orthogonal to `mode` — `mode` says how many points are picked, `granularity` how precise each one is — so `mode="range" granularity="month"` yields `{ start: "2026-01", end: "2026-06" }`, and both endpoints of a time range carry their own hour.
 
-  **The default is `'day'`, which emits the same bare `YYYY-MM-DD` string it always has.** Nothing that exists today changes behaviour; a named block of tests states that guarantee explicitly rather than leaving it to inspection.
+    **The default is `'day'`, which emits the same bare `YYYY-MM-DD` string it always has.** Nothing that exists today changes behaviour; a named block of tests states that guarantee explicitly rather than leaving it to inspection.
 
-  From `hour` onwards the value is a full ISO 8601 timestamp carrying **the reader's local wall clock and the offset of that very date** — `2026-09-01T09:00:00+02:00` in Madrid in September, `+01:00` for the same clock in January. Local-with-offset over UTC on purpose: every calculation in the component already happens in the reader's zone by date parts, so this is the honest serialization of what was computed rather than a conversion the value no longer shows. It still denotes an unambiguous instant, and a consumer who wants UTC converts losslessly with `new Date(value).toISOString()`.
+    From `hour` onwards the value is a full ISO 8601 timestamp carrying **the reader's local wall clock and the offset of that very date** — `2026-09-01T09:00:00+02:00` in Madrid in September, `+01:00` for the same clock in January. Local-with-offset over UTC on purpose: every calculation in the component already happens in the reader's zone by date parts, so this is the honest serialization of what was computed rather than a conversion the value no longer shows. It still denotes an unambiguous instant, and a consumer who wants UTC converts losslessly with `new Date(value).toISOString()`.
 
 - **Three format axes, where before only display was configurable.** The value format was hardcoded inside `formatISO()` and the input format inside `parseDate()`, so a form model that had to hold `Date` objects, or an API that sent epoch millis, meant translating on both sides of the control.
 
-  `valueFormat` says what the bound control holds — `'iso'` (default), `'date'` for a native `Date`, `'timestamp'` for epoch milliseconds, or a function for anything else. `parse` says how an incoming value is read, overriding the built-in detection of ISO strings of any width, `Date` instances and epoch milliseconds, and it applies to `min` and `max` too. `displayFormat` keeps its current meaning and now additionally accepts an Angular pattern such as `'dd/MM/yyyy HH:mm'` or a formatting function.
+    `valueFormat` says what the bound control holds — `'iso'` (default), `'date'` for a native `Date`, `'timestamp'` for epoch milliseconds, or a function for anything else. `parse` says how an incoming value is read, overriding the built-in detection of ISO strings of any width, `Date` instances and epoch milliseconds, and it applies to `min` and `max` too. `displayFormat` keeps its current meaning and now additionally accepts an Angular pattern such as `'dd/MM/yyyy HH:mm'` or a formatting function.
 
-  The asymmetry is deliberate. A pattern *parser* would mean writing a locale-aware date parser inside a library that advertises having no date dependency, and `01/02/2026` is two different days depending on who reads it. Formatting is cheap — `formatDate()` from `@angular/common` is already a dependency — so patterns are offered where they are free and refused where they would cost a parser.
+    The asymmetry is deliberate. A pattern _parser_ would mean writing a locale-aware date parser inside a library that advertises having no date dependency, and `01/02/2026` is two different days depending on who reads it. Formatting is cheap — `formatDate()` from `@angular/common` is already a dependency — so patterns are offered where they are free and refused where they would cost a parser.
 
 - **`minuteStep`, `secondStep`, `hourFormat` and `timeDisplayFormat`**, each with a global default in `provideHubForms`. `hourFormat` is derived from the locale unless forced, and it governs the field's own display as well as the panel — otherwise a picker set to a 24-hour clock would show `14:30` in the panel and `02:30 PM` in the input, the same value contradicting itself.
 
@@ -65,7 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`min` and `max` now honour the time, not just the day.** A day is disabled only when no instant of it is allowed, so `min = 2026-09-01T14:00` leaves 1 September clickable and the time controls refuse the earlier hours. A step that would leave the bounds is refused rather than clamped: clamping a held-down arrow key pins the value to the bound and reads as the control being stuck. At `day` granularity the comparison stays day-level, exactly as before.
 
-- **Range endpoints are ordered by instant rather than by day.** The trap was never the range that crosses midnight — day-level ordering already handled `1 Sep 22:00 → 2 Sep 06:00`. It was the second click landing on the *same* day: `compareDay()` returned 0 and the endpoints were left in click order, producing an end before its start. Picking 21:00 and then 09:00 on one day now reorders itself.
+- **Range endpoints are ordered by instant rather than by day.** The trap was never the range that crosses midnight — day-level ordering already handled `1 Sep 22:00 → 2 Sep 06:00`. It was the second click landing on the _same_ day: `compareDay()` returned 0 and the endpoints were left in click order, producing an end before its start. Picking 21:00 and then 09:00 on one day now reorders itself.
 
 - **A time-carrying granularity keeps the panel open on select**, since closing on the day click would strand time controls the user has not reached yet. `closeOnSelect` is honoured at `day` and coarser; finer than that, a **Done** action appears in the footer. `Escape` and a backdrop click close as always.
 
@@ -83,11 +121,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **A read-only theme, applied from the field's own state.** `readonly` reached the native attributes and stopped there, so a read-only field went on drawing the border, the background and the focus ring of something you can type in — a promise it then refused, and next to an editable neighbour there was nothing at all to tell the two apart. Marking a field `readonly` now styles it as such, with no class to remember at the call site: `hub-input`, `hub-textarea`, `hub-select` and `hub-datepicker` all reflect it as `hub-field--readonly`.
 
-  The error border survives: dropping the chrome is about not promising input, while an invalid value is a different message and one the user still has to see — the feedback text alone is easy to miss in a long form.
+    The error border survives: dropping the chrome is about not promising input, while an invalid value is a different message and one the user still has to see — the feedback text alone is easy to miss in a long form.
 
-  It is deliberately **not** the disabled treatment. Disabled means "not applicable now" and fades to say so; read-only means "this is the value, it is simply not yours to change here", so the text keeps full contrast and stays selectable — copying a tax id out of a document is the point of showing it. The chrome that offers input goes: background, border, focus ring, the select's caret and clear cross, and the datepicker's calendar icon. The padding stays, so a read-only field keeps the same box and baseline as the editable ones beside it in a grid.
+    It is deliberately **not** the disabled treatment. Disabled means "not applicable now" and fades to say so; read-only means "this is the value, it is simply not yours to change here", so the text keeps full contrast and stays selectable — copying a tax id out of a document is the point of showing it. The chrome that offers input goes: background, border, focus ring, the select's caret and clear cross, and the datepicker's calendar icon. The padding stays, so a read-only field keeps the same box and baseline as the editable ones beside it in a grid.
 
-  Four new tokens, so the look can be taken elsewhere: `--hub-input-readonly-bg`, `--hub-input-readonly-border-color`, `--hub-input-readonly-color`, `--hub-input-readonly-cursor`.
+    Four new tokens, so the look can be taken elsewhere: `--hub-input-readonly-bg`, `--hub-input-readonly-border-color`, `--hub-input-readonly-color`, `--hub-input-readonly-cursor`.
 
 ## [22.12.2] - 2026-08-07
 
@@ -178,10 +216,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **`<hub-file-input>` dropzone chrome is now themeable end to end.** The control shipped a dropzone that could only ever look like the library's: a bare glyph, one line of invitation, and an underlined text link to browse. Four additions let a design system reproduce its own dropzone without forking the template or writing a single bespoke selector — every default is unchanged, so no existing consumer moves a pixel.
-  - **Icon medallion.** `--hub-file-input-icon-bg`, `--hub-file-input-icon-chip-size` and `--hub-file-input-icon-chip-radius` put the glyph on a tinted, rounded surface. The glyph moved to the element's `::before`, so `--hub-file-input-icon-color` / `-size` / `-icon` keep meaning exactly what they meant. Defaults (transparent, square, the glyph's own box) render identically.
-  - **Browse action as a button.** `--hub-file-input-browse-bg`, `-hover-bg`, `-padding-x`, `-padding-y`, `-radius`, `-font-size`, `-text-decoration` and `-gap`, plus an optional leading glyph (`--hub-file-input-browse-icon`, `-icon-display`, `-icon-size`) that follows the same mask contract as the rest of the family. Defaults keep it a transparent, underlined text affordance.
-  - **A second invitation line.** New `dropSubtext` label and a matching per-instance `[dropSubtext]` input, rendered under the invitation as `.hub-file-input__drop-subtext`. Empty by default, so it renders nothing. `[dropText]` was added alongside it, so the invitation is now overridable per instance too (`buttonLabel` already was). New `--hub-file-input-prompt-direction`, `-align` and `-gap` stack the prompt into a column, and `--hub-file-input-drop-text-*` / `-drop-subtext-*` type each line.
-  - **A leading slot.** New `hubFileDropzoneNotice` directive (`HubFileDropzoneNoticeDirective`) projects arbitrary markup inside the dropzone, between the glyph and the invitation — the place for a per-instance notice ("2 documents still missing") that neither the invitation nor the constraints hint can express.
+    - **Icon medallion.** `--hub-file-input-icon-bg`, `--hub-file-input-icon-chip-size` and `--hub-file-input-icon-chip-radius` put the glyph on a tinted, rounded surface. The glyph moved to the element's `::before`, so `--hub-file-input-icon-color` / `-size` / `-icon` keep meaning exactly what they meant. Defaults (transparent, square, the glyph's own box) render identically.
+    - **Browse action as a button.** `--hub-file-input-browse-bg`, `-hover-bg`, `-padding-x`, `-padding-y`, `-radius`, `-font-size`, `-text-decoration` and `-gap`, plus an optional leading glyph (`--hub-file-input-browse-icon`, `-icon-display`, `-icon-size`) that follows the same mask contract as the rest of the family. Defaults keep it a transparent, underlined text affordance.
+    - **A second invitation line.** New `dropSubtext` label and a matching per-instance `[dropSubtext]` input, rendered under the invitation as `.hub-file-input__drop-subtext`. Empty by default, so it renders nothing. `[dropText]` was added alongside it, so the invitation is now overridable per instance too (`buttonLabel` already was). New `--hub-file-input-prompt-direction`, `-align` and `-gap` stack the prompt into a column, and `--hub-file-input-drop-text-*` / `-drop-subtext-*` type each line.
+    - **A leading slot.** New `hubFileDropzoneNotice` directive (`HubFileDropzoneNoticeDirective`) projects arbitrary markup inside the dropzone, between the glyph and the invitation — the place for a per-instance notice ("2 documents still missing") that neither the invitation nor the constraints hint can express.
 
 ## [22.6.1] - 2026-07-09
 
@@ -285,7 +323,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Aligned with Angular 22.
 - README documentation standardized.
-
 
 ## [21.0.0] - 2026-06-15
 

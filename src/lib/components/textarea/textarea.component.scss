@@ -1,6 +1,8 @@
 // `<hub-textarea>` — component-specific structure only.
 // Shared chrome + tokens come from the global `styles/_field.scss` + `_tokens.scss`.
 
+@use '../../styles/group-addons';
+
 hub-textarea {
 	display: block;
 }
@@ -24,3 +26,8 @@ hub-textarea.hidden-control {
 		text-align: right;
 	}
 }
+
+// Shared group/addon structure. A textarea grows vertically, so the addons stretch
+// with it: `align-items: stretch` on the group is what keeps a unit beside a box the
+// user has just dragged twice as tall.
+@include group-addons.group-addons('textarea');

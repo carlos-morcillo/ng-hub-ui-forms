@@ -1,0 +1,149 @@
+// ─────────────────────────────────────────────────────────────────────────
+// Group addons — shared structure for every field that renders as a box with
+// a value: input, select, textarea, datepicker.
+// ─────────────────────────────────────────────────────────────────────────
+// Internal, not forwarded from `index.scss`: this is structure, not theming.
+// Consumers tune it through the `--hub-<field>-*` tokens each component maps.
+//
+// One source of truth on purpose. The rules here encode two things that were
+// each learned the hard way, and that a copy per field would lose:
+//
+//   1. The corner flattening hangs off classes on the group, never off sibling
+//      combinators. 22.13.1 shipped the input with `+`-based rules that never
+//      once matched, because an affix span always sat between the addon and the
+//      control — and a selector that matches nothing raises no error.
+//
+//   2. Projected content brings chrome from its own package (`hubButton` sets a
+//      border width, a radius and vertical padding) through a stylesheet that
+//      loads later. 22.15.1 fixed the select by doubling the class and taking
+//      the field's border, radii and height. Every field that accepts projected
+//      content needs that same treatment or it grows the same seam.
+//
+// @param {String} $field - Token/class prefix, e.g. `input`, `select`.
+
+// Every token falls back to the input's. A field only declares its own when it wants
+// to differ, so adding a group to a field costs no new tokens — and a consumer can
+// still override just that field by setting `--hub-<field>-…` themselves.
+@mixin group-addons($field) {
+	$radius: var(--hub-#{$field}-border-radius, var(--hub-input-border-radius));
+	$border-width: var(--hub-#{$field}-border-width, var(--hub-input-border-width));
+	$border-color: var(--hub-#{$field}-border-color, var(--hub-input-border-color));
+	$padding-x: var(--hub-#{$field}-padding-x, var(--hub-input-padding-x));
+	$font-size: var(--hub-#{$field}-font-size, var(--hub-input-font-size));
+	$addon-bg: var(--hub-#{$field}-group-addon-bg, var(--hub-input-group-addon-bg));
+	$addon-color: var(--hub-#{$field}-group-addon-color, var(--hub-input-group-addon-color));
+	$addon-border: var(--hub-#{$field}-group-addon-border-color, var(--hub-input-group-addon-border-color));
+
+	.hub-#{$field}__group {
+		display: flex;
+		align-items: stretch;
+		min-width: 0;
+
+		// The control takes the room; whatever is attached takes only what it needs.
+		> .hub-#{$field}__control,
+		> .hub-field__control {
+			flex: 1 1 auto;
+			min-width: 0;
+		}
+	}
+
+	// ── Static addons (`prepend` / `append` strings) ──────────────────────
+	.hub-#{$field}__addon {
+		display: flex;
+		align-items: center;
+		flex: 0 0 auto;
+		padding: 0 #{$padding-x};
+		color: #{$addon-color};
+		background: #{$addon-bg};
+		border: #{$border-width} solid #{$addon-border};
+		border-radius: #{$radius};
+		font-size: #{$font-size};
+		white-space: nowrap;
+
+		// The shared edge belongs to the control, so the addon drops its own there.
+		&--prepend {
+			border-inline-end: 0;
+			border-start-end-radius: 0;
+			border-end-end-radius: 0;
+		}
+
+		&--append {
+			border-inline-start: 0;
+			border-start-start-radius: 0;
+			border-end-start-radius: 0;
+		}
+	}
+
+	// ── Projected content (`[hubPrepend]` / `[hubAppend]`) ────────────────
+	// Named `__attached`, not `__affix`: the input already spends `__affix` on the
+	// glyphs it positions *inside* the box. These sit outside it and share its border,
+	// which is a different thing and deserves a different word.
+	// The doubled class is deliberate: what is projected arrives with chrome from
+	// its own package through a single-class rule in a stylesheet that loads after
+	// this one, so a single class ties on specificity and loses on order.
+	.hub-#{$field}__attached.hub-#{$field}__attached {
+		display: flex;
+		align-items: stretch;
+		flex: 0 0 auto;
+
+		> * {
+			// Vertical padding surrendered to the group: it is what makes a projected
+			// button stand taller than the field. Inline padding is the control's own
+			// and stays, so an icon keeps its breathing room.
+			padding-block: 0;
+			height: auto;
+			align-self: stretch;
+			// `stretch` above already matches the row's height; this only matters for the
+			// fields that declare a minimum of their own, so the fallback is plain `auto`.
+			min-height: var(--hub-#{$field}-min-height, auto);
+
+			// The field's border, not whatever arrived, so the seam is one line.
+			border: #{$border-width} solid #{$border-color};
+			border-radius: #{$radius};
+
+			// Pulled onto the control's border so the shared edge is drawn once.
+			margin-inline: calc(-1 * #{$border-width}) 0;
+		}
+
+		&--prepend > * {
+			border-start-end-radius: 0;
+			border-end-end-radius: 0;
+			margin-inline: 0 calc(-1 * #{$border-width});
+		}
+
+		&--append > * {
+			border-start-start-radius: 0;
+			border-end-start-radius: 0;
+		}
+	}
+
+	// ── Corner flattening, driven by the group's own classes ──────────────
+	.hub-#{$field}__group {
+		&--has-prepend > .hub-#{$field}__control,
+		&--has-prepend > .hub-field__control,
+		&--has-prepend > .hub-#{$field}__control.ng-select .ng-select-container {
+			border-start-start-radius: 0;
+			border-end-start-radius: 0;
+		}
+
+		&--has-append > .hub-#{$field}__control,
+		&--has-append > .hub-field__control,
+		&--has-append > .hub-#{$field}__control.ng-select .ng-select-container {
+			border-start-end-radius: 0;
+			border-end-end-radius: 0;
+		}
+
+		// A run of addons on one side reads as one piece: only the outermost rounds
+		// its outer corners. The positional test also covers the addon that ends up
+		// beside projected content, which has to hand its corners over to it.
+		> .hub-#{$field}__addon--prepend:not(:first-child) {
+			border-start-start-radius: 0;
+			border-end-start-radius: 0;
+		}
+
+		> .hub-#{$field}__addon--append:not(:last-child) {
+			border-start-end-radius: 0;
+			border-end-end-radius: 0;
+		}
+	}
+}
