@@ -83,9 +83,17 @@
 	--hub-input-wrapper-gap: var(--hub-ref-space-2, 0.5rem);
 
 	// Input-group addons
-	--hub-input-group-addon-bg: var(--hub-sys-surface-elevated, #f8f9fa);
+	// A static addon shares the field's surface: it labels the control rather than
+	// standing beside it, so the group reads as one box with a unit written inside.
+	// The fill is spent on what can be operated instead — see the action tokens below.
+	--hub-input-group-addon-bg: var(--hub-input-bg);
 	--hub-input-group-addon-color: var(--hub-sys-text-muted, #6c757d);
 	--hub-input-group-addon-border-color: var(--hub-input-border-color);
+
+	// Whatever is attached and operable. Carries the fill so the eye lands on the thing
+	// that does something; a projected control that brings its own background still wins.
+	--hub-input-group-action-bg: var(--hub-sys-color-secondary-subtle, #e9ecef);
+	--hub-input-group-action-color: var(--hub-sys-color-secondary-emphasis, #41464b);
 
 	// Input · affix (projected leading/trailing content, e.g. a <hub-icon>)
 	--hub-input-icon-color: var(--hub-sys-text-muted, #6c757d);
@@ -305,6 +313,8 @@
 	--hub-select-group-addon-bg: var(--hub-input-group-addon-bg);
 	--hub-select-group-addon-color: var(--hub-input-group-addon-color);
 	--hub-select-group-addon-border-color: var(--hub-input-group-addon-border-color);
+	--hub-select-group-action-bg: var(--hub-input-group-action-bg);
+	--hub-select-group-action-color: var(--hub-input-group-action-color);
 	--hub-select-arrow-color: var(--hub-sys-text-muted, #6c757d);
 	// Caret geometry — the border of the CSS triangle and the wrapper's inline
 	// padding (clearance from the value and from the field edge). Tune both to

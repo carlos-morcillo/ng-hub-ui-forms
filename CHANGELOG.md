@@ -5,6 +5,30 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.17.0] - 2026-08-13
+
+### Changed
+
+- **The fill moved from the labels to the actions, and every field with an addon changes appearance.** A static `prepend` / `append` used to be a grey box beside the control; it now shares the field's own surface, so the group reads as one box with a unit written inside it. What can be operated — a projected button, a link, anything focusable — carries the fill instead.
+
+    The fill is the affordance, and it was on the wrong thing. A grey box holding a glyph reads as a button whatever the glyph means: attaching a decorative icon produced something indistinguishable from the real actions beside it, while those actions sat transparent and read as inert. Reported from the docs site as "the pencil doesn't work", which is the right complaint about an icon that looks pressable and is not.
+
+    Two tokens carry it, wired to the design system's semantic palette rather than to a fixed grey, so it follows a themed build: `--hub-<field>-group-action-bg` (default `--hub-sys-color-secondary-subtle`) and `--hub-<field>-group-action-color`. `--hub-<field>-group-addon-bg` now defaults to the field's own background; setting it back to `--hub-sys-surface-elevated` restores the previous look on a field, or on all of them through `--hub-input-group-addon-bg`.
+
+    A projected control that brings its own background still wins — a `.btn-primary` stays blue.
+
+### Fixed
+
+- **`<hub-datepicker>` kept its input fully rounded between an addon and an attached action**, drawing three separate boxes where the other fields draw one. The flattening rule used a child combinator, and this field's input is a grandchild of the group: it sits inside the `__trigger` that serves as the overlay origin. The rule read as though it covered every field while matching nothing on the nested ones.
+
+    This is 22.13.1 one storey lower — the same defect for the same reason, a selector that matches nothing raising no error. It also survived the release measurement, because that read the radii off the `__trigger` wrapper, which paints no box at all, instead of the input inside it that does. The rule is now descendant-scoped, so it reaches the control wherever the field chooses to nest it.
+
+- **Content attached with `[hubPrepend]` / `[hubAppend]` collapsed to the width of its glyph unless it arrived pre-styled.** A `.btn` brings its own inline padding and its line-height centres what it holds; a bare `<span>` around an icon brings neither, so it rendered as an 18px sliver with the icon pinned to the top edge — a whole row away from centre in a textarea.
+
+    Attached content now takes the field's inline padding and centres what it holds, which is what the string addons have always done. Nothing that already looked right moves: the padding is the value `.btn` was already using.
+
+    All of it is pinned by tests that ask the DOM whether the element matches the selectors this library actually ships, rather than measuring — `matches()` needs no `var()` resolution, so jsdom can answer it, and the assertion survives the selector being rewritten. Writing that test is also what caught the exclusion list being spelled `:not(:is(…))`, which is Selectors 4 and silently matches nothing on engines that only implement the chained form.
+
 ## [22.16.1] - 2026-08-13
 
 ### Fixed
