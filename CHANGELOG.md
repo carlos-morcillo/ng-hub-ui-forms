@@ -5,6 +5,16 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.17.1] - 2026-08-13
+
+### Fixed
+
+- **Every `<hub-select>` with an addon shipped 22.17.0 with both corners still round**, so the field drew as separate boxes parked together. A regression introduced by the previous release: widening the flattening selector to reach the datepicker's nested input trimmed the select's branch from `.hub-select__control.ng-select .ng-select-container` to a bare `.ng-select-container`, taking it from four classes to two — under the three the select theme spends on that same corner, from a stylesheet that loads later.
+
+    The branch is spelled out to the engine's class again, keeping the descendant combinator that the datepicker needs. Reaching an element and winning it are different things, and only the second one paints.
+
+    **The test written for the previous release did not catch it**, which is the more useful part. It asked whether the shipped selector matched the painted element — `matches()` answered yes, the cascade answered no, and the suite stayed green through a defect visible on the docs site. It now resolves every rule that claims the corner, ranks them by specificity and source order, and asserts ours is the one that wins. Restoring the 22.17.0 selector fails it on both sides of the select.
+
 ## [22.17.0] - 2026-08-13
 
 ### Changed

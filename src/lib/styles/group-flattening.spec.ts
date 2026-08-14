@@ -6,6 +6,7 @@ import { HubPrependDirective } from '../directives/prepend.directive';
 import { HubDatepickerComponent } from '../components/datepicker/datepicker.component';
 import { HubInputComponent } from '../components/input/input.component';
 import { HubTextareaComponent } from '../components/textarea/textarea.component';
+import { HubSelectComponent } from '../select/select.component';
 
 /**
  * The corner flattening has to REACH the element that paints the box.
@@ -25,14 +26,75 @@ import { HubTextareaComponent } from '../components/textarea/textarea.component'
  */
 @Component({
 	standalone: true,
-	imports: [HubInputComponent, HubTextareaComponent, HubDatepickerComponent, HubPrependDirective, HubAppendDirective],
+	imports: [
+		HubInputComponent,
+		HubTextareaComponent,
+		HubDatepickerComponent,
+		HubSelectComponent,
+		HubPrependDirective,
+		HubAppendDirective
+	],
 	template: `
 		<hub-input prepend="€" append="EUR" />
 		<hub-textarea prepend="€" append="EUR" />
 		<hub-datepicker prepend="From" append="UTC" />
+		<hub-select prepend="€" append="EUR" [items]="[]" />
 	`
 })
 class HostComponent {}
+
+/**
+ * Specificity as the cascade counts it: [ids, classes/attributes/pseudo-classes, elements].
+ * Enough for the selectors this library ships — none of them use `:not()` or `:is()`, whose
+ * weight comes from their argument.
+ */
+function specificity(selector: string): [number, number, number] {
+	const ids = (selector.match(/#[\w-]+/g) ?? []).length;
+	const classes = (selector.match(/\.[\w-]+|\[[^\]]+\]|:[\w-]+(?!\()/g) ?? []).length;
+	const elements = (selector.match(/(^|[\s>+~])[a-z][\w-]*/gi) ?? []).length;
+	return [ids, classes, elements];
+}
+
+function beats(a: [number, number, number], b: [number, number, number]): boolean {
+	for (let i = 0; i < 3; i++) {
+		if (a[i] !== b[i]) return a[i] > b[i];
+	}
+	return false;
+}
+
+/**
+ * Which rule actually paints this element's corner — the whole point being that matching is
+ * not winning. Returns every matching declaration in cascade order, strongest last.
+ */
+function cornerRulesFor(el: Element): { selector: string; spec: [number, number, number]; order: number }[] {
+	const hits: { selector: string; spec: [number, number, number]; order: number }[] = [];
+	let order = 0;
+	for (const sheet of [...document.styleSheets]) {
+		let rules: CSSRule[];
+		try {
+			rules = [...(sheet.cssRules ?? [])];
+		} catch {
+			continue;
+		}
+		for (const rule of rules) {
+			const style = rule as CSSStyleRule;
+			order++;
+			if (!style.selectorText || !style.style) continue;
+			const paintsCorner = ['border-radius', 'border-start-start-radius', 'border-start-end-radius'].some((p) =>
+				style.style.getPropertyValue(p)
+			);
+			if (!paintsCorner) continue;
+			for (const selector of style.selectorText.split(',').map((s) => s.trim())) {
+				try {
+					if (el.matches(selector)) hits.push({ selector, spec: specificity(selector), order });
+				} catch {
+					/* a selector this engine cannot parse tells us nothing */
+				}
+			}
+		}
+	}
+	return hits;
+}
 
 /** Every selector this library ships that keys off a group's prepend/append modifier. */
 function flatteningSelectors(side: 'prepend' | 'append'): string[] {
@@ -66,27 +128,37 @@ describe('group corner flattening', () => {
 		expect(flatteningSelectors('append').length).toBeGreaterThan(0);
 	});
 
-	const fields = ['input', 'textarea', 'datepicker'] as const;
+	// The painted element is not the same node in every field: the select paints on the
+	// engine's container, the others on the control itself.
+	const fields = [
+		{ field: 'input', painted: '.hub-field__control' },
+		{ field: 'textarea', painted: '.hub-field__control' },
+		{ field: 'datepicker', painted: '.hub-field__control' },
+		{ field: 'select', painted: '.ng-select-container' }
+	] as const;
 
-	for (const field of fields) {
+	for (const { field, painted } of fields) {
 		for (const side of ['prepend', 'append'] as const) {
-			it(`reaches the painted control of hub-${field} on the ${side} side`, () => {
+			it(`wins the ${side} corner of hub-${field}, not merely matches it`, () => {
 				const host = fixture.nativeElement.querySelector(`hub-${field}`) as HTMLElement;
-				const control = host.querySelector('.hub-field__control') as HTMLElement;
+				const control = host.querySelector(painted) as HTMLElement;
 				expect(control).toBeTruthy();
 
 				// The group must be marked, or the rule has nothing to key off.
 				const group = host.querySelector(`.hub-${field}__group`) as HTMLElement;
 				expect(group.classList.contains(`hub-${field}__group--has-${side}`)).toBe(true);
 
-				const reaches = flatteningSelectors(side).some((selector) => {
-					try {
-						return control.matches(selector);
-					} catch {
-						return false; // a selector jsdom cannot parse tells us nothing
-					}
-				});
-				expect(reaches).toBe(true);
+				const candidates = cornerRulesFor(control);
+				const ours = candidates.filter((c) => c.selector.includes(`--has-${side}`));
+				expect(ours.length).toBeGreaterThan(0);
+
+				// 22.17.0 shipped with this rule reaching the select's container and losing to
+				// the engine theme's three classes, so assert the cascade, not the match.
+				const strongest = ours.reduce((a, b) => (beats(b.spec, a.spec) ? b : a));
+				const outranked = candidates.filter(
+					(c) => !c.selector.includes(`--has-${side}`) && beats(c.spec, strongest.spec)
+				);
+				expect(outranked.map((c) => c.selector)).toEqual([]);
 			});
 		}
 	}

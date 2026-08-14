@@ -161,17 +161,23 @@
 	//
 	// Nothing else inside a group carries these classes: the datepicker's panel is a CDK
 	// overlay attached to the body, so its own controls are out of reach of this scope.
+	//
+	// The select's branch stays spelled out to the engine's own class. Reaching the element
+	// is not enough — the rule has to OUTRANK whatever else paints that corner, and the
+	// select theme claims it with three classes from a stylesheet that loads later. Trimming
+	// this branch to a bare `.ng-select-container` shipped 22.17.0 with every select round
+	// again: the selector still matched, so a test that asks `matches()` stayed green.
 	.hub-#{$field}__group {
 		&--has-prepend .hub-#{$field}__control,
 		&--has-prepend .hub-field__control,
-		&--has-prepend .ng-select-container {
+		&--has-prepend .hub-#{$field}__control.ng-select .ng-select-container {
 			border-start-start-radius: 0;
 			border-end-start-radius: 0;
 		}
 
 		&--has-append .hub-#{$field}__control,
 		&--has-append .hub-field__control,
-		&--has-append .ng-select-container {
+		&--has-append .hub-#{$field}__control.ng-select .ng-select-container {
 			border-start-end-radius: 0;
 			border-end-end-radius: 0;
 		}
