@@ -5,6 +5,16 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.18.1] - 2026-08-16
+
+### Fixed
+
+- **A number field with no bounds wrote `min="null"` and `max="null"`.** `[min]` is a property binding and the IDL property stringifies whatever it is handed, so an unset input reached the DOM as the literal string. Browsers cannot parse it and constraint validation ignores it — which is exactly why it survived, since typing was never affected — but assistive technology reads the attributes as present and announces `valuemin=0 valuemax=0`. A screen-reader user was told that a price field accepting any amount had to be zero. Bound through `[attr.min]` / `[attr.max]` now, which removes the attribute instead of writing `null` into it.
+
+- **A button projected into `hubAppend` or `hubPrepend` ignored its own `variant` and `color`.** The slot doubles its class to beat chrome arriving from another package, and that weight was also swallowing what the consumer asked for: a `hubButton` declaring `variant="outline" color="neutral"` came out in the library's action colour, so the directive accepted two inputs and discarded them without a word. The fill is wrapped in `:where()` now — a default rather than a verdict. A bare `<span>` still gets a surface to sit on; anything that styles itself outranks it.
+
+- **The border of an attached action vanished under the pointer.** Attached actions overlap by a border width so a run reads as one line, which leaves the shared pixel to whichever paints last — the one further right, always. Hovering the left button darkened everything except the edge it shares with its neighbour, and a border that goes missing under the pointer reads as a rendering fault rather than as a hover state. The action under the pointer or the focus ring is raised above its neighbour, and only then: raising it permanently would stop DOM order drawing the run as one line at rest.
+
 ## [22.18.0] - 2026-08-16
 
 ### Added

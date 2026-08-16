@@ -129,28 +129,20 @@
 
 			// Pulled onto the control's border so the shared edge is drawn once.
 			margin-inline: calc(-1 * #{$border-width}) 0;
+
+			// Positioned so the raise below has something to raise. Attached actions overlap
+			// by a border width on purpose, so the shared pixel belongs to whichever paints
+			// last — the one further right, always. Hovering the left button then darkened
+			// everything except the edge it shares, which reads as a border that vanished.
+			position: relative;
 		}
 
-		// Appearance follows what the thing IS, and the fill is the signal: it goes to what
-		// can be operated, never to what merely labels. A grey box holding a glyph reads as
-		// a button whatever the glyph means, so decoration takes the field's own surface and
-		// recedes into the control, exactly like a `prepend` string.
-		//
-		// Chained `:not()` rather than `:not(:is(…))`: the compact form is Selectors 4, and
-		// this has to hold everywhere the library renders — jsdom's engine, for one, matches
-		// the long form and silently fails the short one.
-		> *:not(button):not(a):not(input):not(select):not(textarea):not([role='button']):not([role='link']):not([tabindex]) {
-			background: #{$addon-bg};
-			color: #{$addon-color};
-		}
-
-		> button,
-		> a,
-		> [role='button'],
-		> [role='link'],
-		> [tabindex] {
-			background: #{$action-bg};
-			color: #{$action-color};
+		// Under the pointer or the focus ring, the action owns its whole outline. Only then:
+		// raising it permanently would make DOM order stop deciding the seam, which is what
+		// draws the run as one line at rest.
+		> *:hover,
+		> *:focus-visible {
+			z-index: 1;
 		}
 
 		&--prepend > * {
@@ -184,6 +176,38 @@
 			border-start-end-radius: 0;
 			border-end-end-radius: 0;
 		}
+	}
+
+	// ── The fill of attached content ──────────────────────────────────────
+	//
+	// Appearance follows what the thing IS, and the fill is the signal: it goes to what can
+	// be operated, never to what merely labels. A grey box holding a glyph reads as a button
+	// whatever the glyph means, so decoration takes the field's own surface and recedes into
+	// the control, exactly like a `prepend` string.
+	//
+	// Wrapped in `:where()`, which zeroes the specificity, so these are DEFAULTS and not
+	// verdicts. The doubled class the rest of the slot uses exists to beat chrome that
+	// arrives from another package — but a `hubButton` declaring `variant` and `color` is
+	// not stray chrome, it is an instruction, and swallowing it made the directive accept
+	// two inputs and discard them without a word. Anything a projected element asks for now
+	// outranks this, while a bare `<span>` still gets a surface to sit on.
+	//
+	// Chained `:not()` rather than `:not(:is(…))`: the compact form is Selectors 4, and this
+	// has to hold everywhere the library renders — jsdom's engine, for one, matches the long
+	// form and silently fails the short one.
+	:where(.hub-#{$field}__attached)
+		> *:not(button):not(a):not(input):not(select):not(textarea):not([role='button']):not([role='link']):not([tabindex]) {
+		background: #{$addon-bg};
+		color: #{$addon-color};
+	}
+
+	:where(.hub-#{$field}__attached) > button,
+	:where(.hub-#{$field}__attached) > a,
+	:where(.hub-#{$field}__attached) > [role='button'],
+	:where(.hub-#{$field}__attached) > [role='link'],
+	:where(.hub-#{$field}__attached) > [tabindex] {
+		background: #{$action-bg};
+		color: #{$action-color};
 	}
 
 	// ── Corner flattening, driven by the group's own classes ──────────────

@@ -253,6 +253,81 @@ describe('group corner flattening', () => {
 		expect(positioned.length).toBeGreaterThan(0);
 	});
 
+	/**
+	 * The fill is a DEFAULT, not a verdict.
+	 *
+	 * The slot doubles its class elsewhere to beat chrome arriving from another package,
+	 * and that same weight was swallowing what the consumer asked for: a `hubButton`
+	 * declaring `variant` and `color` came out in the library's action colour, so the
+	 * directive accepted two inputs and discarded them without a word.
+	 *
+	 * Asserted as a comparison rather than an absolute: what matters is not the number but
+	 * that a single class — which is all a themed button has — outranks it.
+	 */
+	it('lets a projected element outrank the fill it is given', () => {
+		// Built here rather than projected: `matches()` reads the element's own ancestor
+		// chain, so the structure is all the selector needs.
+		const wrapper = document.createElement('span');
+		wrapper.className = 'hub-input__attached hub-input__attached--append';
+		const action = document.createElement('button');
+		wrapper.append(action);
+		document.body.append(wrapper);
+
+		const reaching: string[] = [];
+		for (const sheet of [...document.styleSheets]) {
+			try {
+				for (const rule of [...(sheet.cssRules ?? [])]) {
+					const style = rule as CSSStyleRule;
+					if (!style.selectorText?.includes('__attached')) continue;
+					if (!style.style?.getPropertyValue('background')) continue;
+					for (const selector of style.selectorText.split(',').map((s) => s.trim())) {
+						try {
+							if (action.matches(selector)) reaching.push(selector);
+						} catch {
+							/* a selector this engine cannot parse tells us nothing */
+						}
+					}
+				}
+			} catch {
+				continue;
+			}
+		}
+		wrapper.remove();
+
+		// Vacuous otherwise: a button with no fill rule would pass trivially.
+		expect(reaching.length).toBeGreaterThan(0);
+
+		// A themed button carries one class, and every fill that reaches it has to lose to it.
+		const singleClass = specificity('.btn');
+		expect(reaching.filter((selector) => !beats(singleClass, specificity(selector)))).toEqual([]);
+	});
+
+	/**
+	 * Attached actions overlap by a border width so the run reads as one line, which makes
+	 * the shared pixel belong to whichever paints last — the one further right, always.
+	 * Hovering the left button darkened everything except that edge, and a border that goes
+	 * missing under the pointer reads as a rendering fault rather than a hover state.
+	 */
+	it('raises the action under the pointer so it owns its whole outline', () => {
+		const raised: string[] = [];
+		for (const sheet of [...document.styleSheets]) {
+			try {
+				for (const rule of [...(sheet.cssRules ?? [])]) {
+					const style = rule as CSSStyleRule;
+					if (!style.selectorText?.includes('__attached')) continue;
+					if (!style.style?.getPropertyValue('z-index')) continue;
+					raised.push(style.selectorText);
+				}
+			} catch {
+				continue;
+			}
+		}
+
+		expect(raised.length).toBeGreaterThan(0);
+		expect(raised.join(' ')).toContain(':hover');
+		expect(raised.join(' ')).toContain(':focus-visible');
+	});
+
 	it('gives attached content the inline padding and centring it may not bring', () => {
 		const rules: string[] = [];
 		for (const sheet of [...document.styleSheets]) {

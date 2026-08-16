@@ -179,6 +179,48 @@ describe('HubInputComponent', () => {
 			expect(host.ctrl.value).toBe(42);
 		});
 
+		/**
+		 * `[min]` is a property binding, and the IDL property stringifies whatever it is
+		 * handed — so an unset bound input wrote the literal `min="null"`. Browsers cannot
+		 * parse that and constraint validation ignores it, which is why it survived: typing
+		 * was never affected. Assistive technology reads the attribute as present and
+		 * announces `valuemin=0 valuemax=0`, telling a screen-reader user that a price field
+		 * accepting any amount must be zero.
+		 *
+		 * `[attr.min]` removes the attribute on null, which is the whole fix.
+		 */
+		it('omits min and max entirely when they are unset', () => {
+			const input = query('input.hub-field__control') as HTMLInputElement;
+
+			expect(input.hasAttribute('min')).toBe(false);
+			expect(input.hasAttribute('max')).toBe(false);
+			expect(input.getAttribute('min')).not.toBe('null');
+		});
+	});
+
+	describe('number format with explicit bounds', () => {
+		beforeEach(() => {
+			host.type = 'number';
+			host.min = 1;
+			host.max = 9;
+			fixture.detectChanges();
+		});
+
+		/** Removing the attribute on null must not stop it being written when there is one. */
+		it('still writes the bounds it is given', () => {
+			const input = query('input.hub-field__control') as HTMLInputElement;
+
+			expect(input.getAttribute('min')).toBe('1');
+			expect(input.getAttribute('max')).toBe('9');
+		});
+	});
+
+	describe('number format again', () => {
+		beforeEach(() => {
+			host.type = 'number';
+			fixture.detectChanges();
+		});
+
 		it('produces 0 for an empty numeric input', () => {
 			const input = query('input.hub-field__control') as HTMLInputElement;
 			input.value = '';
