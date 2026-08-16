@@ -45,13 +45,17 @@ class HostComponent {}
 
 /**
  * Specificity as the cascade counts it: [ids, classes/attributes/pseudo-classes, elements].
- * Enough for the selectors this library ships — none of them use `:not()` or `:is()`, whose
- * weight comes from their argument.
+ *
+ * `:not()` and `:is()` weigh what they CONTAIN, not themselves, and `:where()` weighs nothing.
+ * Unwrapping them first is what keeps the count honest: matched raw, the function name itself
+ * scores, and a rule the cascade puts second reads here as though it came first.
+ * Single argument and no nesting is all this library ships, which is all this handles.
  */
 function specificity(selector: string): [number, number, number] {
-	const ids = (selector.match(/#[\w-]+/g) ?? []).length;
-	const classes = (selector.match(/\.[\w-]+|\[[^\]]+\]|:[\w-]+(?!\()/g) ?? []).length;
-	const elements = (selector.match(/(^|[\s>+~])[a-z][\w-]*/gi) ?? []).length;
+	const flat = selector.replace(/:where\([^)]*\)/g, '').replace(/:(?:not|is)\(([^)]*)\)/g, '$1');
+	const ids = (flat.match(/#[\w-]+/g) ?? []).length;
+	const classes = (flat.match(/\.[\w-]+|\[[^\]]+\]|:[\w-]+(?!\()/g) ?? []).length;
+	const elements = (flat.match(/(^|[\s>+~])[a-z][\w-]*/gi) ?? []).length;
 	return [ids, classes, elements];
 }
 
@@ -94,6 +98,52 @@ function cornerRulesFor(el: Element): { selector: string; spec: [number, number,
 		}
 	}
 	return hits;
+}
+
+/**
+ * The value the cascade actually lands on for one corner of one element: strongest specificity,
+ * ties broken by source order, with the `border-radius` shorthand counted as a declaration of
+ * every corner it sets.
+ *
+ * Reading the winner rather than asking "does a flattening rule match?" is the whole point —
+ * the rule that squares an inner corner sits beside one that rounds every corner of the same
+ * element, so matching proves nothing on its own.
+ */
+function winningCorner(el: Element, corner: string): string | null {
+	let best: { spec: [number, number, number]; order: number; value: string } | null = null;
+	let order = 0;
+	for (const sheet of [...document.styleSheets]) {
+		let rules: CSSRule[];
+		try {
+			rules = [...(sheet.cssRules ?? [])];
+		} catch {
+			continue;
+		}
+		for (const rule of rules) {
+			const style = rule as CSSStyleRule;
+			order++;
+			if (!style.selectorText || !style.style) continue;
+			const value = style.style.getPropertyValue(corner) || style.style.getPropertyValue('border-radius');
+			if (!value) continue;
+			for (const selector of style.selectorText.split(',').map((s) => s.trim())) {
+				try {
+					if (!el.matches(selector)) continue;
+				} catch {
+					continue; // a selector this engine cannot parse tells us nothing
+				}
+				const spec = specificity(selector);
+				if (!best || beats(spec, best.spec) || (!beats(best.spec, spec) && order >= best.order)) {
+					best = { spec, order, value };
+				}
+			}
+		}
+	}
+	return best?.value ?? null;
+}
+
+/** A flattened corner, however the engine chose to serialize the zero. */
+function isSquare(value: string | null): boolean {
+	return value !== null && /^0(px|%)?$/.test(value.trim());
 }
 
 /** Every selector this library ships that keys off a group's prepend/append modifier. */
@@ -173,6 +223,36 @@ describe('group corner flattening', () => {
 	 * resolves, so measuring here would report an unstyled box and pass anything. The width
 	 * and the centring are checked in a browser before release.
 	 */
+	/**
+	 * Whoever is pulled onto the shared edge has to be the one that paints it.
+	 *
+	 * The attached elements carry a negative inline margin, so their border lands in the same
+	 * pixel column as the control's. The select's container is `position: relative` (the
+	 * engine's own rule) and this slot was static, so the control painted last and swallowed
+	 * the attached border. It stayed hidden because both borders share a colour by default —
+	 * the wrong element was winning from the start, and it only surfaced once a consumer
+	 * themed a projected button differently from the field.
+	 *
+	 * Asserted on the shipped rule: jsdom lays nothing out, so paint order cannot be measured
+	 * here. The two-colour proof was taken in a browser.
+	 */
+	it('positions the attached slot so the control cannot repaint the shared edge', () => {
+		const positioned: string[] = [];
+		for (const sheet of [...document.styleSheets]) {
+			try {
+				for (const rule of [...(sheet.cssRules ?? [])]) {
+					const style = rule as CSSStyleRule;
+					if (!style.selectorText?.includes('__attached')) continue;
+					if (style.style?.getPropertyValue('position')) positioned.push(style.selectorText);
+				}
+			} catch {
+				continue;
+			}
+		}
+
+		expect(positioned.length).toBeGreaterThan(0);
+	});
+
 	it('gives attached content the inline padding and centring it may not bring', () => {
 		const rules: string[] = [];
 		for (const sheet of [...document.styleSheets]) {
@@ -253,4 +333,133 @@ describe('group corner flattening', () => {
 		expect(control.parentElement).not.toBe(group);
 		expect(flatteningSelectors('append').some((s) => control.matches(s))).toBe(true);
 	});
+});
+
+/**
+ * A slot takes a TEMPLATE, so it hands over two buttons as readily as one — and the pair then
+ * has to read as one piece, exactly like a run of string addons does.
+ *
+ * This is the third variant of the same mistake, and the reason it keeps recurring is worth
+ * stating: everything a slot projects lands inside a single `__attached` wrapper, so the
+ * positional rule that squares a run of addons (`> .hub-…__addon--append:not(:last-child)`,
+ * a CHILD of the group) never sees them. The strip's own rules squared only the edge it
+ * shares with the control, so with two buttons the first one kept a rounded outer corner in
+ * the middle of the strip while every selector involved still matched something.
+ */
+@Component({
+	standalone: true,
+	imports: [
+		HubInputComponent,
+		HubTextareaComponent,
+		HubDatepickerComponent,
+		HubSelectComponent,
+		HubPrependDirective,
+		HubAppendDirective
+	],
+	template: `
+		<hub-input>
+			<ng-template hubPrepend>
+				<button type="button">1</button>
+				<button type="button">2</button>
+			</ng-template>
+			<ng-template hubAppend>
+				<button type="button">1</button>
+				<button type="button">2</button>
+			</ng-template>
+		</hub-input>
+		<hub-textarea>
+			<ng-template hubPrepend>
+				<button type="button">1</button>
+				<button type="button">2</button>
+			</ng-template>
+			<ng-template hubAppend>
+				<button type="button">1</button>
+				<button type="button">2</button>
+			</ng-template>
+		</hub-textarea>
+		<hub-datepicker>
+			<ng-template hubPrepend>
+				<button type="button">1</button>
+				<button type="button">2</button>
+			</ng-template>
+			<ng-template hubAppend>
+				<button type="button">1</button>
+				<button type="button">2</button>
+			</ng-template>
+		</hub-datepicker>
+		<hub-select [items]="[]">
+			<ng-template hubPrepend>
+				<button type="button">1</button>
+				<button type="button">2</button>
+			</ng-template>
+			<ng-template hubAppend>
+				<button type="button">1</button>
+				<button type="button">2</button>
+			</ng-template>
+		</hub-select>
+	`
+})
+class StripHostComponent {}
+
+describe('a slot that projects more than one element', () => {
+	let fixture: ReturnType<typeof TestBed.createComponent<StripHostComponent>>;
+
+	beforeEach(() => {
+		fixture = TestBed.configureTestingModule({ imports: [StripHostComponent] }).createComponent(StripHostComponent);
+		fixture.detectChanges();
+	});
+
+	/** The elements of one strip, in DOM order. */
+	function strip(field: string, side: 'prepend' | 'append'): HTMLElement[] {
+		const host = fixture.nativeElement.querySelector(`hub-${field}`) as HTMLElement;
+		const wrapper = host.querySelector(`.hub-${field}__attached--${side}`) as HTMLElement;
+		return [...wrapper.children] as HTMLElement[];
+	}
+
+	// Asymmetric on purpose, and asserted on both sides for that reason: the corner that
+	// SURVIVES is the outer one, which is the leading pair on a prepend strip and the
+	// trailing pair on an append strip. The loop that flattens addons shipped this backwards
+	// once already, on a side nobody re-read.
+	const sides = [
+		{
+			side: 'prepend',
+			outer: ['border-start-start-radius', 'border-end-start-radius'],
+			inner: ['border-start-end-radius', 'border-end-end-radius']
+		},
+		{
+			side: 'append',
+			outer: ['border-start-end-radius', 'border-end-end-radius'],
+			inner: ['border-start-start-radius', 'border-end-start-radius']
+		}
+	] as const;
+
+	for (const field of ['input', 'textarea', 'datepicker', 'select']) {
+		for (const { side, outer, inner } of sides) {
+			it(`squares the shared edges of a two-element ${side} strip on hub-${field}`, () => {
+				const elements = strip(field, side);
+				expect(elements.length).toBe(2);
+
+				// Whichever element faces the control: both its corners on that side go flat,
+				// which is the behaviour that already worked and must keep working.
+				const facingControl = side === 'prepend' ? elements[1] : elements[0];
+				for (const corner of inner) {
+					expect(isSquare(winningCorner(facingControl, corner))).toBe(true);
+				}
+
+				// The seam BETWEEN the two: the inner element hands its outer corners over.
+				for (const corner of outer) {
+					expect(isSquare(winningCorner(facingControl, corner))).toBe(true);
+				}
+
+				// And the outermost element keeps the radius that closes the whole group.
+				const outermost = side === 'prepend' ? elements[0] : elements[1];
+				for (const corner of outer) {
+					expect(isSquare(winningCorner(outermost, corner))).toBe(false);
+				}
+				for (const corner of inner) {
+					expect(isSquare(winningCorner(outermost, corner))).toBe(true);
+				}
+			});
+		}
+	}
 });

@@ -205,7 +205,7 @@
 				}
 			</div>
 
-			<div class="hub-datepicker__grid" role="grid" (keydown)="onGridKeydown($event)">
+			<div class="hub-datepicker__grid" role="grid" (keydown)="onGridKeydown($event)" (mouseleave)="clearPreview()">
 				@for (cell of grid(); track cell.date.getTime()) {
 					<button
 						type="button"
@@ -217,11 +217,14 @@
 						[class.hub-datepicker__cell--range-start]="cell.rangeStart"
 						[class.hub-datepicker__cell--range-end]="cell.rangeEnd"
 						[class.hub-datepicker__cell--in-range]="cell.inRange"
+						[class.hub-datepicker__cell--preview]="cell.preview"
+						[class.hub-datepicker__cell--preview-end]="cell.previewEnd"
 						[attr.data-time]="cell.date.getTime()"
 						[attr.tabindex]="cell.focused ? 0 : -1"
 						[attr.aria-selected]="cell.selected || cell.rangeStart || cell.rangeEnd"
 						[disabled]="cell.disabled"
 						(click)="selectDay(cell)"
+						(mouseenter)="previewDay(cell)"
 					>
 						{{ cell.day }}
 					</button>
@@ -234,7 +237,7 @@
 				<hub-datepicker-time
 					[value]="startTimeValue()"
 					(valueChange)="onStartTimeChange($event)"
-					[label]="_isRange() ? _labels().startTime : _labels().time"
+					[label]="_emitsRange() ? _labels().startTime : _labels().time"
 					[granularity]="_granularity()"
 					[locale]="locale()"
 					[hour12]="_hour12()"
@@ -245,7 +248,7 @@
 					[labels]="_labels()"
 				/>
 
-				@if (_isRange()) {
+				@if (_emitsRange()) {
 					<hub-datepicker-time
 						[value]="endTimeValue()"
 						(valueChange)="onEndTimeChange($event)"

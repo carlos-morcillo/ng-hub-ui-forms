@@ -1,5 +1,17 @@
-/** Selection mode for `<hub-datepicker>`: how many points are picked. */
-export type HubDatepickerMode = 'single' | 'range';
+/**
+ * Selection mode for `<hub-datepicker>`: how many points are picked, and how they relate.
+ *
+ * - `'single'` — one point.
+ * - `'range'` — two independent points, each with its own date and its own time.
+ * - `'day-time-range'` — **one** date and two times within it: the day, from 09:00 to 11:00.
+ *   This is what booking a room, a slot or a shift actually is, and `'range'` cannot express it
+ *   — its two ends are free to land on different days. The value is still a
+ *   {@link HubDateRange}, so serialization, `min`/`max` and `valueFormat` are unchanged; what
+ *   the mode adds is the guarantee that both ends share a calendar day, enforced by a control
+ *   that cannot express anything else rather than by a validator that rejects it afterwards.
+ *   Implies a time: a granularity coarser than `hour` is raised to it.
+ */
+export type HubDatepickerMode = 'single' | 'range' | 'day-time-range';
 
 /**
  * Precision carried by each selected point, from a whole year down to a second.
@@ -27,6 +39,8 @@ export type HubDatepickerValueFormat = 'iso' | 'date' | 'timestamp' | ((date: Da
 /**
  * A selected range. `T` follows {@link HubDatepickerValueFormat} and defaults to `string`, so
  * an existing `HubDateRange` annotation keeps meaning exactly what it meant (ISO strings).
+ *
+ * In `day-time-range` mode both ends are guaranteed to fall on the same calendar day.
  */
 export interface HubDateRange<T = string> {
 	start: T | null;
@@ -35,8 +49,9 @@ export interface HubDateRange<T = string> {
 
 /**
  * The CVA value of `<hub-datepicker>`: a single point in `single` mode, a {@link HubDateRange}
- * in `range` mode. `T` defaults to `string` — consumers on the default `valueFormat` of `'iso'`
- * keep typing their control as `HubDateValue` and keep receiving strings.
+ * in `range` and `day-time-range` modes. `T` defaults to `string` — consumers on the default
+ * `valueFormat` of `'iso'` keep typing their control as `HubDateValue` and keep receiving
+ * strings.
  */
 export type HubDateValue<T = string> = T | HubDateRange<T> | null;
 

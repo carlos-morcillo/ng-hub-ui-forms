@@ -5,6 +5,40 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.18.0] - 2026-08-16
+
+### Added
+
+- **`<hub-datepicker mode="day-time-range">` — one day, two times within it.** Booking a room, a slot or a shift is not two free instants; it is the day, from 09:00 to 11:00. `range` could not say that: its two ends are free to land on different days, so products needing this had to bolt a validator on top and reject the impossible span after the user had already expressed it.
+
+    The value is still a `HubDateRange`, so serialization, `min`/`max` and `valueFormat` are untouched and existing back ends that take a span need no change. What the mode adds is the guarantee that both ends share a calendar day — enforced by a control that cannot express anything else, rather than by a check that runs afterwards. A single click on the day settles the whole span, the two time strips carry the rest, and the input names the day once: "20/06/2026, 09:00 – 11:00".
+
+    The mode implies a time, so a granularity coarser than `hour` is raised to it rather than rendering two time strips that cannot exist. A stored span that crosses midnight is pulled onto the start's day, keeping the time it asked for.
+
+    Rejected on the way: fencing `range` with `min`/`max` driven from the chosen start. Those bound the **whole** picker, so once a start was chosen the user was locked out of every other day and could not move the start without clearing the field — trading a wrong selection for an inescapable one.
+
+- **`<hub-datepicker mode="range">` now previews the half it is still waiting for.** Between the two picks the range is half-open, and the grid said nothing about it: the anchor was lit, every other cell was inert, and the days the range was about to swallow gave no sign as the pointer swept over them. The band the range would take is now drawn against the cell under the cursor — or the one keyboard navigation last moved to, so arrowing towards the end date shows the same thing.
+
+    Painted with a new `--hub-daterangepicker-preview-bg`, half the tint of the committed band and derived from it rather than from the accent, so retinting the range moves the preview with it. Tentative on purpose: reading as settled would make choosing the end feel like it had already happened.
+
+    Works in both directions — picking the later day first and sweeping back is as ordinary as the other way round — and a disabled day under the cursor is skipped rather than dropping the band, so sweeping across a blocked date does not make it flicker.
+
+### Fixed
+
+- **A slot that projects two elements drew a rounded corner in the middle of the strip.** `hubAppend` and `hubPrepend` take a template, so a field can attach two buttons as easily as one — and the pair has to read as one piece, the way a run of string addons already does. Measured with two buttons on a `<hub-select>`: the control closed correctly at `6 0 0 6`, but the first button stayed at `0 6 6 0` instead of squaring off against the second.
+
+    The rule that flattens a run of addons tests position among the group's **children** (`> .hub-…__addon--append:not(:last-child)`), and everything a slot projects lands inside a single `.hub-…__attached` wrapper — so it never saw them. The strip's own rules only squared the edge it shares with the control. Each side now hands its inner corners over as well, leaving the radius to whichever element is actually outermost, and both sides are written out rather than derived: the surviving corner is the leading one on a prepend strip and the trailing one on an append strip, and that asymmetry has been shipped backwards before.
+
+    Fixed for all four families the mixin covers — input, select, datepicker and textarea — not just the one it was reported on.
+
+- **The control repainted the edge it shares with attached content.** Whatever a slot projects is pulled onto the field's border by a negative inline margin, so the two borders land in the same pixel column and paint order decides which one you see. The select's container is `position: relative` — the engine's own rule — and the slot was static, so the control painted last and swallowed the attached border.
+
+    It stayed hidden because both borders share a colour by default: the wrong element had been winning from the start, and it only surfaced once a consumer themed a projected button differently from the field. The slot is now positioned, with no `z-index` — joining the positioned layer is the whole fix, and a stacking context there would lift the slot over chrome that has nothing to do with this seam.
+
+- **The datepicker capitalized the panel header wrong outside English.** `Intl` renders the month and year as "agosto de 2026", and `text-transform: capitalize` raised every word of it: "Agosto De 2026". Spanish does not capitalize the particle, and no consumer could undo it — component styles are injected after the global sheet, so an override had to out-specify rather than out-order them. The header now raises only its initial.
+
+    The weekday and period labels deliberately keep word casing. Both render a single `Intl` token ("lun", "ago"), where the two rules mean the same thing, and both are `inline-flex` boxes — which `::first-letter` does not apply to, so converting them would have dropped their capital altogether. Verified in a browser: the header title is a flex item, and flex items are blockified, which is what makes the rule land there and nowhere else.
+
 ## [22.17.1] - 2026-08-13
 
 ### Fixed

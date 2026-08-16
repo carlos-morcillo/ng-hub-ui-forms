@@ -28,7 +28,7 @@ import { HUB_FORMS_CONFIG } from '../../services/forms-config';
 import { HubAppendDirective } from '../../directives/append.directive';
 import { HubPrependDirective } from '../../directives/prepend.directive';
 import { HubFieldControl } from '../../shared/hub-field-control';
-import { addMonths, buildCalendarGrid, isInRange, isSameDay, weekdayLabels } from './date-utils';
+import { addMonths, buildCalendarGrid, isBeforeDay, isInRange, isSameDay, weekdayLabels } from './date-utils';
 import { decadeStart, HubDatepickerPeriodGridComponent } from './period-grid.component';
 import { HubDatepickerTimeFieldComponent } from './time-field.component';
 import {
@@ -55,6 +55,10 @@ interface DatepickerCell {
 	rangeStart: boolean;
 	rangeEnd: boolean;
 	inRange: boolean;
+	/** Inside the band a half-open range would take if it closed on the previewed cell. */
+	preview: boolean;
+	/** The previewed cell itself — the end the range would take right now. */
+	previewEnd: boolean;
 	focused: boolean;
 }
 
@@ -133,6 +137,17 @@ export class HubDatepickerComponent extends HubFieldControl {
 
 	/** Date that currently holds keyboard focus inside the grid. */
 	protected readonly _focusedDate = signal<Date>(new Date());
+
+	/**
+	 * Cell a half-open range is currently being measured against — the pointer's, or the one
+	 * keyboard navigation last moved to.
+	 *
+	 * Fed by both so the two input methods give the same affordance, and held separately from
+	 * `_focusedDate` rather than derived from it: focus survives the pointer leaving the grid,
+	 * and a band that stayed lit across the whole panel while the cursor was elsewhere would be
+	 * claiming an end the user is no longer choosing.
+	 */
+	protected readonly _previewTarget = signal<Date | null>(null);
 
 	/** Whether the calendar overlay is open. */
 	protected readonly _open = signal(false);
@@ -288,7 +303,19 @@ export class HubDatepickerComponent extends HubFieldControl {
 	protected readonly _displayFormat = computed(() => this.displayFormat() ?? this.#config.displayFormat);
 	protected readonly _timeDisplayFormat = computed(() => this.timeDisplayFormat() ?? this.#config.timeDisplayFormat);
 	protected readonly _rangeSeparator = computed(() => this.rangeSeparator() ?? this.#config.rangeSeparator);
-	protected readonly _granularity = computed(() => this.granularity() ?? this.#config.granularity);
+	/**
+	 * Precision each point carries.
+	 *
+	 * `day-time-range` raises anything coarser than an hour: the mode is defined as a day plus
+	 * two times within it, so a granularity carrying no time contradicts it, and the mode is the
+	 * more specific of the two statements. Raising it keeps a misconfigured control usable
+	 * instead of rendering two time strips that cannot exist.
+	 */
+	protected readonly _granularity = computed<HubDatepickerGranularity>(() => {
+		const declared = this.granularity() ?? this.#config.granularity;
+
+		return this.mode() === 'day-time-range' && !carriesTime(declared) ? 'hour' : declared;
+	});
 	protected readonly _valueFormat = computed(() => this.valueFormat() ?? this.#config.valueFormat);
 	protected readonly _minuteStep = computed(() => this.minuteStep() ?? this.#config.minuteStep);
 	protected readonly _secondStep = computed(() => this.secondStep() ?? this.#config.secondStep);
@@ -305,7 +332,23 @@ export class HubDatepickerComponent extends HubFieldControl {
 	/** Whether the granularity is coarser than a day, and so uses the period grid. */
 	protected readonly _isPeriod = computed(() => isPeriodUnit(this._granularity()));
 
+	/**
+	 * Whether the day grid picks TWO days. False in `day-time-range`, which picks one — the
+	 * grid then behaves exactly as it does in `single` mode, and the second point is a time
+	 * rather than a date.
+	 */
 	protected readonly _isRange = computed(() => this.mode() === 'range');
+
+	/** One date, two times within it. */
+	protected readonly _isDayTimeRange = computed(() => this.mode() === 'day-time-range');
+
+	/**
+	 * Whether the value is a {@link HubDateRange} — true for both two-ended modes. Kept apart
+	 * from {@link _isRange} because the two questions have different answers here: the value has
+	 * two ends, but the day grid only ever picks one day.
+	 */
+	protected readonly _emitsRange = computed(() => this._isRange() || this._isDayTimeRange());
+
 	protected readonly _hour12 = computed(() => resolveHour12(this.locale(), this._hourFormat()));
 
 	protected readonly rangeStart = computed<Date | null>(() => this._start());
@@ -331,6 +374,25 @@ export class HubDatepickerComponent extends HubFieldControl {
 	protected readonly displayValue = computed<string>(() => {
 		const format = this.#resolveDisplay();
 		const start = this._start();
+
+		// One day and two times reads as "01/09/2026, 09:00 – 11:00": naming the day twice would
+		// be noise, since the mode guarantees it is the same one. Falls back to the generic
+		// two-ended shape when `displayFormat` is a pattern or a function — the caller said
+		// exactly what they wanted, and this is not the place to second-guess it.
+		if (this._isDayTimeRange()) {
+			if (!start) {
+				return '';
+			}
+
+			const end = this._end();
+			const time = this.#resolveTimeDisplay();
+
+			if (!end) {
+				return format(start);
+			}
+
+			return `${format(start)}${this._rangeSeparator()}${time ? time(end) : format(end)}`;
+		}
 
 		if (!this._isRange()) {
 			return start ? format(start) : '';
@@ -367,6 +429,25 @@ export class HubDatepickerComponent extends HubFieldControl {
 		return `${start} – ${start + 9}`;
 	});
 
+	/**
+	 * The band a half-open range would take if it closed right now, ordered low to high.
+	 *
+	 * Only a range with a start and no end has one: before the first pick there is no anchor to
+	 * measure from, and once both ends are committed the preview has nothing left to say. The
+	 * target is normalized against the anchor because a range can be drawn backwards — picking
+	 * the later day first and sweeping left is as natural as the other way round.
+	 */
+	protected readonly previewRange = computed<{ from: Date; to: Date } | null>(() => {
+		const anchor = this._start();
+		const target = this._previewTarget();
+
+		if (!this._isRange() || !anchor || this._end() || !target) {
+			return null;
+		}
+
+		return isBeforeDay(target, anchor) ? { from: target, to: anchor } : { from: anchor, to: target };
+	});
+
 	/** Enriched 6×7 grid for the displayed month. */
 	protected readonly grid = computed<DatepickerCell[]>(() => {
 		const start = this._start();
@@ -376,6 +457,7 @@ export class HubDatepickerComponent extends HubFieldControl {
 		const max = this._maxDate();
 		const disabledFn = this.disabledDates();
 		const isRange = this._isRange();
+		const preview = this.previewRange();
 
 		return buildCalendarGrid(this._viewDate(), this._firstDayOfWeek()).map((c) => ({
 			...c,
@@ -384,6 +466,11 @@ export class HubDatepickerComponent extends HubFieldControl {
 			rangeStart: isRange && isSameDay(c.date, start),
 			rangeEnd: isRange && isSameDay(c.date, end),
 			inRange: isRange && isInRange(c.date, start, end),
+			// The anchor already paints as `rangeStart`, so the band starts after it — same
+			// exclusive shape as `inRange`, with the previewed end drawn on top of it.
+			preview: !!preview && isInRange(c.date, preview.from, preview.to),
+			previewEnd:
+				!!preview && !isSameDay(c.date, start) && (isSameDay(c.date, preview.from) || isSameDay(c.date, preview.to)),
 			focused: isSameDay(c.date, focused)
 		}));
 	});
@@ -394,10 +481,19 @@ export class HubDatepickerComponent extends HubFieldControl {
 		const granularity = this._granularity();
 		const parse = this.parse();
 
-		if (this._isRange()) {
+		if (this._emitsRange()) {
 			const range = (value ?? {}) as HubDateRange<unknown>;
 			const start = parseFlexible(range?.start ?? null, parse);
-			const end = parseFlexible(range?.end ?? null, parse);
+			const incomingEnd = parseFlexible(range?.end ?? null, parse);
+
+			// A `day-time-range` cannot express a span that crosses midnight, so an incoming one
+			// is pulled onto the start's day, keeping the time the caller asked for. Silent on
+			// purpose — `writeValue` must not write back — exactly like the granularity
+			// truncation on the line below, which has always rewritten what it was handed.
+			const end =
+				this._isDayTimeRange() && start && incomingEnd
+					? withTime(start, incomingEnd.getHours(), incomingEnd.getMinutes(), incomingEnd.getSeconds())
+					: incomingEnd;
 
 			this._start.set(start ? startOfUnit(start, granularity) : null);
 			this._end.set(end ? startOfUnit(end, granularity) : null);
@@ -433,6 +529,7 @@ export class HubDatepickerComponent extends HubFieldControl {
 		}
 
 		this._open.set(false);
+		this._previewTarget.set(null);
 		this.onTouched?.();
 		this.closed.emit();
 	}
@@ -473,6 +570,7 @@ export class HubDatepickerComponent extends HubFieldControl {
 	protected clear(): void {
 		this._start.set(null);
 		this._end.set(null);
+		this._previewTarget.set(null);
 		this.#emit();
 		this.cleared.emit();
 	}
@@ -492,6 +590,25 @@ export class HubDatepickerComponent extends HubFieldControl {
 
 		this._focusedDate.set(cell.date);
 		this.#select(cell.date);
+	}
+
+	/**
+	 * Measures the pending range against the cell under the pointer.
+	 *
+	 * A disabled cell is skipped rather than cleared: sweeping across a blocked day on the way
+	 * to a valid one would otherwise make the band flicker off and back on.
+	 *
+	 * @param cell - The cell the pointer entered.
+	 */
+	protected previewDay(cell: DatepickerCell): void {
+		if (!cell.disabled) {
+			this._previewTarget.set(cell.date);
+		}
+	}
+
+	/** Drops the pending band — the pointer left the grid, or the range is no longer half-open. */
+	protected clearPreview(): void {
+		this._previewTarget.set(null);
 	}
 
 	/**
@@ -582,6 +699,9 @@ export class HubDatepickerComponent extends HubFieldControl {
 
 		event.preventDefault();
 		this._focusedDate.set(next);
+		// Keyboard navigation measures the pending range too, so arrowing towards the end date
+		// shows the same band the pointer would.
+		this._previewTarget.set(next);
 
 		if (next.getMonth() !== this._viewDate().getMonth() || next.getFullYear() !== this._viewDate().getFullYear()) {
 			this._viewDate.set(next);
@@ -623,6 +743,19 @@ export class HubDatepickerComponent extends HubFieldControl {
 				),
 				granularity
 			);
+
+		// One day, both ends. The two times are already on screen, so picking the day settles
+		// the whole span at once — and there is no second day to wait for, which is the entire
+		// difference from `range`.
+		if (this._isDayTimeRange()) {
+			this._start.set(compose(this.startTimeValue()));
+			this._end.set(compose(this.endTimeValue()));
+			this.#reorderIfNeeded();
+			this.#emit();
+
+			// Never auto-closes: the times are the rest of the answer.
+			return;
+		}
 
 		if (!this._isRange()) {
 			this._start.set(compose(this.startTimeValue()));
@@ -714,6 +847,30 @@ export class HubDatepickerComponent extends HubFieldControl {
 	}
 
 	/**
+	 * Formatter for the trailing end of a `day-time-range` — the time alone, since the date is
+	 * already on the other side of the separator.
+	 *
+	 * Returns `null` when `displayFormat` is a pattern string or a function: those describe a
+	 * whole point, there is no time half to extract from them, and the caller asked for exactly
+	 * that shape.
+	 *
+	 * @returns A time-only formatter, or `null` when the display format is caller-supplied.
+	 */
+	#resolveTimeDisplay(): ((date: Date) => string) | null {
+		if (typeof this._displayFormat() !== 'object') {
+			return null;
+		}
+
+		const formatter = new Intl.DateTimeFormat(this.locale(), {
+			...this._timeDisplayFormat(),
+			...(this._granularity() === 'second' ? { second: '2-digit' } : {}),
+			hour12: this._hour12()
+		});
+
+		return (date: Date) => formatter.format(date);
+	}
+
+	/**
 	 * Fits `Intl` options to the current granularity, adding the time parts or removing the ones
 	 * finer than the picked unit.
 	 *
@@ -751,7 +908,7 @@ export class HubDatepickerComponent extends HubFieldControl {
 		const valueFormat = this._valueFormat();
 		const start = this._start();
 
-		if (this._isRange()) {
+		if (this._emitsRange()) {
 			const end = this._end();
 			const value =
 				start || end

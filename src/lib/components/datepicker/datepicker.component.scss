@@ -116,9 +116,25 @@ hub-datepicker.hidden-control {
 		}
 	}
 
+	// The only label in the panel that is a PHRASE rather than a word: `Intl` renders the
+	// month-and-year header as "agosto de 2026", and `capitalize` uppercases every word in it
+	// — "Agosto De 2026", which is wrong in every language that joins with a particle.
+	// Raising just the initial is the rule the text actually wants.
+	//
+	// A consumer cannot patch this from the outside: these are component styles, injected
+	// after the global sheet, so an override has to out-specify rather than out-order them.
+	//
+	// `::first-letter` needs a block container. It gets one here — the title is a flex item of
+	// `__header`, and flex items are blockified — which is exactly why the weekday and period
+	// labels below keep `capitalize` instead: those are `inline-flex`, where this rule would
+	// silently do nothing and drop their capital altogether.
 	.hub-datepicker__title {
 		font-weight: var(--hub-ref-font-weight-medium, 500);
-		text-transform: capitalize;
+		text-transform: none;
+
+		&::first-letter {
+			text-transform: uppercase;
+		}
 	}
 
 	.hub-datepicker__weekdays,
@@ -135,6 +151,9 @@ hub-datepicker.hidden-control {
 		height: 1.5rem;
 		font-size: var(--hub-ref-font-size-sm, 0.875rem);
 		color: var(--hub-daterangepicker-off-color);
+		// One word — `Intl`'s short weekday, "lun" — so `capitalize` and raising the initial
+		// are the same thing here, and this box is `inline-flex`, where `::first-letter` does
+		// not apply. See `__title` above for the case where the difference is visible.
 		text-transform: capitalize;
 	}
 
@@ -166,6 +185,26 @@ hub-datepicker.hidden-control {
 
 		&--in-range {
 			background: var(--hub-daterangepicker-in-range-bg);
+			border-radius: 0;
+		}
+
+		// The band a half-open range WOULD take. Lighter than the committed one on purpose: it
+		// answers "where would this land?", and reading as settled would make choosing the end
+		// feel like it had already happened.
+		//
+		// The hover branch is not redundant. The previewed end is by definition the cell the
+		// pointer sits on, so the plain hover surface would otherwise repaint it and break the
+		// band open right where the user is looking.
+		&--preview,
+		&--preview-end,
+		&--preview:hover,
+		&--preview-end:hover {
+			background: var(--hub-daterangepicker-preview-bg);
+		}
+
+		// Squared off against its neighbours; the previewed end keeps its outer corners, exactly
+		// as a committed endpoint does.
+		&--preview {
 			border-radius: 0;
 		}
 
@@ -218,6 +257,8 @@ hub-datepicker.hidden-control {
 		border: 0;
 		border-radius: var(--hub-daterangepicker-cell-border-radius);
 		font-size: var(--hub-input-font-size);
+		// A month name or a year number — one token either way, and `inline-flex` besides,
+		// so `capitalize` stays for the same reason as the weekday above.
 		text-transform: capitalize;
 		cursor: pointer;
 

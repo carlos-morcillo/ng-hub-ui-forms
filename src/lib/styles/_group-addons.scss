@@ -88,6 +88,20 @@
 		align-items: stretch;
 		flex: 0 0 auto;
 
+		// Positioned so the shared edge belongs to whoever was pulled onto it.
+		//
+		// The elements below carry a negative inline margin, which lands their border in the
+		// same pixel column as the control's. Paint order decides which one you see, and the
+		// select's container is `position: relative` (the engine's own rule) while this slot
+		// was static — so the control painted last and swallowed the attached border. Invisible
+		// wherever both borders share a colour, which is why it survived: the wrong element was
+		// winning all along, and it only showed once a consumer themed the two differently.
+		//
+		// `relative` with no `z-index`: joining the positioned layer is the whole fix, and a
+		// stacking context here would lift the slot over chrome that has nothing to do with
+		// this seam.
+		position: relative;
+
 		> * {
 			// Vertical padding is surrendered to the group: it is what makes a projected
 			// button stand taller than the field. Inline padding is imposed rather than
@@ -148,6 +162,27 @@
 		&--append > * {
 			border-start-start-radius: 0;
 			border-end-start-radius: 0;
+		}
+
+		// A slot holds a template, not an element, so it can hand over two buttons as easily
+		// as one — and then the strip has to read as one piece exactly like a run of addons
+		// does. The two rules above square the edge the strip shares with the CONTROL; these
+		// square the edges its elements share with EACH OTHER, leaving the outer corner to
+		// whichever element is actually on the outside.
+		//
+		// The positional test lives here rather than beside the addon one below because the
+		// elements are not children of the group: everything a slot projects is wrapped in a
+		// single `__attached`, so `> .hub-…__addon--append:not(:last-child)` never sees them.
+		// Same failure mode as the two before it — a selector that matches nothing raises no
+		// error, and the first button kept a rounded outer edge in the middle of the strip.
+		&--prepend > *:not(:first-child) {
+			border-start-start-radius: 0;
+			border-end-start-radius: 0;
+		}
+
+		&--append > *:not(:last-child) {
+			border-start-end-radius: 0;
+			border-end-end-radius: 0;
 		}
 	}
 

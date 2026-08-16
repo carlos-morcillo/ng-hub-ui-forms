@@ -372,6 +372,11 @@
 	// rather than sRGB; kept independent of `-subtle` (which mixes over the page
 	// surface, not transparent) so the band reads as a translucent overlay.
 	--hub-daterangepicker-in-range-bg: color-mix(in oklch, var(--hub-sys-color-primary, #0d6efd) 14%, transparent);
+	// The band a half-open range WOULD take if it closed on the cell under the cursor.
+	// Half the tint of the committed band, and derived from it rather than from the accent,
+	// so retinting the range moves the preview with it — the two must never drift apart, or
+	// the tentative state stops reading as weaker than the settled one.
+	--hub-daterangepicker-preview-bg: color-mix(in oklch, var(--hub-daterangepicker-in-range-bg) 50%, transparent);
 	--hub-daterangepicker-off-color: var(--hub-sys-text-muted, #6c757d);
 	--hub-daterangepicker-nav-arrow-color: var(--hub-sys-text-muted, #6c757d);
 	--hub-daterangepicker-nav-arrow-hover-color: var(--hub-sys-text-primary, #212529);

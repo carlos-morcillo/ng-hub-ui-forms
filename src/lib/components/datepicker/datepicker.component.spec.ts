@@ -4,7 +4,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { vi } from 'vitest';
-import { HubDatepickerGranularity, HubDatepickerValueFormat } from '../../interfaces/datepicker.interface';
+import { HubDatepickerGranularity, HubDatepickerMode, HubDatepickerValueFormat } from '../../interfaces/datepicker.interface';
 import { provideHubForms } from '../../services/forms-config';
 import { HubDatepickerComponent } from './datepicker.component';
 import { formatOffset } from './time-utils';
@@ -60,7 +60,7 @@ function iso(year: number, month: number, day: number, hours = 0, minutes = 0, s
 })
 class DatepickerHostComponent {
 	readonly ctrl = new FormControl<unknown>(null);
-	readonly mode = signal<'single' | 'range'>('single');
+	readonly mode = signal<HubDatepickerMode>('single');
 	readonly granularity = signal<HubDatepickerGranularity | undefined>(undefined);
 	readonly valueFormat = signal<HubDatepickerValueFormat | undefined>(undefined);
 	readonly minuteStep = signal<number | undefined>(undefined);
@@ -249,6 +249,135 @@ describe('HubDatepickerComponent', () => {
 			expect(cellFor(2026, 5, 15)!.classList).toContain('hub-datepicker__cell--in-range');
 			expect(cellFor(2026, 5, 10)!.classList).toContain('hub-datepicker__cell--range-start');
 			expect(cellFor(2026, 5, 20)!.classList).toContain('hub-datepicker__cell--range-end');
+		});
+
+		/**
+		 * Between the two picks the range is half-open, and until this shipped the grid said
+		 * nothing about it: the anchor was lit, every other cell was inert, and the days the
+		 * range was about to swallow gave no sign as the pointer swept over them. The band is
+		 * drawn against the cell being pointed at — or arrowed to — and is tentative on purpose,
+		 * so it never reads as a range that has already been chosen.
+		 */
+		describe('previewing the pending half of a range', () => {
+			/** Moves the pointer onto a day cell, as a user sweeping the grid would. */
+			function hoverDay(year: number, month: number, day: number): void {
+				cellFor(year, month, day)!.dispatchEvent(new MouseEvent('mouseenter', { bubbles: false }));
+				fixture.detectChanges();
+			}
+
+			/** Days of the visible month currently drawn as the pending band. */
+			function previewed(): number[] {
+				return [...document.querySelectorAll('.hub-datepicker__cell--preview')].map((el) =>
+					Number((el.textContent ?? '').trim())
+				);
+			}
+
+			it('lights the days between the anchor and the cell under the pointer', async () => {
+				await openCalendar();
+				await pickDay(2026, 5, 10);
+				hoverDay(2026, 5, 14);
+
+				expect(previewed()).toEqual([11, 12, 13]);
+				expect(cellFor(2026, 5, 14)!.classList).toContain('hub-datepicker__cell--preview-end');
+				// The anchor keeps reading as the anchor, not as part of the tentative band.
+				expect(cellFor(2026, 5, 10)!.classList).toContain('hub-datepicker__cell--range-start');
+				expect(cellFor(2026, 5, 10)!.classList).not.toContain('hub-datepicker__cell--preview');
+			});
+
+			/** A range can be drawn backwards, and the band has to follow the pointer either way. */
+			it('lights the band when the pointer moves before the anchor', async () => {
+				await openCalendar();
+				await pickDay(2026, 5, 20);
+				hoverDay(2026, 5, 17);
+
+				expect(previewed()).toEqual([18, 19]);
+				expect(cellFor(2026, 5, 17)!.classList).toContain('hub-datepicker__cell--preview-end');
+			});
+
+			it('follows the pointer as it sweeps', async () => {
+				await openCalendar();
+				await pickDay(2026, 5, 10);
+
+				hoverDay(2026, 5, 13);
+				expect(previewed()).toEqual([11, 12]);
+
+				hoverDay(2026, 5, 16);
+				expect(previewed()).toEqual([11, 12, 13, 14, 15]);
+			});
+
+			it('drops the band when the pointer leaves the grid', async () => {
+				await openCalendar();
+				await pickDay(2026, 5, 10);
+				hoverDay(2026, 5, 14);
+				expect(previewed().length).toBeGreaterThan(0);
+
+				document
+					.querySelector('.hub-datepicker__grid')!
+					.dispatchEvent(new MouseEvent('mouseleave', { bubbles: false }));
+				fixture.detectChanges();
+
+				expect(previewed()).toEqual([]);
+			});
+
+			/**
+			 * Once both ends are settled there is nothing left to preview. Seeded through the
+			 * control rather than by clicking twice, because completing a range closes the panel
+			 * — so a hover after the second pick would have no grid to land on.
+			 */
+			it('says nothing once the range is closed', async () => {
+				host.ctrl.setValue({ start: '2026-06-10', end: '2026-06-14' });
+				fixture.detectChanges();
+				await openCalendar();
+				hoverDay(2026, 5, 18);
+
+				expect(previewed()).toEqual([]);
+				expect(cellFor(2026, 5, 18)!.classList).not.toContain('hub-datepicker__cell--preview-end');
+			});
+
+			it('says nothing in single mode', async () => {
+				host.mode.set('single');
+				host.closeOnSelect.set(false);
+				fixture.detectChanges();
+				await openCalendar();
+				await pickDay(2026, 5, 10);
+				hoverDay(2026, 5, 14);
+
+				expect(previewed()).toEqual([]);
+			});
+
+			/**
+			 * The same affordance for the keyboard: arrowing towards the end date draws the band
+			 * it would take, so the choice is not visible only to a pointer.
+			 */
+			it('follows keyboard navigation too', async () => {
+				await openCalendar();
+				await pickDay(2026, 5, 10);
+
+				const grid = document.querySelector('.hub-datepicker__grid') as HTMLElement;
+				for (let i = 0; i < 3; i++) {
+					grid.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
+				}
+				fixture.detectChanges();
+
+				expect(previewed()).toEqual([11, 12]);
+				expect(cellFor(2026, 5, 13)!.classList).toContain('hub-datepicker__cell--preview-end');
+			});
+
+			/**
+			 * Sweeping across a blocked day on the way to a valid one must not make the band
+			 * flicker off and back on, so a disabled cell is skipped rather than taken as target.
+			 */
+			it('ignores a disabled cell instead of dropping the band', async () => {
+				host.max.set('2026-06-15');
+				fixture.detectChanges();
+				await openCalendar();
+				await pickDay(2026, 5, 10);
+				hoverDay(2026, 5, 14);
+				expect(previewed()).toEqual([11, 12, 13]);
+
+				hoverDay(2026, 5, 20); // past `max`, so disabled
+				expect(previewed()).toEqual([11, 12, 13]);
+			});
 		});
 	});
 
@@ -554,6 +683,132 @@ describe('HubDatepickerComponent', () => {
 
 			const value = host.ctrl.value as { start: string; end: string };
 			expect(new Date(value.start).getTime()).toBeLessThanOrEqual(new Date(value.end).getTime());
+		});
+	});
+
+	/**
+	 * `mode="day-time-range"` — one day, two times within it. Booking a meeting room is not two
+	 * free instants; it is the day, from 09:00 to 11:00, and `range` cannot say that: its two
+	 * ends are free to land on different days, which is why products that need this end up
+	 * guarding it with a validator and a 422 after the fact.
+	 *
+	 * The value stays a `HubDateRange`, so serialization, `min`/`max` and `valueFormat` are
+	 * untouched. What the mode adds is that the control cannot express a cross-day span at all.
+	 */
+	describe('mode="day-time-range"', () => {
+		beforeEach(() => {
+			host.mode.set('day-time-range');
+			host.granularity.set('minute');
+			fixture.detectChanges();
+		});
+
+		it('renders one day grid and two time rows', async () => {
+			await openCalendar();
+
+			expect(document.querySelectorAll('.hub-datepicker__grid').length).toBe(1);
+			expect(document.querySelectorAll('.hub-datepicker__time').length).toBe(2);
+		});
+
+		/** One click settles the whole span — there is no second day to wait for. */
+		it('settles both ends from a single day click', async () => {
+			await openCalendar();
+			await typeInto(timeFields(0)[0], '9');
+			await typeInto(timeFields(1)[0], '11');
+			await pickDay(2026, 5, 20);
+
+			expect(host.ctrl.value).toEqual({ start: iso(2026, 5, 20, 9, 0), end: iso(2026, 5, 20, 11, 0) });
+		});
+
+		/** The invariant the mode exists for. */
+		it('keeps both ends on the same day whichever day is picked', async () => {
+			await openCalendar();
+			await typeInto(timeFields(0)[0], '22');
+			await typeInto(timeFields(1)[0], '23');
+			await pickDay(2026, 5, 20);
+			await pickDay(2026, 5, 25);
+
+			const value = host.ctrl.value as { start: string; end: string };
+			expect(new Date(value.start).getDate()).toBe(25);
+			expect(new Date(value.end).getDate()).toBe(25);
+		});
+
+		it('keeps the day when a time is edited afterwards', async () => {
+			await openCalendar();
+			await pickDay(2026, 5, 20);
+			await typeInto(timeFields(1)[0], '18');
+
+			const value = host.ctrl.value as { start: string; end: string };
+			expect(new Date(value.end).getDate()).toBe(20);
+			expect(new Date(value.end).getHours()).toBe(18);
+		});
+
+		it('orders the two times, whichever was typed first', async () => {
+			await openCalendar();
+			await typeInto(timeFields(0)[0], '17');
+			await typeInto(timeFields(1)[0], '9');
+			await pickDay(2026, 5, 20);
+
+			expect(host.ctrl.value).toEqual({ start: iso(2026, 5, 20, 9, 0), end: iso(2026, 5, 20, 17, 0) });
+		});
+
+		/** The day grid picks ONE day here, so it must not draw a range band. */
+		it('marks the day as selected rather than as a range', async () => {
+			await openCalendar();
+			await pickDay(2026, 5, 20);
+
+			expect(cellFor(2026, 5, 20)!.classList).toContain('hub-datepicker__cell--selected');
+			expect(document.querySelectorAll('.hub-datepicker__cell--in-range').length).toBe(0);
+			expect(document.querySelectorAll('.hub-datepicker__cell--range-end').length).toBe(0);
+		});
+
+		/** Naming the day twice would be noise when the mode guarantees it is the same one. */
+		it('names the day once in the input', async () => {
+			await openCalendar();
+			await typeInto(timeFields(0)[0], '9');
+			await typeInto(timeFields(1)[0], '11');
+			await pickDay(2026, 5, 20);
+
+			const [left, right] = displayValue().split(' – ');
+			expect(left).toContain('06/20/2026');
+			expect(right).toBe('11:00');
+		});
+
+		/**
+		 * A stored span that crosses midnight is outside what this control can express, so it is
+		 * pulled onto the start's day — keeping the time that was asked for — instead of being
+		 * rendered as something the user could never have produced.
+		 */
+		it('pulls an incoming cross-day span onto the start day', async () => {
+			host.ctrl.setValue({ start: '2026-06-20T09:00:00', end: '2026-06-21T11:00:00' });
+			fixture.detectChanges();
+			await openCalendar();
+
+			// Nudging the end re-emits what the panel is actually showing.
+			await typeInto(timeFields(1)[0], '11');
+
+			const value = host.ctrl.value as { start: string; end: string };
+			expect(new Date(value.start).getDate()).toBe(20);
+			expect(new Date(value.end).getDate()).toBe(20);
+			expect(new Date(value.end).getHours()).toBe(11);
+		});
+
+		/** The mode is defined as a day plus two times, so a timeless granularity contradicts it. */
+		it('raises a granularity that carries no time', async () => {
+			host.granularity.set('day');
+			fixture.detectChanges();
+			await openCalendar();
+
+			expect(document.querySelectorAll('.hub-datepicker__time').length).toBe(2);
+		});
+
+		it('still honours min and max', async () => {
+			host.min.set('2026-06-20T00:00:00');
+			host.max.set('2026-06-22T23:59:00');
+			fixture.detectChanges();
+			await openCalendar();
+
+			expect(cellFor(2026, 5, 19)!.disabled).toBe(true);
+			expect(cellFor(2026, 5, 21)!.disabled).toBe(false);
 		});
 	});
 
