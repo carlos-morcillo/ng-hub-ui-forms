@@ -5,6 +5,26 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.20.0] - 2026-08-17
+
+### Added
+
+- **`hubPrepend` / `hubAppend` can now attach a FIELD, not only a button.** A `<hub-select>` projected into a slot kept its own rounded leading corners and sat a padding-width away from the control, so the two read as a field and a loose control parked beside it — the opposite of attaching them.
+
+    The slot's rules assumed they could reach the box they were squaring. That holds for a button, an anchor or a bare span, whose border and radius sit on the very element the slot selects. A field primitive holds neither on its host: the host is a plain custom element and the box lives on the control inside it. So the slot painted a second border around a control that already had one, squared corners nobody can see, and left the visible leading edge untouched.
+
+    The treatment is forwarded one level down now — the host gives up the border and padding it should never have taken, and the control inside takes the squaring. Measured in a browser, on a `<hub-select>` appended to a `<hub-input>`:
+
+    |                               | before | after |
+    | ----------------------------- | ------ | ----- |
+    | leading radius of the control | 6px    | 0px   |
+    | border on the host            | 1px    | 0px   |
+    | padding on the host           | 12px   | 0px   |
+
+    The trailing radius stays at 6px — the outer corner still belongs to whatever is on the outside — and the overlap with the field is one border width, so the pair draws as a single line.
+
+    The case is ordinary, not a curiosity: a price and the period it is a price of are one statement, and splitting "180 € a month" across two separate fields makes the reader reassemble it on every row. Both slots are covered, not just `append`.
+
 ## [22.19.1] - 2026-08-17
 
 ### Fixed

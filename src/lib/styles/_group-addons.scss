@@ -176,6 +176,48 @@
 			border-start-end-radius: 0;
 			border-end-end-radius: 0;
 		}
+
+		// ── A projected FIELD, not a button ───────────────────────────────
+		//
+		// Everything above assumes the slot can reach the box it is squaring. That holds for a
+		// button, an anchor or a bare span: border and radius sit on the very element the slot
+		// selects. A field primitive holds neither on its host — the host is a plain custom
+		// element and the box lives on the control inside it. So the rules above painted a
+		// SECOND border around a control that already had one, and squared corners nobody can
+		// see, while the rounded leading edge the reader does see stayed exactly where it was.
+		// The projected field then read as a separate control parked beside the one it was
+		// meant to join, which is the opposite of attaching it.
+		//
+		// The treatment is forwarded one level down: the host gives up the border and the
+		// padding it should never have taken, and the control inside takes the squaring.
+		//
+		// Not wrapped in `:where()`, unlike the fill below. The select's own radius arrives
+		// from `.hub-select__control.ng-select .ng-select-container` — three classes — and a
+		// zero-specificity rule would lose to it in silence.
+		> hub-input,
+		> hub-select,
+		> hub-textarea,
+		> hub-datepicker {
+			padding-inline: 0;
+			border: 0;
+			border-radius: 0;
+		}
+
+		&--prepend > hub-input .hub-field__control,
+		&--prepend > hub-select .ng-select-container,
+		&--prepend > hub-textarea .hub-field__control,
+		&--prepend > hub-datepicker .hub-field__control {
+			border-start-end-radius: 0;
+			border-end-end-radius: 0;
+		}
+
+		&--append > hub-input .hub-field__control,
+		&--append > hub-select .ng-select-container,
+		&--append > hub-textarea .hub-field__control,
+		&--append > hub-datepicker .hub-field__control {
+			border-start-start-radius: 0;
+			border-end-start-radius: 0;
+		}
 	}
 
 	// ── The fill of attached content ──────────────────────────────────────
