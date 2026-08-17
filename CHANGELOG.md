@@ -5,6 +5,18 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.19.0] - 2026-08-17
+
+### Fixed
+
+- **A range picker no longer commits a range that has only one end.** The first click used to be published immediately as `{ start, end: null }`, which cost twice: opening a picker that already held a complete span and clicking a new start destroyed the old value before the user had chosen anything, and dismissing the panel there left the control holding a half-open shape that every consumer then has to defend against.
+
+    The first pick is now a question, not an answer. It is drawn on the grid and previewed as the pointer sweeps, but nothing reaches the control until the second end lands; dismissing the panel half-way rolls the panel back to the value that was last committed, so the field and the model never disagree. Clearing is unaffected — an explicit clear still publishes `null`.
+
+    `day-time-range` was never affected: picking the day settles both ends at once.
+
+    Released as a minor rather than a patch because what the control receives has changed: an application that leaned on the half-open emission to drive its own "now pick the end" affordance should listen to the panel instead.
+
 ## [22.18.1] - 2026-08-16
 
 ### Fixed

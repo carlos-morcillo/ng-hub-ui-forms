@@ -351,6 +351,9 @@ export class HubDatepickerComponent extends HubFieldControl {
 
 	protected readonly _hour12 = computed(() => resolveHour12(this.locale(), this._hourFormat()));
 
+	/** Last range actually published, so an abandoned half-selection has somewhere to return to. */
+	#committed: { start: Date | null; end: Date | null } = { start: null, end: null };
+
 	protected readonly rangeStart = computed<Date | null>(() => this._start());
 	protected readonly rangeEnd = computed<Date | null>(() => (this._isRange() ? this._end() : null));
 
@@ -497,6 +500,7 @@ export class HubDatepickerComponent extends HubFieldControl {
 
 			this._start.set(start ? startOfUnit(start, granularity) : null);
 			this._end.set(end ? startOfUnit(end, granularity) : null);
+			this.#committed = { start: this._start(), end: this._end() };
 			this.#anchor(start ?? new Date());
 
 			return;
@@ -528,6 +532,7 @@ export class HubDatepickerComponent extends HubFieldControl {
 			return;
 		}
 
+		this.#rollbackPendingRange();
 		this._open.set(false);
 		this._previewTarget.set(null);
 		this.onTouched?.();
@@ -792,6 +797,22 @@ export class HubDatepickerComponent extends HubFieldControl {
 		}
 	}
 
+	/**
+	 * Drops a range that was only half picked when the panel closed.
+	 *
+	 * The first click of a span is a question, not an answer, and {@link #emit} never published
+	 * it. Leaving it on screen would show a selection the model does not hold, so the panel goes
+	 * back to the last value that was actually committed.
+	 */
+	#rollbackPendingRange(): void {
+		if (!this._emitsRange() || !this._start() || this._end()) {
+			return;
+		}
+
+		this._start.set(this.#committed.start);
+		this._end.set(this.#committed.end);
+	}
+
 	/** Keeps the two endpoints ordered after a time edit has moved one past the other. */
 	#reorderIfNeeded(): void {
 		const start = this._start();
@@ -910,6 +931,16 @@ export class HubDatepickerComponent extends HubFieldControl {
 
 		if (this._emitsRange()) {
 			const end = this._end();
+
+			// A half-open range is not an answer, so it is not published. Emitting the first pick
+			// used to destroy a complete value the instant the user began choosing a new span —
+			// and if they then clicked away, the control was left holding `{ start, end: null }`,
+			// a shape no consumer asked for and every consumer has to defend against. The pick
+			// stays on screen; the model keeps what it had until the second end lands.
+			if (start && !end) {
+				return;
+			}
+
 			const value =
 				start || end
 					? {
@@ -918,6 +949,7 @@ export class HubDatepickerComponent extends HubFieldControl {
 						}
 					: null;
 
+			this.#committed = { start, end };
 			this.onChange?.(value);
 			this.valueChange.emit(value as HubDateValue<any>);
 

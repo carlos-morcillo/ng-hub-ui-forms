@@ -258,6 +258,70 @@ describe('HubDatepickerComponent', () => {
 		 * drawn against the cell being pointed at — or arrowed to — and is tentative on purpose,
 		 * so it never reads as a range that has already been chosen.
 		 */
+		/**
+		 * A range is only an answer once it has both ends. Until this shipped the first pick was
+		 * published straight away as `{ start, end: null }` — so beginning a new span destroyed
+		 * the complete value that was already there, before the user had chosen anything, and
+		 * clicking away left the control holding a half-open shape no consumer asked for.
+		 */
+		describe('an incomplete range is never committed', () => {
+			/** Dismisses the panel from outside, which is what the CDK backdrop does. */
+			async function clickOutside(): Promise<void> {
+				(document.querySelector('.cdk-overlay-backdrop') as HTMLElement).click();
+				fixture.detectChanges();
+				await tick0();
+				fixture.detectChanges();
+			}
+
+			it('publishes nothing on the first pick', async () => {
+				await openCalendar();
+				await pickDay(2026, 5, 10);
+
+				expect(host.ctrl.value).toBeNull();
+			});
+
+			it('leaves a complete value untouched while a new span is being picked', async () => {
+				host.ctrl.setValue({ start: '2026-06-10', end: '2026-06-20' });
+				fixture.detectChanges();
+				await openCalendar();
+				await pickDay(2026, 5, 5);
+
+				expect(host.ctrl.value).toEqual({ start: '2026-06-10', end: '2026-06-20' });
+			});
+
+			it('restores the previous range when the panel is dismissed half-way', async () => {
+				host.ctrl.setValue({ start: '2026-06-10', end: '2026-06-20' });
+				fixture.detectChanges();
+				const before = displayValue();
+
+				await openCalendar();
+				await pickDay(2026, 5, 5);
+				await clickOutside();
+
+				expect(host.ctrl.value).toEqual({ start: '2026-06-10', end: '2026-06-20' });
+				// And the field must agree with the model: showing the abandoned pick would be a
+				// range the control does not hold.
+				expect(displayValue()).toBe(before);
+			});
+
+			it('leaves the field empty when there was nothing to go back to', async () => {
+				await openCalendar();
+				await pickDay(2026, 5, 10);
+				await clickOutside();
+
+				expect(host.ctrl.value).toBeNull();
+				expect(displayValue()).toBe('');
+			});
+
+			it('publishes as soon as the second end lands', async () => {
+				await openCalendar();
+				await pickDay(2026, 5, 10);
+				await pickDay(2026, 5, 20);
+
+				expect(host.ctrl.value).toEqual({ start: '2026-06-10', end: '2026-06-20' });
+			});
+		});
+
 		describe('previewing the pending half of a range', () => {
 			/** Moves the pointer onto a day cell, as a user sweeping the grid would. */
 			function hoverDay(year: number, month: number, day: number): void {
