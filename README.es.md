@@ -234,8 +234,33 @@ siempre en el extremo de su lado. La unidad rotula el campo; la acción va más 
 </hub-input>
 ```
 
+Un slot también puede llevar un **campo**, no sólo una acción. Un precio y el periodo del que es
+precio son una sola afirmación —«180 € al mes»— y repartirla en dos campos obliga a recomponerla
+en cada fila.
+
+```html
+<hub-input formControlName="rate" label="Tarifa" prepend="€">
+	<ng-template hubAppend>
+		<hub-select
+			formControlName="period"
+			[items]="periods"
+			bindLabel="name"
+			bindValue="id"
+			[clearable]="false"
+			placeholder="por"
+		/>
+	</ng-template>
+</hub-input>
+```
+
+`hub-input`, `hub-select`, `hub-textarea` y `hub-datepicker` son los cuatro que cierran a ras, y
+sólo como **hijo directo** de la plantilla: envuelve uno en un `<div>` y recibe el trato de una
+acción.
+
 Lo proyectado lleva el borde, el radio y la altura del campo, no los suyos, de modo que un botón
-no dibuja una segunda costura más gruesa junto al control.
+no dibuja una segunda costura más gruesa junto al control. Un campo proyectado lo cede un nivel
+más adentro —su host renuncia al borde y el control interior recibe el cuadrado— porque un campo
+guarda su caja en el control, no en su host.
 
 > Importa `HubPrependDirective` / `HubAppendDirective` de `ng-hub-ui-forms`.
 > `[hubSelectSuffix]` queda **deprecado** en favor de `[hubAppend]`, que hace lo mismo en todos los

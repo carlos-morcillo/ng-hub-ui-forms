@@ -5,6 +5,14 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.20.1] - 2026-08-17
+
+### Changed
+
+- **The two attach slots document that they take a field, not only an action.** `hubPrepend` and `hubAppend` gained the capability in 22.20.0 and said nothing about it, which is the same as not having it: a consumer reaching for the slot had no reason to believe a `<hub-select>` would close flush against the host field rather than sit beside it.
+
+    The JSDoc now states the shape and, more usefully, its two limits — only `hub-input`, `hub-select`, `hub-textarea` and `hub-datepicker`, and only as a **direct child** of the template. Wrapping one in a `<div>` falls back to the treatment an action gets, silently, because the rules select direct children. Both READMEs carry the same.
+
 ## [22.20.0] - 2026-08-17
 
 ### Added

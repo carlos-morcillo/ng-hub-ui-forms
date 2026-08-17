@@ -257,8 +257,33 @@ outermost on its side. A unit labels the field; the action sits beyond it.
 </hub-input>
 ```
 
+A slot can also hand over a **field**, not only an action. A price and the period it is a price
+of are one statement — "180 € a month" — and splitting them into two separate fields makes the
+reader put it back together on every row.
+
+```html
+<hub-input formControlName="rate" label="Rate" prepend="€">
+	<ng-template hubAppend>
+		<hub-select
+			formControlName="period"
+			[items]="periods"
+			bindLabel="name"
+			bindValue="id"
+			[clearable]="false"
+			placeholder="per"
+		/>
+	</ng-template>
+</hub-input>
+```
+
+`hub-input`, `hub-select`, `hub-textarea` and `hub-datepicker` are the four that close flush, and
+only as a **direct child** of the template — wrap one in a `<div>` and it falls back to the
+treatment an action gets.
+
 Whatever is projected wears the field's border, radius and height rather than its own, so a
-button does not draw a second, thicker seam beside the control.
+button does not draw a second, thicker seam beside the control. A projected field hands that over
+one level deeper — its host gives up the border and the inner control takes the squaring —
+because a field keeps its box on the control rather than on its host.
 
 > Import `HubPrependDirective` / `HubAppendDirective` from `ng-hub-ui-forms`.
 > `[hubSelectSuffix]` is **deprecated** in favour of `[hubAppend]`, which does the same on every

@@ -2,9 +2,18 @@ import { Directive } from '@angular/core';
 
 /**
  * Marks content attached to the **inline-end edge** of a field (right in LTR, left in RTL) —
- * an icon, a button, anything richer than the text an `append` string can carry. This is the
- * slot for an action that operates on the field's value: search it, calculate it, copy it,
- * configure it.
+ * an icon, a button, another field, anything richer than the text an `append` string can carry.
+ * This is the slot for whatever operates on the field's value: search it, calculate it, copy it,
+ * configure it, or say what unit it is in.
+ *
+ * **A field is allowed too, not only an action.** `hub-input`, `hub-select`, `hub-textarea` and
+ * `hub-datepicker` may be projected here and close flush against the host field, which is how a
+ * price and the period it is a price of stay one statement — "180 € a month" — instead of two
+ * fields the reader has to put back together. It works a level deeper than for a button: a field
+ * keeps its box on the control inside it rather than on its host, so the host gives up the border
+ * and padding it should never have taken and the inner control takes the squaring. Only those
+ * four, and only as a **direct child** of the template — wrap one in a `<div>` and it falls back
+ * to the treatment an action gets.
  *
  * Works on every field that renders as a box with a value: `<hub-input>`, `<hub-select>`,
  * `<hub-textarea>` and `<hub-datepicker>`. Composes with the `append` input, which stays the
