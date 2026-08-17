@@ -1,16 +1,7 @@
 // @ts-nocheck -- vendored ng-select source (type-checked upstream); see ../PATCHES.md
-import {
-	afterEveryRender,
-	booleanAttribute,
-	ChangeDetectionStrategy,
-	Component,
-	ElementRef,
-	inject,
-	input,
-	OnInit,
-	signal,
-} from '@angular/core';
+import { afterEveryRender, booleanAttribute, ChangeDetectionStrategy, Component, ElementRef, inject, input, OnInit, signal } from '@angular/core';
 
+/** Declares an option for ng-select declared via HTML. Use the value input to bind the option's value and the element content as its label. */
 @Component({
 	selector: 'ng-option',
 	standalone: true,
@@ -18,24 +9,34 @@ import {
 	template: `<ng-content />`,
 })
 export class NgOptionComponent implements OnInit {
-
+	/** Value bound to the option. The projected element content is used as the option's label. */
 	public readonly value = input<any>();
+	/** Whether the option is disabled and cannot be selected. */
 	public readonly disabled = input(false, {
 		transform: booleanAttribute,
 	});
 	public readonly elementRef = inject(ElementRef<HTMLElement>);
 
 	public readonly label = signal<string>('');
+	public readonly classes = signal<string>('');
 
 	/** True when this component's inputs are initialized (after first change detection). */
 	public readonly isInitialized = signal<boolean>(false);
 
 	constructor() {
 		afterEveryRender(() => {
-			// Update label signal after render (innerHTML updated by template bindings)
-			const currentLabel = (this.elementRef.nativeElement.innerHTML || '').trim();
+			const element = this.elementRef.nativeElement;
+			// textContent (not innerHTML): default labels are plain text, like Material viewValue.
+			const currentLabel = (element.textContent || '').trim();
 			if (currentLabel !== this.label()) {
 				this.label.set(currentLabel);
+			}
+
+			const currentClasses = Array.from(element.classList)
+				.filter((className) => className !== 'ng-star-inserted')
+				.join(' ');
+			if (currentClasses !== this.classes()) {
+				this.classes.set(currentClasses);
 			}
 		});
 	}
