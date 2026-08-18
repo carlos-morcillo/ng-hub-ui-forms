@@ -36,6 +36,46 @@
 	$action-bg: var(--hub-#{$field}-group-action-bg, var(--hub-input-group-action-bg));
 	$action-color: var(--hub-#{$field}-group-action-color, var(--hub-input-group-action-color));
 
+	// ── The seam, made governable ─────────────────────────────────────────
+	//
+	// Attached content is welded to the control and to its neighbours: squared corners on the
+	// shared edges, and no space between elements. That is right when the strip has to read as
+	// one continuous line, and wrong the moment the field itself is not drawn as a box — inside
+	// a table cell, say, where the control has no border and a run of welded buttons reads as
+	// one smeared shape rather than as the separate actions they are.
+	//
+	// Both default to today's values, so nothing moves for anyone who does not ask. What they
+	// buy is the ability to ask from OUTSIDE: the tokens are declared at `:root` and never
+	// redeclared on a component host, so an ancestor — a `<td>`, a toolbar, a panel — can set
+	// them and every field inside obeys. No new input on four primitives to express a decision
+	// that belongs to the surroundings rather than to the control.
+	$attached-radius: var(--hub-#{$field}-group-attached-radius, var(--hub-input-group-attached-radius));
+	$attached-gap: var(--hub-#{$field}-group-attached-gap, var(--hub-input-group-attached-gap));
+
+	// The border attached content wears, kept SEPARATE from the field's own.
+	//
+	// It used to be the same token, which reads as an economy until the field stops being
+	// drawn as a box: zeroing the field's border then erased the border of every button
+	// beside it too, and an outline button — transparent fill, its shape carried entirely by
+	// that line — collapsed into a bare glyph floating in the cell. The chrome of an action
+	// is not the chrome of the control it sits next to; they only happened to agree.
+	//
+	// Defaults to the field's width, so a group that says nothing still draws one seam.
+	$attached-border-width: var(
+		--hub-#{$field}-group-attached-border-width,
+		var(--hub-input-group-attached-border-width)
+	);
+
+	// And its colour, for the same reason one step further in. Imposing the field's colour is
+	// right while the two form one line; once they do not, a button with a colour of its own —
+	// an outline in the accent, a destructive action in red — has it quietly repainted grey.
+	// Set this to `currentColor` and each action's border takes its own text colour, which is
+	// exactly what an outline button's colour already is.
+	$attached-border-color: var(
+		--hub-#{$field}-group-attached-border-color,
+		var(--hub-input-group-attached-border-color)
+	);
+
 	.hub-#{$field}__group {
 		display: flex;
 		align-items: stretch;
@@ -87,6 +127,7 @@
 		display: flex;
 		align-items: stretch;
 		flex: 0 0 auto;
+		gap: #{$attached-gap};
 
 		// Positioned so the shared edge belongs to whoever was pulled onto it.
 		//
@@ -124,11 +165,11 @@
 			min-height: var(--hub-#{$field}-min-height, auto);
 
 			// The field's border, not whatever arrived, so the seam is one line.
-			border: #{$border-width} solid #{$border-color};
+			border: #{$attached-border-width} solid #{$attached-border-color};
 			border-radius: #{$radius};
 
 			// Pulled onto the control's border so the shared edge is drawn once.
-			margin-inline: calc(-1 * #{$border-width}) 0;
+			margin-inline: calc(-1 * #{$attached-border-width}) 0;
 
 			// Positioned so the raise below has something to raise. Attached actions overlap
 			// by a border width on purpose, so the shared pixel belongs to whichever paints
@@ -146,14 +187,14 @@
 		}
 
 		&--prepend > * {
-			border-start-end-radius: 0;
-			border-end-end-radius: 0;
-			margin-inline: 0 calc(-1 * #{$border-width});
+			border-start-end-radius: #{$attached-radius};
+			border-end-end-radius: #{$attached-radius};
+			margin-inline: 0 calc(-1 * #{$attached-border-width});
 		}
 
 		&--append > * {
-			border-start-start-radius: 0;
-			border-end-start-radius: 0;
+			border-start-start-radius: #{$attached-radius};
+			border-end-start-radius: #{$attached-radius};
 		}
 
 		// A slot holds a template, not an element, so it can hand over two buttons as easily
@@ -168,13 +209,13 @@
 		// Same failure mode as the two before it — a selector that matches nothing raises no
 		// error, and the first button kept a rounded outer edge in the middle of the strip.
 		&--prepend > *:not(:first-child) {
-			border-start-start-radius: 0;
-			border-end-start-radius: 0;
+			border-start-start-radius: #{$attached-radius};
+			border-end-start-radius: #{$attached-radius};
 		}
 
 		&--append > *:not(:last-child) {
-			border-start-end-radius: 0;
-			border-end-end-radius: 0;
+			border-start-end-radius: #{$attached-radius};
+			border-end-end-radius: #{$attached-radius};
 		}
 
 		// ── A projected FIELD, not a button ───────────────────────────────
@@ -269,18 +310,22 @@
 	// this branch to a bare `.ng-select-container` shipped 22.17.0 with every select round
 	// again: the selector still matched, so a test that asks `matches()` stayed green.
 	.hub-#{$field}__group {
+		// Governed by the same token as the strip's own corners: the seam is one decision, not
+		// two. A group that is not welded — a field drawn without a box inside a table cell,
+		// where each control and each action stands on its own — has to give the CONTROL its
+		// corners back too, or the flat side betrays a join that is no longer there.
 		&--has-prepend .hub-#{$field}__control,
 		&--has-prepend .hub-field__control,
 		&--has-prepend .hub-#{$field}__control.ng-select .ng-select-container {
-			border-start-start-radius: 0;
-			border-end-start-radius: 0;
+			border-start-start-radius: #{$attached-radius};
+			border-end-start-radius: #{$attached-radius};
 		}
 
 		&--has-append .hub-#{$field}__control,
 		&--has-append .hub-field__control,
 		&--has-append .hub-#{$field}__control.ng-select .ng-select-container {
-			border-start-end-radius: 0;
-			border-end-end-radius: 0;
+			border-start-end-radius: #{$attached-radius};
+			border-end-end-radius: #{$attached-radius};
 		}
 
 		// A run of addons on one side reads as one piece: only the outermost rounds

@@ -76,19 +76,38 @@ describe('the chrome of an attached action', () => {
 		expect(classes.length).toBeGreaterThanOrEqual(2);
 	});
 
-	/** One seam, one line: the action takes the field's border, not its own. */
+	/**
+	 * One seam, one line: the action takes the group's border, not its own.
+	 *
+	 * Through a token of its own now, defaulting to the field's. They used to be the same
+	 * variable, which held until the field stopped being drawn as a box: zeroing the field's
+	 * border erased the action's too, and an outline button — whose whole shape is that line —
+	 * collapsed into a bare glyph. What the test pins is the default, so a group that says
+	 * nothing still draws exactly one seam.
+	 */
 	it('takes the field border rather than whatever the action brought', () => {
-		// The shared mixin carries a fallback to the input's token for fields without their own.
-		expect(attachedActionRule()).toContain('border: var(--hub-select-border-width');
+		const rule = attachedActionRule();
+
+		expect(rule).toContain('border: var(--hub-select-group-attached-border-width');
+		// …whose declared default is the field's own width, so an unstyled group draws one seam.
+		expect(rule).toContain('var(--hub-input-group-attached-border-width)');
 	});
 
-	/** Each side gives up the corner it shares, and keeps the outer one. */
+	/**
+	 * Each side gives up the corner it shares, and keeps the outer one.
+	 *
+	 * The shared corner is flattened through a token rather than literally, so that a field
+	 * drawn without a box — inside a table cell, say — can hand the corners back from an
+	 * ancestor. The assertion is on the fallback rather than on the token name: what has to
+	 * hold is that nobody who says nothing gets a rounded seam.
+	 */
 	it('flattens the shared corners and rounds the outer ones', () => {
 		const rule = attachedActionRule();
 
-		expect(rule).toContain('border-start-start-radius: 0');
-		expect(rule).toContain('border-end-start-radius: 0');
-		// The outer corners come from the shorthand; only the shared ones are zeroed.
+		expect(rule).toContain('border-start-start-radius: var(--hub-select-group-attached-radius');
+		expect(rule).toContain('border-end-start-radius: var(--hub-select-group-attached-radius');
+		expect(rule).toContain('var(--hub-input-group-attached-radius)');
+		// The outer corners come from the shorthand; only the shared ones are governed.
 		expect(rule).toContain('border-radius: var(--hub-select-border-radius');
 	});
 
@@ -105,8 +124,14 @@ describe('the chrome of an attached action', () => {
 		expect(rule).toContain('min-height: var(--hub-select-min-height');
 	});
 
-	/** Pulled onto the control's border, so the shared edge is drawn once. */
+	/**
+	 * Pulled onto the control's border, so the shared edge is drawn once.
+	 *
+	 * By the width of the seam it is being pulled onto — the attached token — rather than the
+	 * field's, or a group whose action keeps a border while the field drops one would overlap
+	 * by the wrong amount and show a gap where the two should meet.
+	 */
 	it('sits on the field border rather than beside it', () => {
-		expect(attachedActionRule()).toContain('margin-inline: calc(-1 * var(--hub-select-border-width');
+		expect(attachedActionRule()).toContain('margin-inline: calc(-1 * var(--hub-select-group-attached-border-width');
 	});
 });

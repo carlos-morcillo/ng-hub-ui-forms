@@ -95,6 +95,17 @@
 	--hub-input-group-action-bg: var(--hub-sys-color-secondary-subtle, #e9ecef);
 	--hub-input-group-action-color: var(--hub-sys-color-secondary-emphasis, #41464b);
 
+	// ── The seam of a group ────────────────────────────────────────────────
+	// Attached content is welded to the control and to its neighbours: shared corners flat, no
+	// space between, one border shared. That is right while the strip has to read as a single
+	// line, and wrong the moment the field is not drawn as a box — inside a table cell, say,
+	// where each control and each action stands on its own. These four unweld it, and their
+	// defaults are today's behaviour, so nothing moves for anyone who says nothing.
+	--hub-input-group-attached-radius: 0;
+	--hub-input-group-attached-gap: 0;
+	--hub-input-group-attached-border-width: var(--hub-input-border-width);
+	--hub-input-group-attached-border-color: var(--hub-input-border-color);
+
 	// Input · affix (projected leading/trailing content, e.g. a <hub-icon>)
 	--hub-input-icon-color: var(--hub-sys-text-muted, #6c757d);
 	--hub-input-icon-size: var(--hub-ref-font-size-base, 1rem);
@@ -315,6 +326,10 @@
 	--hub-select-group-addon-border-color: var(--hub-input-group-addon-border-color);
 	--hub-select-group-action-bg: var(--hub-input-group-action-bg);
 	--hub-select-group-action-color: var(--hub-input-group-action-color);
+	--hub-select-group-attached-radius: var(--hub-input-group-attached-radius);
+	--hub-select-group-attached-gap: var(--hub-input-group-attached-gap);
+	--hub-select-group-attached-border-width: var(--hub-select-border-width);
+	--hub-select-group-attached-border-color: var(--hub-select-border-color);
 	--hub-select-arrow-color: var(--hub-sys-text-muted, #6c757d);
 	// Caret geometry — the border of the CSS triangle and the wrapper's inline
 	// padding (clearance from the value and from the field edge). Tune both to

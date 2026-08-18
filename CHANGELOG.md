@@ -5,6 +5,25 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.21.0] - 2026-08-18
+
+### Added
+
+- **The seam of a group can be undone.** Attached content is welded to the control and to its neighbours: shared corners flat, no space between, one border shared. That is right while the strip has to read as a single line, and wrong the moment the field is not drawn as a box — inside a table cell, where each control and each action stands on its own.
+
+    Four tokens govern it, and their defaults are exactly today's behaviour, so nothing moves for anyone who says nothing:
+
+    | Token                                     | Default                         | What it does                                                                                                                                  |
+    | ----------------------------------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+    | `--hub-input-group-attached-radius`       | `0`                             | The corners a group shares — the control's _and_ the strip's. Set it to the field radius and nothing carries the flat side that says "joined" |
+    | `--hub-input-group-attached-gap`          | `0`                             | Space between the elements a slot projects                                                                                                    |
+    | `--hub-input-group-attached-border-width` | `var(--hub-input-border-width)` | The attached border, no longer the field's own                                                                                                |
+    | `--hub-input-group-attached-border-color` | `var(--hub-input-border-color)` | Its colour                                                                                                                                    |
+
+    The last two exist because sharing one variable held only while both were drawn: zeroing the field's border erased the border of every button beside it too, and an outline button — whose entire shape is that line — collapsed into a bare glyph. Point the colour at `currentColor` and each action keeps its own, so a destructive one stays red instead of being repainted the field's grey.
+
+    Governable from an **ancestor**, not through an input on each of four primitives: the tokens are declared at `:root` and never redeclared on a component host, so a `<td>`, a toolbar or a panel sets them and every field inside obeys — including whatever a consumer projects into a template the library cannot see into. That is the same reason `ng-hub-ui-paginable`'s new `flushFields` needs no cooperation from any field.
+
 ## [22.20.1] - 2026-08-17
 
 ### Changed

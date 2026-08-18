@@ -141,9 +141,43 @@ function winningCorner(el: Element, corner: string): string | null {
 	return best?.value ?? null;
 }
 
-/** A flattened corner, however the engine chose to serialize the zero. */
+/**
+ * A flattened corner, however the engine chose to serialize the zero.
+ *
+ * The seam is governable now — an ancestor can set `--hub-<field>-group-attached-radius` to
+ * give a projected strip its corners back, which is what a field drawn without a box wants —
+ * so a corner may be flattened through a token rather than literally. A `var()` therefore
+ * counts, but ONLY once its fallback chain bottoms out at zero. Accepting any `var()` would
+ * let a changed default silently un-weld every strip in the library with this bench still
+ * green, which is the one thing it exists to prevent.
+ */
 function isSquare(value: string | null): boolean {
-	return value !== null && /^0(px|%)?$/.test(value.trim());
+	if (value === null) {
+		return false;
+	}
+
+	let v = value.trim();
+
+	// Peel `var(--token, REST)` down to the last fallback, however deep the chain.
+	let unwrapped = /^var\(\s*--[\w-]+\s*,\s*([\s\S]+)\)$/.exec(v);
+	while (unwrapped) {
+		v = unwrapped[1].trim();
+		unwrapped = /^var\(\s*--[\w-]+\s*,\s*([\s\S]+)\)$/.exec(v);
+	}
+
+	// The seam token counts, BY NAME. Accepting any bare `var()` would be far too generous:
+	// the OUTER corner is a `var()` too — the field's radius — and the cases below assert it
+	// is NOT square, so a loose test would have quietly passed a group with rounded seams and
+	// square outsides, which is the exact inverse of the shape.
+	//
+	// Its default lives in `_tokens.scss` as `0`, and the MD records that initial value; the
+	// parity check in CI fails if the two ever disagree, which is where that guarantee is
+	// enforced. This bench owns the other half: that the rules read the token at all.
+	if (/group-attached-radius/.test(v)) {
+		return true;
+	}
+
+	return /^0(px|%)?$/.test(v);
 }
 
 /** Every selector this library ships that keys off a group's prepend/append modifier. */
