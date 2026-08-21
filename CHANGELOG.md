@@ -5,6 +5,16 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.22.0] - 2026-08-21
+
+### Added
+
+- **`searchFn` reaches the engine.** The underlying select has always taken one; this wrapper never passed it on, so a consumer who wanted typing to match on something the option shows and the label does not — the building a room is in, the code beside a name — had to smuggle it into `bindLabel` and hide it again behind a label template.
+
+### Fixed
+
+- **An `addTag` that resolves with nothing no longer adds anything.** The synchronous branch has always guarded that; the promise branch did not, so a creation dialog the user dismissed, or a request the server refused, became an option built out of `null`, pushed into the list and written into the form. The caller said no and the field answered with a record that does not exist. Nobody meets this by hand — you have to cancel the dialog to see it — so it now has a case of its own.
+
 ## [22.21.0] - 2026-08-18
 
 ### Added

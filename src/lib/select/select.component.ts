@@ -175,6 +175,18 @@ export class HubSelectComponent extends HubFieldControl {
 	/** Property (or fn) used to group items. */
 	readonly groupBy = input<string | undefined>(undefined);
 
+	/**
+	 * How typing matches an item, when matching its label is not enough.
+	 *
+	 * The underlying select has always taken one; this wrapper did not pass it on, so a
+	 * consumer who wanted to search by something the option shows but the label does not
+	 * — the building a room is in, the code beside a name — had to smuggle it into
+	 * `bindLabel` and then hide it again with a label template.
+	 */
+	readonly searchFn = input<((term: string, item: any) => boolean) | undefined>(
+		undefined
+	);
+
 	/** Label text. */
 	readonly label = input<string>('');
 

@@ -745,7 +745,17 @@ export class NgSelectComponent implements OnChanges, OnInit, AfterViewInit, Cont
 		const handleTag = (item) =>
 			this.typeahead()?.observed || !this.isOpen() ? this.itemsList.mapItem(item, null) : this.itemsList.addItem(item);
 		if (isPromise(tag)) {
-			tag.then((item) => this.select(handleTag(item))).catch(() => {});
+			// The same guard the synchronous branch has always had. An `addTag` that
+			// resolves with nothing is saying "there is nothing to add" — a creation
+			// dialog dismissed, a request refused — and selecting it anyway turned that
+			// into an option built out of `false` or `null`, added to the list and
+			// written into the form. The caller had said no and the field answered with
+			// a record that does not exist.
+			tag.then((item) => {
+				if (item) {
+					this.select(handleTag(item));
+				}
+			}).catch(() => {});
 		} else if (tag) {
 			this.select(handleTag(tag));
 		}
