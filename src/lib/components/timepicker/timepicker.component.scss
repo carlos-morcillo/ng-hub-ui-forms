@@ -1,0 +1,27 @@
+/**
+ * The time field wears the family's field shape and lets the platform draw the rest.
+ *
+ * Only two things need saying. The native control reserves room for a clock affordance
+ * that some engines draw and others do not, so the width is content-driven rather than
+ * full-bleed — a field the width of the form for four digits reads as something unfinished.
+ * And the digits are tabular, because a column of opening times is compared down the
+ * column and only lines up when the figures do.
+ */
+.hub-timepicker {
+	&__control {
+		inline-size: var(--hub-timepicker-width, fit-content);
+		min-inline-size: var(--hub-timepicker-min-width, 8rem);
+		font-variant-numeric: tabular-nums;
+
+		// Chromium hides its own indicator behind a pseudo-element that inherits nothing;
+		// giving it the field's colour keeps it from being a black glyph on a themed field.
+		&::-webkit-calendar-picker-indicator {
+			cursor: pointer;
+			opacity: var(--hub-timepicker-indicator-opacity, 0.6);
+		}
+
+		&:hover::-webkit-calendar-picker-indicator {
+			opacity: 1;
+		}
+	}
+}

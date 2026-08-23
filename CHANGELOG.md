@@ -5,6 +5,12 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.23.0] - 2026-08-23
+
+### Added
+
+- **`<hub-timepicker>`, a time of day.** The family had a date and no hour, so a product that needed one reached for a text field with an `HH:MM` pattern. A pattern is the wrong tool three times over: no numeric keyboard on a phone, nothing offered when the field is focused, and `8:00` accepted until the form is submitted rather than refused while it is typed. Built on the platform's `<input type="time">`, so the keyboard, the stepper and the reader's own 12- or 24-hour presentation come for free — and what it publishes is normalised to `HH:MM`, so what a form holds does not change with the locale it is read in. An empty field publishes `null` and not the empty string, because "no time" is an absence and a string of length zero sails past a `required` written as a null check. Takes `min`, `max` and `step` (in seconds: 900 offers quarter hours), and reads a value that carries more than the hour — `09:30:00`, a whole instant — rather than showing nothing, which is what the native control does with anything it cannot parse.
+
 ## [22.22.0] - 2026-08-21
 
 ### Added

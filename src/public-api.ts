@@ -28,6 +28,7 @@ export { HubFormComponent } from './lib/components/form/form.component';
 export { HubLegendComponent } from './lib/components/legend/legend.component';
 export { HubSelectComponent } from './lib/select/select.component';
 export { HubDatepickerComponent } from './lib/components/datepicker/datepicker.component';
+export { HubTimepickerComponent } from './lib/components/timepicker/timepicker.component';
 export { HubFileInputComponent } from './lib/components/file-input/file-input.component';
 
 // Select — dropdown customization passthrough (vendored ng-select template directives)
