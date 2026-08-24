@@ -40,6 +40,23 @@ export interface HubFormControlAdapter {
 }
 
 /**
+ * A control the adapter creates is embedded, not stacked.
+ *
+ * Field hosts carry `margin-bottom: var(--hub-field-stack-gap)` so that fields written one
+ * under another in a form breathe. A control created *into another component's chrome* —
+ * a table's search group, a paginator's row — is not in that list and never was: the gap
+ * made the group taller than the field, so anything stretching beside it came out taller
+ * too. A table's search button overshot its own field by exactly that margin.
+ *
+ * Zeroed on the host through the token the family already exposes, so nothing has to write
+ * a rule that reaches into the control — and so every library that wires this adapter gets
+ * it, rather than each one discovering it separately.
+ */
+function markEmbedded(element: HTMLElement): void {
+	element.style.setProperty('--hub-field-stack-gap', '0');
+}
+
+/**
  * Ready-made {@link HubFormControlAdapter} backed by `HubInputComponent` /
  * `HubSelectComponent`.
  *
@@ -51,10 +68,12 @@ export interface HubFormControlAdapter {
  * Requires `provideHubForms()` (or the default config) to be available in the
  * environment so the field components can resolve their configuration.
  */
+
 export const hubFormControlAdapter: HubFormControlAdapter = {
 	create(container: ViewContainerRef, config: HubFormControlConfig): HubFormControlHandle {
 		if (config.kind === 'select') {
 			const ref = container.createComponent(HubSelectComponent);
+			markEmbedded(ref.location.nativeElement as HTMLElement);
 			ref.setInput(
 				'items',
 				(config.options ?? []).map((option) => ({ ...option }))
@@ -83,6 +102,7 @@ export const hubFormControlAdapter: HubFormControlAdapter = {
 		}
 
 		const ref = container.createComponent(HubInputComponent);
+		markEmbedded(ref.location.nativeElement as HTMLElement);
 		ref.setInput('type', config.type ?? 'text');
 		if (config.placeholder) {
 			ref.setInput('placeholder', config.placeholder);

@@ -5,6 +5,29 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [22.23.1] - 2026-08-24
+
+### Added
+
+- **`--hub-field-stack-gap`**, the space a field leaves under itself when fields are stacked. Zero by default — the gap between fields has always been the container's to give, through its own `gap` or margins — so no existing form moves. What it buys is that a form can hand that job to the fields, and that a control built into somebody else's chrome can be excluded from it.
+
+### Fixed
+
+- **A control `hubFormControlAdapter` creates is no longer part of a stack.** The adapter zeroes the token on every host it builds, so a field created into another component's chrome — a table's search group, a paginator's row — never reserves room below itself and cannot make the group taller than the field it holds.
+
+    Worth recording how this arrived: the zeroing shipped first on its own, writing a token that no rule read. It was inert, and measurable as such — raising the token to `20px` on a live field left the margin at `0px` in a form and in a table alike. The write is only a fix now that the token is declared and the host reads it.
+
+
+### Fixed
+
+- **A control `hubFormControlAdapter` creates no longer keeps a form field's stacking margin.** Field hosts carry `margin-bottom: var(--hub-field-stack-gap)` so that fields written one under another in a form breathe. A control created *into another component's chrome* — a table's search group, a paginator's row — is in no such list and never was, and the gap it kept made the group taller than the field: anything stretching beside it came out taller too. A table's search button overshot its own field by exactly that margin, 54px against 38px, and the two stopped reading as one control.
+
+    The adapter is the only place that knows a control is being embedded, so it says it there: the token is zeroed on the host as the component is created. Every library that wires the adapter gets it, rather than each one discovering the same margin separately and patching it from outside — which is what happened first, twice, in the wrong places: a `::ng-deep` rule in the host library, then a block in the consuming application.
+
+    Written on the element rather than through a stylesheet on purpose. A rule would have to name the control from outside, which is exactly what emulated encapsulation forbids and what sent the first attempt reaching for `::ng-deep`.
+
 ## [22.23.0] - 2026-08-23
 
 ### Added

@@ -7,6 +7,17 @@
 // and only add their component-specific bits.
 // ─────────────────────────────────────────────────────────────────────────
 
+// The stacking gap lives on the HOST, not on `.hub-field` inside it: the host is the element
+// a form lays out, and the one `hubFormControlAdapter` can reach when it builds a control into
+// somebody else's chrome. Zero by default, so no existing form moves.
+hub-input,
+hub-select,
+hub-textarea,
+hub-datepicker,
+hub-timepicker {
+	margin-bottom: var(--hub-field-stack-gap, 0);
+}
+
 .hub-field {
 	display: flex;
 	flex-direction: column;
