@@ -1,18 +1,4 @@
 // @ts-nocheck -- vendored ng-select source (type-checked upstream); see ../PATCHES.md
-const unescapedHTMLExp = /[&<>"']/g;
-const hasUnescapedHTMLExp = RegExp(unescapedHTMLExp.source);
-const htmlEscapes = {
-	'&': '&amp;',
-	'<': '&lt;',
-	'>': '&gt;',
-	'"': '&quot;',
-	"'": '&#39;',
-};
-
-export function escapeHTML(value: string) {
-	return value && hasUnescapedHTMLExp.test(value) ? value.replace(unescapedHTMLExp, (chr) => htmlEscapes[chr]) : value;
-}
-
 export function isDefined(value: any) {
 	return value !== undefined && value !== null;
 }
