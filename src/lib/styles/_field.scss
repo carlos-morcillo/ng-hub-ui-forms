@@ -15,6 +15,19 @@ hub-select,
 hub-textarea,
 hub-datepicker,
 hub-timepicker {
+	/*
+	 * The space a field leaves under itself when fields are written one under another.
+	 *
+	 * Zero by default, which is what every form has always got: the gap between fields has
+	 * been the container's to give, through its own `gap` or margins. The token exists so a
+	 * form can hand that job to the fields instead — and, more to the point, so a control
+	 * created INTO another component's chrome can opt out of it. `hubFormControlAdapter`
+	 * zeroes it on every control it builds, because a search box inside a table's toolbar
+	 * is not in a stack and must not reserve room below itself.
+	 *
+	 * The default is the fallback here, not a `:root` declaration. A declaration would beat
+	 * a consumer that sets the token, decided by import order alone.
+	 */
 	margin-bottom: var(--hub-field-stack-gap, 0);
 }
 

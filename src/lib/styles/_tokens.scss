@@ -10,15 +10,12 @@
 :root {
 	// ── Shared form contract (used by every field) ──────────────────────────
 	--hub-form-field-gap: var(--hub-ref-space-1, 0.25rem); // label ↔ control
-	// Space a field leaves under itself when fields are written one under another.
-	//
-	// Zero by default, which is what every form has always got: the gap between fields has
-	// been the container's to give, through its own `gap` or margins. The token exists so a
-	// form can hand that job to the fields instead — and, more to the point, so a control
-	// created INTO another component's chrome can opt out of it. `hubFormControlAdapter`
-	// zeroes it on every control it builds, because a search box inside a table's toolbar is
-	// not in a stack and must not reserve room below itself.
-	--hub-field-stack-gap: 0;
+	// `--hub-field-stack-gap` is deliberately NOT declared here. Its default lives in the
+	// rule that reads it (`var(--hub-field-stack-gap, 0)`, see _field.scss), because a
+	// declaration in this block would silently beat a consumer that sets the token — the
+	// winner being whichever stylesheet the application happens to import last. One did:
+	// an application declaring `1rem` had every stacked field come out touching, because
+	// its own token file was imported before this one.
 	--hub-form-row-gap: var(--hub-ref-space-3, 1rem); // horizontal label gutter
 	--hub-form-fieldset-padding-x: var(--hub-ref-space-3, 1rem);
 	--hub-form-fieldset-padding-y: var(--hub-ref-space-3, 1rem);

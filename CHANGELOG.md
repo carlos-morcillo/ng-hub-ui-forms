@@ -5,6 +5,16 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.23.2] - 2026-08-24
+
+### Fixed
+
+- **A form that sets `--hub-field-stack-gap` is obeyed again.** 22.23.1 declared the token's default in `:root`. Two `:root` declarations tie on specificity, so the winner is whichever stylesheet the application happens to import last — and an application whose own token file came first had its `1rem` silently overruled, leaving every stacked field touching.
+
+    The default now lives where it is read, as the fallback of `var(--hub-field-stack-gap, 0)`. A fallback competes with nobody: declare the token and it wins, declare nothing and the field leaves no gap, whatever the import order.
+
+    Verified against the reported shape rather than a convenient one — a consumer sheet inserted **before** the library's, where the old code failed: `0px` with nothing declared, `16px` with the consumer asking for `1rem`.
+
 ## [Unreleased]
 
 ## [22.23.1] - 2026-08-24
