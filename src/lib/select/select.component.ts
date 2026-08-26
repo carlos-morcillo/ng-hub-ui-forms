@@ -24,7 +24,6 @@ import { HubFieldControl } from '../shared/hub-field-control';
 import { areEqual, get } from '../utils/utils';
 import { NgSelectComponent } from './vendor/lib/ng-select.component';
 import { NgSelectConfig } from './vendor/lib/config.service';
-import { NgOptionComponent } from './vendor/lib/ng-option.component';
 import {
 	NgFooterTemplateDirective,
 	NgHeaderTemplateDirective,
@@ -56,7 +55,6 @@ import {
 		KeyValuePipe,
 		FormsModule,
 		NgSelectComponent,
-		NgOptionComponent,
 		NgOptionTemplateDirective,
 		NgOptgroupTemplateDirective,
 		NgLabelTemplateDirective,
