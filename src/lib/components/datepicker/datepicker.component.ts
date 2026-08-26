@@ -1,4 +1,3 @@
-import { OverlayModule } from '@angular/cdk/overlay';
 import { formatDate, KeyValuePipe, NgTemplateOutlet } from '@angular/common';
 import {
 	booleanAttribute,
@@ -11,10 +10,15 @@ import {
 	contentChild,
 	numberAttribute,
 	output,
+	DestroyRef,
+	ElementRef,
 	signal,
 	TemplateRef,
+	ViewContainerRef,
+	viewChild,
 	ViewEncapsulation
 } from '@angular/core';
+import { HUB_DROPDOWN_POSITIONS, OverlayRef, OverlayService } from 'ng-hub-ui-utils';
 import { FormTextType, FormTextTypes, HubLabelType, HubLabelTypes } from '../../interfaces/common.interface';
 import {
 	HubDatepickerGranularity,
@@ -100,7 +104,7 @@ interface DatepickerCell {
  */
 @Component({
 	selector: 'hub-datepicker',
-	imports: [NgTemplateOutlet, KeyValuePipe, OverlayModule, HubDatepickerTimeFieldComponent, HubDatepickerPeriodGridComponent],
+	imports: [NgTemplateOutlet, KeyValuePipe, HubDatepickerTimeFieldComponent, HubDatepickerPeriodGridComponent],
 	templateUrl: './datepicker.component.html',
 	styleUrl: './datepicker.component.scss',
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -112,6 +116,25 @@ interface DatepickerCell {
 })
 export class HubDatepickerComponent extends HubFieldControl {
 	readonly #localeId = inject(LOCALE_ID);
+	readonly #overlays = inject(OverlayService);
+	readonly #viewContainerRef = inject(ViewContainerRef);
+
+	/** The field's own box: what the calendar hangs off. */
+	private readonly _trigger = viewChild.required<ElementRef<HTMLElement>>('trigger');
+
+	/** The calendar, rendered into the overlay rather than into the field. */
+	private readonly _panel = viewChild.required<TemplateRef<unknown>>('panel');
+
+	/** Live overlay while the calendar is up; `null` when it is closed. */
+	#overlayRef: OverlayRef | null = null;
+
+	constructor() {
+		super();
+		// The panel lives in `document.body`, outside this component's own tree, so nothing removes
+		// it when the field goes away: a datepicker destroyed while open would leave its calendar
+		// on screen, attached to a field that no longer exists.
+		inject(DestroyRef).onDestroy(() => this.#closeOverlay());
+	}
 	readonly #config = inject(HUB_FORMS_CONFIG).datepicker;
 
 	protected readonly _labelTypes = HubLabelTypes;
@@ -549,7 +572,53 @@ export class HubDatepickerComponent extends HubFieldControl {
 
 		this.#anchor(this._start() ?? new Date());
 		this._open.set(true);
+		this.#openOverlay();
 		this.opened.emit();
+	}
+
+	/**
+	 * Puts the calendar on screen, hung off the field's own box.
+	 *
+	 * `start` and `end` in the position list are logical, and the strategy reads the direction from
+	 * the origin — so a field inside an RTL container opens its calendar against the right edge
+	 * without a second list of positions. The offset mirrors what this component asked the CDK for
+	 * before the swap, so any visual difference means the swap is wrong rather than better.
+	 */
+	#openOverlay(): void {
+		if (this.#overlayRef) {
+			return;
+		}
+
+		const position = this.#overlays
+			.position()
+			.flexibleConnectedTo(this._trigger().nativeElement)
+			.withPositions(HUB_DROPDOWN_POSITIONS.map((p) => ({ ...p, offsetY: 4 })));
+
+		const ref = this.#overlays.create({
+			positionStrategy: position,
+			hasBackdrop: true,
+			backdropClass: 'hub-datepicker__backdrop',
+			panelClass: 'hub-datepicker__overlay'
+		});
+
+		ref.onBackdropClick(() => this.close());
+		// The panel does not take focus — opened from a click, focus stays where it was — so the
+		// grid's own keydown never hears Escape. The overlay listens on the document and tells the
+		// topmost open one, which is how the CDK behaved before the swap.
+		ref.onKeydown((event) => {
+			if (event.key === 'Escape') {
+				event.preventDefault();
+				this.close();
+			}
+		});
+		ref.attach(this._panel(), this.#viewContainerRef);
+		this.#overlayRef = ref;
+	}
+
+	/** Takes the calendar off screen and releases the overlay it lived in. */
+	#closeOverlay(): void {
+		this.#overlayRef?.dispose();
+		this.#overlayRef = null;
 	}
 
 	/** Closes the calendar and marks the control as touched. */
@@ -560,6 +629,7 @@ export class HubDatepickerComponent extends HubFieldControl {
 
 		this.#rollbackPendingRange();
 		this._open.set(false);
+		this.#closeOverlay();
 		this._previewTarget.set(null);
 		this.onTouched?.();
 		this.closed.emit();

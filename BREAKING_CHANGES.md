@@ -2,6 +2,25 @@
 
 This document tracks all breaking changes in the `ng-hub-ui-forms` library.
 
+## Version 22.25.0
+
+### `@angular/cdk` is no longer a peer dependency
+
+- **Change**: the datepicker's calendar moved off Angular CDK's overlay onto the one in `ng-hub-ui-utils`, which this package already required. `@angular/cdk` is gone from `peerDependencies`; `ng-hub-ui-utils` moves to `>=22.11.0`.
+- **Impact**: none for a consumer who uses the CDK elsewhere in their application — nothing stops them installing it. For one who installed it only to satisfy this package, it can be removed. What changes at runtime is that the calendar now stays glued to its field while the page scrolls; before, in an application scrolling an inner container rather than the page, it drifted away from it.
+- **Migration**: bump `ng-hub-ui-utils` alongside this package. If your application imports nothing from `@angular/cdk` itself, `npm uninstall @angular/cdk`.
+
+```json
+{
+	"dependencies": {
+		"ng-hub-ui-forms": "^22.25.0",
+		"ng-hub-ui-utils": "^22.11.0"
+	}
+}
+```
+
+- **Why it is a minor**: in this family the major states which Angular major the library targets, so it cannot be spent on a change of dependencies. Listed here because a peer dependency disappearing is not something the compiler mentions.
+
 ## Version 22.24.0
 
 ### Every `<hub-select>` is 2px shorter, and a floating field is 10px taller

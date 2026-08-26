@@ -15,6 +15,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
     Verified against the reported shape rather than a convenient one — a consumer sheet inserted **before** the library's, where the old code failed: `0px` with nothing declared, `16px` with the consumer asking for `1rem`.
 
+## [22.25.0] - 2026-08-26
+
+### Changed
+
+- **`@angular/cdk` is no longer a peer dependency.** One component used it — the datepicker, for the overlay its calendar lives in — and every consumer of this package installed the CDK for it. The calendar now uses `ng-hub-ui-utils`' own overlay, which this package already depended on, so the install shrinks by a package for everybody.
+
+    Not a like-for-like swap, because a like-for-like swap would have been a regression. Two things had to be built in `ng-hub-ui-utils@22.11.0` first, and both are worth knowing about:
+
+    - **The overlay had no repositioning.** Coordinates were computed once and never again, so a panel opened and then scrolled sat where it was left. What makes it better than what it replaces is where the listener sits: on `window` in the **capture** phase. A `scroll` event on an element does not bubble, so the CDK's `document`-level listener never hears an application that scrolls an inner container rather than the page — and this repository's own docs site is exactly that shape, which is why its CDK-backed calendar drifted too. Measured after the swap: the panel holds its 4px offset and its start-edge alignment across repeated scrolls, in both directions.
+    - **`start` and `end` were physical.** They resolved to `left` and `right` whatever the direction, which would have undone the RTL work of 22.24.0 the moment the calendar moved onto them. They are logical now, read from the origin element.
+
+    A third thing was missing and only a browser found it: **Escape stopped closing the calendar.** The panel does not hold focus — opened from a click, the active element is the body — so the grid's own `keydown` never heard the key, while `cdkConnectedOverlay` had been closing on Escape from anywhere through the CDK's global keyboard dispatcher. `ng-hub-ui-utils` grew the same mechanism, and the datepicker wires Escape to it. Verified in a browser rather than assumed, which is how the regression was caught in the first place.
+
+    Everything the datepicker asked the CDK for is preserved deliberately, offset included, so a visual difference means the swap is wrong rather than better. What is not preserved is the drift. Focus behaviour is unchanged: the panel never takes focus, and Escape leaves it on the field.
+
+    Consumers keeping `@angular/cdk` for their own use are unaffected; those who installed it only for this package can drop it. `ng-hub-ui-utils` moves to `>=22.11.0`.
+
 ## [22.24.0] - 2026-08-25
 
 ### Added

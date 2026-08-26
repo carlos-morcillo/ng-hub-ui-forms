@@ -78,7 +78,7 @@ describe('HubDatepickerComponent capitalization', () => {
 	afterEach(() => {
 		vi.useRealTimers();
 		// The panel is a CDK overlay on <body>; leave none behind for the next suite.
-		document.querySelectorAll('.cdk-overlay-container').forEach((el) => el.remove());
+		document.querySelectorAll('.hub-overlay-container, .hub-overlay-backdrop').forEach((el) => el.remove());
 	});
 
 	/** The panel header title, which lives in the overlay rather than under the host. */

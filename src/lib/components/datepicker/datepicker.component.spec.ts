@@ -98,7 +98,7 @@ describe('HubDatepickerComponent', () => {
 	afterEach(() => {
 		vi.useRealTimers();
 		// CDK appends the overlay container to <body>; remove any leftover so suites stay isolated.
-		document.querySelectorAll('.cdk-overlay-container').forEach((el) => el.remove());
+		document.querySelectorAll('.hub-overlay-container, .hub-overlay-backdrop').forEach((el) => el.remove());
 	});
 
 	/** Triggers the input click that calls the (protected) `toggleCalendar()` and flushes timers. */
@@ -265,9 +265,9 @@ describe('HubDatepickerComponent', () => {
 		 * clicking away left the control holding a half-open shape no consumer asked for.
 		 */
 		describe('an incomplete range is never committed', () => {
-			/** Dismisses the panel from outside, which is what the CDK backdrop does. */
+			/** Dismisses the panel from outside, which is what the overlay's backdrop does. */
 			async function clickOutside(): Promise<void> {
-				(document.querySelector('.cdk-overlay-backdrop') as HTMLElement).click();
+				(document.querySelector('.hub-overlay-backdrop') as HTMLElement).click();
 				fixture.detectChanges();
 				await tick0();
 				fixture.detectChanges();

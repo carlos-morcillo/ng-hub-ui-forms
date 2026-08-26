@@ -126,6 +126,15 @@ hub-datepicker.hidden-control {
 }
 
 // ── Calendar panel (CDK overlay) ─────────────────────────────────────────────
+// The overlay container paints a surface of its own — background, radius, shadow — which is right
+// for a bare panel and wrong for one that already dresses itself. Stripped here rather than in the
+// container, because it is this panel that is opinionated, not the overlay.
+.hub-datepicker__overlay {
+	background: none;
+	border-radius: 0;
+	box-shadow: none;
+}
+
 .hub-datepicker__panel {
 	width: max-content;
 	padding: var(--hub-daterangepicker-padding-y, var(--hub-ref-space-3, 1rem))

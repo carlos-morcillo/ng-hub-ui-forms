@@ -31,7 +31,7 @@
 			@for (addon of _prependAddons(); track $index) {
 				<span class="hub-datepicker__addon hub-datepicker__addon--prepend">{{ addon }}</span>
 			}
-			<div class="hub-datepicker__trigger" cdkOverlayOrigin #trigger="cdkOverlayOrigin">
+			<div class="hub-datepicker__trigger" #trigger>
 			<input
 			class="hub-field__control hub-datepicker__input"
 			[class.hub-field__control--invalid]="isInvalid"
@@ -122,16 +122,7 @@
 	}
 </div>
 
-<ng-template
-	cdkConnectedOverlay
-	[cdkConnectedOverlayOrigin]="trigger"
-	[cdkConnectedOverlayOpen]="_open()"
-	[cdkConnectedOverlayHasBackdrop]="true"
-	cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
-	[cdkConnectedOverlayOffsetY]="4"
-	(backdropClick)="close()"
-	(detach)="close()"
->
+<ng-template #panel>
 	<div class="hub-datepicker__panel" role="dialog" [attr.aria-label]="_isPeriod() ? periodLabel() : monthYearLabel()">
 		@if (_isPeriod()) {
 			<header class="hub-datepicker__header">
