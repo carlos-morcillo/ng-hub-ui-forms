@@ -20,13 +20,7 @@ import { HubSelectComponent } from './select.component';
 	standalone: true,
 	imports: [HubSelectComponent, ReactiveFormsModule],
 	template: `
-		<hub-select
-			[formControl]="ctrl"
-			[items]="items()"
-			[label]="label()"
-			[labelType]="labelType()"
-			[format]="format()"
-		/>
+		<hub-select [formControl]="ctrl" [items]="items()" [label]="label()" [labelType]="labelType()" [format]="format()" />
 	`
 })
 class FloatingLabelHostComponent {

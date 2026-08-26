@@ -138,8 +138,7 @@ hub-input.hidden-control {
 
 		.hub-field__control:focus ~ .hub-input__label--floating,
 		.hub-field__control:not(:placeholder-shown) ~ .hub-input__label--floating {
-			transform: scale(var(--hub-field-floating-scale))
-				translateY(calc(-1 * var(--hub-field-floating-travel)));
+			transform: scale(var(--hub-field-floating-scale)) translateY(calc(-1 * var(--hub-field-floating-travel)));
 			opacity: 0.9;
 		}
 	}

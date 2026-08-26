@@ -9,12 +9,7 @@ import {
 	signal,
 	ViewEncapsulation
 } from '@angular/core';
-import {
-	FormTextType,
-	FormTextTypes,
-	HubLabelType,
-	HubLabelTypes
-} from '../../interfaces/common.interface';
+import { FormTextType, FormTextTypes, HubLabelType, HubLabelTypes } from '../../interfaces/common.interface';
 import { HubFieldControl } from '../../shared/hub-field-control';
 
 /**
@@ -81,10 +76,7 @@ import { HubFieldControl } from '../../shared/hub-field-control';
 				/>
 
 				@if (formText()) {
-					<div
-						class="hub-field__form-text"
-						[class.hub-field__form-text--disabled]="disabled()"
-					>
+					<div class="hub-field__form-text" [class.hub-field__form-text--disabled]="disabled()">
 						{{ formText() }}
 					</div>
 				}

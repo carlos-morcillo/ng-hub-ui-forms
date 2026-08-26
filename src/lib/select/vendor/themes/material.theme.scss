@@ -22,7 +22,12 @@ $ng-select-bg: #ffffff !default;
 			&.ng-appearance-fill {
 				background-color: rgba(0, 0, 0, 0.02);
 				&:after {
-					background-image: linear-gradient(to right, rgba(0, 0, 0, 0.42) 0%, rgba(0, 0, 0, 0.42) 33%, transparent 0%);
+					background-image: linear-gradient(
+						to right,
+						rgba(0, 0, 0, 0.42) 0%,
+						rgba(0, 0, 0, 0.42) 33%,
+						transparent 0%
+					);
 					background-size: 4px 1px;
 					background-repeat: repeat-x;
 					border-bottom: none;
@@ -207,7 +212,12 @@ $ng-select-bg: #ffffff !default;
 			.ng-appearance-fill {
 				&:after,
 				&:hover:after {
-					background-image: linear-gradient(to right, rgba(0, 0, 0, 0.42) 0%, rgba(0, 0, 0, 0.42) 33%, transparent 0%);
+					background-image: linear-gradient(
+						to right,
+						rgba(0, 0, 0, 0.42) 0%,
+						rgba(0, 0, 0, 0.42) 33%,
+						transparent 0%
+					);
 					background-size: 4px 1px;
 					background-repeat: repeat-x;
 					border-bottom: none;

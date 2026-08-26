@@ -30,22 +30,22 @@
 				<span class="hub-textarea__addon hub-textarea__addon--prepend">{{ addon }}</span>
 			}
 			<textarea
-			class="hub-field__control hub-textarea__control"
-			[class.hub-field__control--invalid]="isInvalid"
-			[class.hub-field__control--valid]="showsValid"
-			[id]="id"
-			[hubAutoresize]="autoresize()"
-			[ngModel]="_value()"
-			(ngModelChange)="setValue($event)"
-			[attr.rows]="rows()"
-			[attr.cols]="cols()"
-			[attr.maxlength]="maxlength()"
-			[placeholder]="placeholder()"
-			[disabled]="disabled()"
-			[readonly]="readonly()"
-			[required]="!!required()"
-			[attr.aria-invalid]="isInvalid"
-			[style.width]="cols() ? 'auto' : '100%'"
+				class="hub-field__control hub-textarea__control"
+				[class.hub-field__control--invalid]="isInvalid"
+				[class.hub-field__control--valid]="showsValid"
+				[id]="id"
+				[hubAutoresize]="autoresize()"
+				[ngModel]="_value()"
+				(ngModelChange)="setValue($event)"
+				[attr.rows]="rows()"
+				[attr.cols]="cols()"
+				[attr.maxlength]="maxlength()"
+				[placeholder]="placeholder()"
+				[disabled]="disabled()"
+				[readonly]="readonly()"
+				[required]="!!required()"
+				[attr.aria-invalid]="isInvalid"
+				[style.width]="cols() ? 'auto' : '100%'"
 			></textarea>
 			@for (addon of _append(); track $index) {
 				<span class="hub-textarea__addon hub-textarea__addon--append">{{ addon }}</span>

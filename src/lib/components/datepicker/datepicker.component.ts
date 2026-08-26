@@ -413,9 +413,7 @@ export class HubDatepickerComponent extends HubFieldControl {
 	 * open panel counts alongside focus and a value: while the calendar is up the field is in
 	 * use, and a label sliding back down under it would read as the value being cleared.
 	 */
-	protected readonly isLabelRaised = computed<boolean>(
-		() => this._focused() || this._open() || !!this.displayValue()
-	);
+	protected readonly isLabelRaised = computed<boolean>(() => this._focused() || this._open() || !!this.displayValue());
 
 	/** Tracks focus for {@link isLabelRaised}. */
 	protected setFocused(focused: boolean): void {

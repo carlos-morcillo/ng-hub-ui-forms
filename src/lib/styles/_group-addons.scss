@@ -61,20 +61,14 @@
 	// is not the chrome of the control it sits next to; they only happened to agree.
 	//
 	// Defaults to the field's width, so a group that says nothing still draws one seam.
-	$attached-border-width: var(
-		--hub-#{$field}-group-attached-border-width,
-		var(--hub-input-group-attached-border-width)
-	);
+	$attached-border-width: var(--hub-#{$field}-group-attached-border-width, var(--hub-input-group-attached-border-width));
 
 	// And its colour, for the same reason one step further in. Imposing the field's colour is
 	// right while the two form one line; once they do not, a button with a colour of its own —
 	// an outline in the accent, a destructive action in red — has it quietly repainted grey.
 	// Set this to `currentColor` and each action's border takes its own text colour, which is
 	// exactly what an outline button's colour already is.
-	$attached-border-color: var(
-		--hub-#{$field}-group-attached-border-color,
-		var(--hub-input-group-attached-border-color)
-	);
+	$attached-border-color: var(--hub-#{$field}-group-attached-border-color, var(--hub-input-group-attached-border-color));
 
 	.hub-#{$field}__group {
 		display: flex;

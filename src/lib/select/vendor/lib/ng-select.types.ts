@@ -20,7 +20,7 @@ export enum KeyCode {
 	Space = ' ',
 	ArrowUp = 'ArrowUp',
 	ArrowDown = 'ArrowDown',
-	Backspace = 'Backspace',
+	Backspace = 'Backspace'
 }
 
 export type DropdownPosition = 'top' | 'right' | 'bottom' | 'left' | 'auto';

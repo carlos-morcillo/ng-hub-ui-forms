@@ -181,9 +181,7 @@ export class HubSelectComponent extends HubFieldControl {
 	 * — the building a room is in, the code beside a name — had to smuggle it into
 	 * `bindLabel` and then hide it again with a label template.
 	 */
-	readonly searchFn = input<((term: string, item: any) => boolean) | undefined>(
-		undefined
-	);
+	readonly searchFn = input<((term: string, item: any) => boolean) | undefined>(undefined);
 
 	/** Label text. */
 	readonly label = input<string>('');

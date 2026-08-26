@@ -29,7 +29,7 @@ import {
 	SimpleChanges,
 	TemplateRef,
 	viewChild,
-	ViewEncapsulation,
+	ViewEncapsulation
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -49,7 +49,7 @@ import {
 	NgOptionTemplateDirective,
 	NgPlaceholderTemplateDirective,
 	NgTagTemplateDirective,
-	NgTypeToSearchTemplateDirective,
+	NgTypeToSearchTemplateDirective
 } from './ng-templates.directive';
 
 import { NgTemplateOutlet } from '@angular/common';
@@ -83,11 +83,11 @@ function optionalBooleanAttribute(value: unknown): boolean | undefined {
 		{
 			provide: NG_VALUE_ACCESSOR,
 			useExisting: forwardRef(() => NgSelectComponent),
-			multi: true,
+			multi: true
 		},
-		NgDropdownPanelService,
+		NgDropdownPanelService
 	],
-	encapsulation: ViewEncapsulation.None	,
+	encapsulation: ViewEncapsulation.None,
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [NgTemplateOutlet, NgItemLabelDirective, NgDropdownPanelComponent],
 	host: {
@@ -99,8 +99,8 @@ function optionalBooleanAttribute(value: unknown): boolean | undefined {
 		'[class.ng-select-searchable]': 'searchable()',
 		'[class.ng-select-clearable]': 'clearable()',
 		'[class.ng-select-filtered]': 'filtered',
-		'[class.ng-select-disabled]': 'disabled()',
-	},
+		'[class.ng-select-disabled]': 'disabled()'
+	}
 })
 export class NgSelectComponent implements OnChanges, OnInit, AfterViewInit, ControlValueAccessor {
 	readonly classes = inject(new HostAttributeToken('class'), { optional: true });
@@ -183,7 +183,7 @@ export class NgSelectComponent implements OnChanges, OnInit, AfterViewInit, Cont
 
 	readonly _virtualScroll = input<boolean | undefined, unknown>(undefined, {
 		alias: 'virtualScroll',
-		transform: optionalBooleanAttribute,
+		transform: optionalBooleanAttribute
 	});
 	readonly virtualScroll = linkedSignal(() => this._virtualScroll());
 	readonly dropdownVirtualScroll = computed(() => {
@@ -264,7 +264,7 @@ export class NgSelectComponent implements OnChanges, OnInit, AfterViewInit, Cont
 				throw Error('`compareWith` must be a function.');
 			}
 			return fn;
-		},
+		}
 	});
 	readonly compareWith = linkedSignal(() => this._compareWith());
 
@@ -879,7 +879,9 @@ export class NgSelectComponent implements OnChanges, OnInit, AfterViewInit, Cont
 	private _setItems(items: readonly any[]) {
 		const firstItem = items[0];
 		this.bindLabel.set(this.bindLabel() || this._defaultLabel);
-		this._primitive = isDefined(firstItem) ? !isObject(firstItem) : this._primitive || this.bindLabel() === this._defaultLabel;
+		this._primitive = isDefined(firstItem)
+			? !isObject(firstItem)
+			: this._primitive || this.bindLabel() === this._defaultLabel;
 		this.itemsList.setItems(items);
 		if (items.length > 0 && this.hasValue) {
 			this.itemsList.mapSelectedItems();
@@ -906,7 +908,7 @@ export class NgSelectComponent implements OnChanges, OnInit, AfterViewInit, Cont
 					options.map((option) => ({
 						$ngOptionValue: option.value(),
 						$ngOptionLabel: option.elementRef.nativeElement.innerHTML,
-						disabled: option.disabled(),
+						disabled: option.disabled()
 					})) ?? [];
 				this.items.set(items);
 				this.itemsList.setItems(items);
@@ -919,7 +921,7 @@ export class NgSelectComponent implements OnChanges, OnInit, AfterViewInit, Cont
 					// find item for each option
 					.map((option) => ({
 						option,
-						item: this.itemsList.findItem(option.value()),
+						item: this.itemsList.findItem(option.value())
 					}))
 					// filter non found items
 					.filter(({ item }) => isDefined(item))
@@ -929,7 +931,7 @@ export class NgSelectComponent implements OnChanges, OnInit, AfterViewInit, Cont
 						item.label = option.label() || item.label;
 					});
 			},
-			{ injector: this._injector },
+			{ injector: this._injector }
 		);
 	}
 
@@ -941,7 +943,7 @@ export class NgSelectComponent implements OnChanges, OnInit, AfterViewInit, Cont
 		const validateBinding = (item: any): boolean => {
 			if (!isDefined(this.compareWith()) && isObject(item) && this.bindValue()) {
 				this._console.warn(
-					`Setting object(${JSON.stringify(item)}) as your model with bindValue is not allowed unless [compareWith] is used.`,
+					`Setting object(${JSON.stringify(item)}) as your model with bindValue is not allowed unless [compareWith] is used.`
 				);
 				return false;
 			}
@@ -976,7 +978,7 @@ export class NgSelectComponent implements OnChanges, OnInit, AfterViewInit, Cont
 				} else if (this.bindValue()) {
 					item = {
 						[this.bindLabel()]: null,
-						[this.bindValue()]: val,
+						[this.bindValue()]: val
 					};
 					this.itemsList.select(this.itemsList.mapItem(item, null));
 				}
@@ -1001,7 +1003,7 @@ export class NgSelectComponent implements OnChanges, OnInit, AfterViewInit, Cont
 				tap((letter) => this._pressedKeys.push(letter)),
 				debounceTime(200),
 				filter(() => this._pressedKeys.length > 0),
-				map(() => this._pressedKeys.join('')),
+				map(() => this._pressedKeys.join(''))
 			)
 			.subscribe((term) => {
 				const item = this.itemsList.findByLabel(term);
@@ -1028,7 +1030,7 @@ export class NgSelectComponent implements OnChanges, OnInit, AfterViewInit, Cont
 			autocapitalize: 'off',
 			autocomplete: 'off',
 			'aria-controls': this.dropdownId,
-			...this.inputAttrs(),
+			...this.inputAttrs()
 		};
 
 		for (const key of Object.keys(attributes)) {
@@ -1037,7 +1039,9 @@ export class NgSelectComponent implements OnChanges, OnInit, AfterViewInit, Cont
 	}
 
 	private _setTabFocusOnClear() {
-		this.tabFocusOnClear.set(isDefined(this.tabFocusOnClearButton()) ? !!this.tabFocusOnClearButton() : this.config.tabFocusOnClear);
+		this.tabFocusOnClear.set(
+			isDefined(this.tabFocusOnClearButton()) ? !!this.tabFocusOnClearButton() : this.config.tabFocusOnClear
+		);
 	}
 
 	private _updateNgModel() {
@@ -1188,7 +1192,10 @@ export class NgSelectComponent implements OnChanges, OnInit, AfterViewInit, Cont
 	private _nextItemIsTag(nextStep: number): boolean {
 		const nextIndex = this.itemsList.markedIndex + nextStep;
 		return (
-			this.addTag() && this.searchTerm && this.itemsList.markedItem && (nextIndex < 0 || nextIndex === this.itemsList.filteredItems.length)
+			this.addTag() &&
+			this.searchTerm &&
+			this.itemsList.markedItem &&
+			(nextIndex < 0 || nextIndex === this.itemsList.filteredItems.length)
 		);
 	}
 

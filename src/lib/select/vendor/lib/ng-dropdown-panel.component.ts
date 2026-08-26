@@ -17,7 +17,7 @@ import {
 	SimpleChanges,
 	TemplateRef,
 	viewChild,
-	ViewEncapsulation,
+	ViewEncapsulation
 } from '@angular/core';
 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -54,7 +54,7 @@ const SCROLL_SCHEDULER = typeof requestAnimationFrame !== 'undefined' ? animatio
 			</div>
 		}
 	`,
-	imports: [NgTemplateOutlet],
+	imports: [NgTemplateOutlet]
 })
 export class NgDropdownPanelComponent implements OnInit, OnChanges {
 	readonly items = input<NgOption[]>([]);

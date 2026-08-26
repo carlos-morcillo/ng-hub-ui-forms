@@ -18,7 +18,7 @@ export class NgDropdownPanelService {
 	private _dimensions: PanelDimensions = {
 		itemHeight: 0,
 		panelHeight: 0,
-		itemsPerViewport: 0,
+		itemsPerViewport: 0
 	};
 
 	get dimensions() {
@@ -50,7 +50,7 @@ export class NgDropdownPanelService {
 			topPadding,
 			scrollHeight,
 			start,
-			end,
+			end
 		};
 	}
 
@@ -59,7 +59,7 @@ export class NgDropdownPanelService {
 		this._dimensions = {
 			itemHeight,
 			panelHeight,
-			itemsPerViewport,
+			itemsPerViewport
 		};
 	}
 

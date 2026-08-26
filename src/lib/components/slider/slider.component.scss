@@ -181,7 +181,8 @@ hub-slider.hidden-control {
 			// space it is divided by is symmetric and stays as it is.
 			[dir='rtl'] & {
 				background-position:
-					calc((100 - var(--hub-slider-to)) / max(100 - var(--hub-slider-to) + var(--hub-slider-from), 1) * 100%) center,
+					calc((100 - var(--hub-slider-to)) / max(100 - var(--hub-slider-to) + var(--hub-slider-from), 1) * 100%)
+						center,
 					0 0;
 			}
 		}

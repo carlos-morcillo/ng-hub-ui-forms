@@ -13,7 +13,7 @@ export class ItemsList {
 
 	constructor(
 		private _ngSelect: NgSelectComponent,
-		private _selectionModel: SelectionModel,
+		private _selectionModel: SelectionModel
 	) {}
 
 	private _items: NgOption[] = [];
@@ -108,7 +108,8 @@ export class ItemsList {
 			findBy = (item) => !item.children && this.resolveNested(item.value, this._ngSelect.bindValue()) === value;
 		} else {
 			findBy = (item) =>
-				item.value === value || (!item.children && item.label && item.label === this.resolveNested(value, this._ngSelect.bindLabel()));
+				item.value === value ||
+				(!item.children && item.label && item.label === this.resolveNested(value, this._ngSelect.bindLabel()));
 		}
 		return this._items.find((item) => findBy(item));
 	}
@@ -242,7 +243,7 @@ export class ItemsList {
 			label: isDefined(label) ? label.toString() : '',
 			value,
 			disabled: item && item.disabled ? item.disabled : false,
-			htmlId: `${this._ngSelect.dropdownId}-${index}`,
+			htmlId: `${this._ngSelect.dropdownId}-${index}`
 		};
 	}
 
@@ -382,7 +383,7 @@ export class ItemsList {
 					...withoutGroup.map((x) => {
 						x.index = i++;
 						return x;
-					}),
+					})
 				);
 				continue;
 			}
@@ -394,7 +395,7 @@ export class ItemsList {
 				parent: null,
 				index: i++,
 				disabled: !this._ngSelect.selectableGroup(),
-				htmlId: newId(),
+				htmlId: newId()
 			};
 			const groupKey = isGroupByFn ? this._ngSelect.bindLabel() : <string>this._ngSelect.groupBy();
 			const groupValue =
@@ -414,7 +415,7 @@ export class ItemsList {
 			parent.children = children;
 			parent.value = groupValue(
 				key,
-				children.map((x) => x.value),
+				children.map((x) => x.value)
 			);
 			items.push(parent);
 			items.push(...children);

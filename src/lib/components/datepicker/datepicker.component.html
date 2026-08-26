@@ -32,46 +32,46 @@
 				<span class="hub-datepicker__addon hub-datepicker__addon--prepend">{{ addon }}</span>
 			}
 			<div class="hub-datepicker__trigger" #trigger>
-			<input
-			class="hub-field__control hub-datepicker__input"
-			[class.hub-field__control--invalid]="isInvalid"
-			[class.hub-field__control--valid]="showsValid"
-			[class.hub-datepicker__input--clearable]="clearable() && displayValue()"
-			[id]="id"
-			type="text"
-			readonly
-			[value]="displayValue()"
-			[placeholder]="showsFloatingLabel() && !isLabelRaised() ? '' : placeholder()"
-			[disabled]="disabled()"
-			[required]="!!required()"
-			[attr.aria-invalid]="isInvalid"
-			[attr.aria-expanded]="_open()"
-			aria-haspopup="dialog"
-			(click)="toggleCalendar()"
-			(focus)="setFocused(true)"
-			(blur)="setFocused(false); handleBlur($event)"
-		/>
-		@if (clearable() && displayValue() && !disabled() && !readonly()) {
-			<button type="button" class="hub-datepicker__clear" [attr.aria-label]="_labels().clear" (click)="clear()">
-				&times;
-			</button>
-		}
-		<button
-			type="button"
-			class="hub-datepicker__icon"
-			tabindex="-1"
-			[attr.aria-label]="_labels().openCalendar"
-			[disabled]="disabled() || readonly()"
-			(click)="toggleCalendar()"
-		></button>
-		@if (showsFloatingLabel()) {
-			<label [for]="id" class="hub-field__label hub-datepicker__label--floating">
-				{{ label() }}
-				@if (required()) {
-					<span class="hub-field__required" aria-hidden="true">*</span>
+				<input
+					class="hub-field__control hub-datepicker__input"
+					[class.hub-field__control--invalid]="isInvalid"
+					[class.hub-field__control--valid]="showsValid"
+					[class.hub-datepicker__input--clearable]="clearable() && displayValue()"
+					[id]="id"
+					type="text"
+					readonly
+					[value]="displayValue()"
+					[placeholder]="showsFloatingLabel() && !isLabelRaised() ? '' : placeholder()"
+					[disabled]="disabled()"
+					[required]="!!required()"
+					[attr.aria-invalid]="isInvalid"
+					[attr.aria-expanded]="_open()"
+					aria-haspopup="dialog"
+					(click)="toggleCalendar()"
+					(focus)="setFocused(true)"
+					(blur)="setFocused(false); handleBlur($event)"
+				/>
+				@if (clearable() && displayValue() && !disabled() && !readonly()) {
+					<button type="button" class="hub-datepicker__clear" [attr.aria-label]="_labels().clear" (click)="clear()">
+						&times;
+					</button>
 				}
-			</label>
-		}
+				<button
+					type="button"
+					class="hub-datepicker__icon"
+					tabindex="-1"
+					[attr.aria-label]="_labels().openCalendar"
+					[disabled]="disabled() || readonly()"
+					(click)="toggleCalendar()"
+				></button>
+				@if (showsFloatingLabel()) {
+					<label [for]="id" class="hub-field__label hub-datepicker__label--floating">
+						{{ label() }}
+						@if (required()) {
+							<span class="hub-field__required" aria-hidden="true">*</span>
+						}
+					</label>
+				}
 			</div>
 			@for (addon of _appendAddons(); track $index) {
 				<span class="hub-datepicker__addon hub-datepicker__addon--append">{{ addon }}</span>

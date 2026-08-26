@@ -3,7 +3,8 @@
 	[class.ng-appearance-outline]="appearance() === 'outline'"
 	[class.ng-appearance-fill]="appearance() === 'fill'"
 	[class.ng-has-value]="hasValue"
-	class="ng-select-container">
+	class="ng-select-container"
+>
 	<div class="ng-value-container">
 		@if ((selectedItems.length === 0 && !searchTerm) || (fixedPlaceholder() ?? config.fixedPlaceholder)) {
 			<ng-template #defaultPlaceholderTemplate>
@@ -21,14 +22,18 @@
 					</ng-template>
 					<ng-template
 						[ngTemplateOutlet]="labelTemplate() || defaultLabelTemplate"
-						[ngTemplateOutletContext]="{ item: item.value, clear: clearItem, label: item.label }">
+						[ngTemplateOutletContext]="{ item: item.value, clear: clearItem, label: item.label }"
+					>
 					</ng-template>
 				</div>
 			}
 		}
 
 		@if (multiple() && multiLabelTemplate() && selectedValues.length > 0) {
-			<ng-template [ngTemplateOutlet]="multiLabelTemplate()" [ngTemplateOutletContext]="{ items: selectedValues, clear: clearItem }">
+			<ng-template
+				[ngTemplateOutlet]="multiLabelTemplate()"
+				[ngTemplateOutletContext]="{ items: selectedValues, clear: clearItem }"
+			>
 			</ng-template>
 		}
 
@@ -51,7 +56,8 @@
 				[readOnly]="!searchable() || itemsList.maxItemsSelected"
 				[value]="searchTerm ?? ''"
 				aria-autocomplete="list"
-				role="combobox" />
+				role="combobox"
+			/>
 		</div>
 	</div>
 
@@ -70,7 +76,8 @@
 			[attr.tabindex]="tabFocusOnClear() ? 0 : -1"
 			title="{{ clearAllText() || config.clearAllText }}"
 			#clearButton
-			(click)="handleClearClick($event)">
+			(click)="handleClearClick($event)"
+		>
 			@if (clearButtonTemplate()) {
 				<ng-container [ngTemplateOutlet]="clearButtonTemplate()"></ng-container>
 			} @else {
@@ -107,7 +114,8 @@
 		[class]="appendToValue ? (ngClass() ? ngClass() : classes) : null"
 		[id]="dropdownId"
 		[ariaLabelDropdown]="ariaLabelDropdown() ?? config.ariaLabelDropdown"
-		[popover]="popover()">
+		[popover]="popover()"
+	>
 		<ng-container>
 			@for (item of viewPortItems; track trackByOption($index, item)) {
 				<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus, @angular-eslint/template/mouse-events-have-key-events -->
@@ -125,15 +133,19 @@
 					[attr.aria-selected]="item.selected"
 					[attr.id]="item?.htmlId"
 					[attr.aria-setsize]="itemsList.filteredItems.length"
-					[attr.aria-posinset]="(item.index ?? 0) + 1">
+					[attr.aria-posinset]="(item.index ?? 0) + 1"
+				>
 					<ng-template #defaultOptionTemplate>
 						<span class="ng-option-label" [ngItemLabel]="item.label" [escape]="escapeHTML"></span>
 					</ng-template>
 					<ng-template
 						[ngTemplateOutlet]="
-							item.children ? optgroupTemplate() || defaultOptionTemplate : optionTemplate() || defaultOptionTemplate
+							item.children
+								? optgroupTemplate() || defaultOptionTemplate
+								: optionTemplate() || defaultOptionTemplate
 						"
-						[ngTemplateOutletContext]="{ item: item.value, item$: item, index: item.index, searchTerm: searchTerm }">
+						[ngTemplateOutletContext]="{ item: item.value, item$: item, index: item.index, searchTerm: searchTerm }"
+					>
 					</ng-template>
 				</div>
 			}
@@ -145,7 +157,8 @@
 					(mouseover)="itemsList.unmarkItem()"
 					role="option"
 					[attr.aria-selected]="false"
-					(click)="selectTag()">
+					(click)="selectTag()"
+				>
 					<ng-template #defaultTagTemplate>
 						<span
 							><span class="ng-tag-label">{{ addTagText() || config.addTagText }}</span
@@ -154,7 +167,8 @@
 					</ng-template>
 					<ng-template
 						[ngTemplateOutlet]="tagTemplate() || defaultTagTemplate"
-						[ngTemplateOutletContext]="{ searchTerm: searchTerm }">
+						[ngTemplateOutletContext]="{ searchTerm: searchTerm }"
+					>
 					</ng-template>
 				</div>
 			}
@@ -165,7 +179,8 @@
 			</ng-template>
 			<ng-template
 				[ngTemplateOutlet]="notFoundTemplate() || defaultNotFoundTemplate"
-				[ngTemplateOutletContext]="{ searchTerm: searchTerm }">
+				[ngTemplateOutletContext]="{ searchTerm: searchTerm }"
+			>
 			</ng-template>
 		}
 		@if (showTypeToSearch()) {
@@ -180,7 +195,8 @@
 			</ng-template>
 			<ng-template
 				[ngTemplateOutlet]="loadingTextTemplate() || defaultLoadingTextTemplate"
-				[ngTemplateOutletContext]="{ searchTerm: searchTerm }">
+				[ngTemplateOutletContext]="{ searchTerm: searchTerm }"
+			>
 			</ng-template>
 		}
 	</ng-dropdown-panel>

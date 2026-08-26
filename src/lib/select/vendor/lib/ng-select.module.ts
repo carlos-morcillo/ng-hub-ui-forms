@@ -39,7 +39,7 @@ import { DefaultSelectionModelFactory } from './selection-model';
 		NgLoadingTextTemplateDirective,
 		NgTagTemplateDirective,
 		NgLoadingSpinnerTemplateDirective,
-		NgItemLabelDirective,
+		NgItemLabelDirective
 	],
 	exports: [
 		NgSelectComponent,
@@ -58,15 +58,15 @@ import { DefaultSelectionModelFactory } from './selection-model';
 		NgLoadingSpinnerTemplateDirective,
 		NgClearButtonTemplateDirective
 	],
-	providers: provideNgSelect(),
+	providers: provideNgSelect()
 })
-export class NgSelectModule { }
+export class NgSelectModule {}
 
 export function provideNgSelect() {
 	return [
 		{
 			provide: SELECTION_MODEL_FACTORY,
-			useValue: DefaultSelectionModelFactory,
-		},
+			useValue: DefaultSelectionModelFactory
+		}
 	];
 }

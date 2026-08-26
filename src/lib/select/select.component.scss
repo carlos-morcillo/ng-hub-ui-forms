@@ -212,9 +212,9 @@ hub-select.hidden-control {
 
 		// The origin has to flip too, and no logical keyword for it has usable
 		// support, and `:host-context()` is inert here: these components declare
-			// `ViewEncapsulation.None`, so Angular never runs the shim that would translate it and
-			// the selector ships literally, matching nothing. A plain descendant does the job.
-			// `inset-inline-start` already pins the label to the right edge under
+		// `ViewEncapsulation.None`, so Angular never runs the shim that would translate it and
+		// the selector ships literally, matching nothing. A plain descendant does the job.
+		// `inset-inline-start` already pins the label to the right edge under
 		// RTL; left at `0 0` the scale would still shrink it toward the LEFT, walking
 		// it away from the very edge it is pinned to.
 		[dir='rtl'] & {
@@ -252,8 +252,7 @@ hub-select.hidden-control {
 }
 
 .hub-select__group--floating.hub-select__group--raised .hub-select__label--floating {
-	transform: scale(var(--hub-field-floating-scale))
-		translateY(calc(-1 * var(--hub-field-floating-travel)));
+	transform: scale(var(--hub-field-floating-scale)) translateY(calc(-1 * var(--hub-field-floating-travel)));
 	opacity: 0.9;
 }
 

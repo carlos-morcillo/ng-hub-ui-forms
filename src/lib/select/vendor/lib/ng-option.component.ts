@@ -8,20 +8,19 @@ import {
 	inject,
 	input,
 	OnInit,
-	signal,
+	signal
 } from '@angular/core';
 
 @Component({
 	selector: 'ng-option',
 	standalone: true,
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	template: `<ng-content />`,
+	template: `<ng-content />`
 })
 export class NgOptionComponent implements OnInit {
-
 	public readonly value = input<any>();
 	public readonly disabled = input(false, {
-		transform: booleanAttribute,
+		transform: booleanAttribute
 	});
 	public readonly elementRef = inject(ElementRef<HTMLElement>);
 
