@@ -373,6 +373,32 @@ export class HubDatepickerComponent extends HubFieldControl {
 		() => this._end() ?? clampToBounds(this._endDraft(), this._minDate(), this._maxDate())
 	);
 
+	/**
+	 * Whether the input is focused. Tracked rather than read from `:focus` because the calendar
+	 * is an overlay: opening it moves focus out of the input, and a label driven by the pseudo
+	 * class would drop back over the value at exactly the moment the reader is choosing a date.
+	 */
+	private readonly _focused = signal<boolean>(false);
+
+	/** Whether the label is laid inside the control rather than stacked above it. */
+	protected readonly showsFloatingLabel = computed<boolean>(
+		() => this.labelType() === this._labelTypes.Floating && (!!this.label() || !!this.required())
+	);
+
+	/**
+	 * Whether the floating label sits lifted rather than standing in for the placeholder. The
+	 * open panel counts alongside focus and a value: while the calendar is up the field is in
+	 * use, and a label sliding back down under it would read as the value being cleared.
+	 */
+	protected readonly isLabelRaised = computed<boolean>(
+		() => this._focused() || this._open() || !!this.displayValue()
+	);
+
+	/** Tracks focus for {@link isLabelRaised}. */
+	protected setFocused(focused: boolean): void {
+		this._focused.set(focused);
+	}
+
 	/** Locale-formatted display string for the input. */
 	protected readonly displayValue = computed<string>(() => {
 		const format = this.#resolveDisplay();

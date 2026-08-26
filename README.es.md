@@ -100,6 +100,7 @@ en tiempo de ejecución — sin dependencia de Bootstrap.
 - **Validadores y helpers** — validador cross-field `hubAreEqual`, los validadores de ficheros (`hubAcceptedFiles`, `hubMaxFileSize`, `hubMinFileSize`, `hubMaxTotalSize`, `hubMaxFiles`, `hubMinFiles`), directivas de proyección `hubValidationError` / `hubFormText`, y un conjunto de pipes de utilidad.
 - **Listo para Signal Forms** — un entry point secundario opt-in [`ng-hub-ui-forms/signals`](#-signal-forms-opt-in) integra Angular Signal Forms; el núcleo sigue basado en Reactive Forms y compatible con Angular 21.
 - **Theming** — cada color, borde, radio y espaciado es una variable CSS `--hub-*`; incluye tokens SCSS compartidos para los consumidores.
+- **De derecha a izquierda** — todos los campos se voltean con `dir="rtl"`: las primitivas usan propiedades lógicas de CSS, y las tres cuya geometría solo es CSS a medias se tratan aparte — el slider (un `range` nativo se voltea, pero la imagen de fondo que rellena su pista no), el switch (su pomo y la transición que lo nombra van juntos) y el control segmentado, que vuelve a medir su indicador cuando cambia la dirección, porque un volteo recoloca las opciones sin cambiar el tamaño de nada.
 
 ---
 
@@ -208,6 +209,29 @@ provideHubForms({
 <!-- agrupado -->
 <hub-select formControlName="city" label="City" [items]="cities" bindLabel="name" bindValue="id" groupBy="country" />
 ```
+
+#### Etiqueta flotante
+
+```html
+<hub-select formControlName="country" labelType="floating" label="Country" [items]="countries" bindLabel="name" bindValue="code" />
+```
+
+La etiqueta se coloca dentro del control y sube al enfocarlo o al tener valor, con el mismo
+recorrido que `hub-input` — de modo que un formulario puede flotar todas sus etiquetas en vez
+de flotar los campos de texto y apilar los selects que van al lado. Si además se pasa un
+`placeholder`, solo se muestra cuando la etiqueta ya ha subido: hasta entonces la etiqueta
+está ocupando su sitio.
+
+Solo flota el formato `dropdown`. Los formatos obsoletos `buttons` / `checkbox` / `radio` no
+tienen caja donde flotar y conservan la etiqueta apilada.
+
+`hub-datepicker` flota igual, y lo gobierna desde el estado del campo y no desde `:focus`: su
+calendario es un overlay, así que al abrirlo el foco sale del input, y una etiqueta gobernada
+por la pseudoclase volvería a caer sobre el valor justo cuando lo estás usando.
+
+La geometría es común a los tres a través de tres tokens, de modo que flotan igual y se ajustan
+en un solo sitio: `--hub-field-floating-inset` (cuánto baja el valor),
+`--hub-field-floating-travel` (cuánto sube la etiqueta) y `--hub-field-floating-scale`.
 
 #### Addons y contenido acoplado
 

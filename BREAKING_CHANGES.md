@@ -2,6 +2,23 @@
 
 This document tracks all breaking changes in the `ng-hub-ui-forms` library.
 
+## Version 22.24.0
+
+### Every `<hub-select>` is 2px shorter, and a floating field is 10px taller
+
+- **Change**: `--hub-select-min-height` no longer defaults to a hard-coded `2.5rem` (40px). It is now derived from the same arithmetic every other field arrives at — one line of text between two paddings and two borders — which is 38px at the default scale. Separately, `--hub-field-floating-inset` went from a hard-coded `0.625rem` to `1.125rem`, so a field with a floating label is 56px rather than 46px.
+- **Impact**: visual, and the compiler cannot warn about it. A select rendered next to an input was 2px taller than it; now the two match, which is the point — but any layout that measured around the old 40px, any fixed-height container sized to it, and any screenshot test of a form will see the difference. Screens with floating labels grow by 10px; in practice that is the login, register and password screens.
+- **Migration**: none required. To keep the old geometry exactly, declare the tokens yourself:
+
+```css
+:root {
+	--hub-select-min-height: 2.5rem;
+	--hub-field-floating-inset: 0.625rem;
+}
+```
+
+- **Why it is a minor and not a major**: in this family the major version states which Angular major the library targets, so it cannot be spent on a change of shape. That is what this file is for.
+
 ## Version 22.12.0
 
 ### The public `showPassword` field of `<hub-input>` is removed

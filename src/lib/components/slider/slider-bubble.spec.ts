@@ -7,12 +7,18 @@ import { HubSliderComponent } from './slider.component';
 /**
  * Regression spec for the value bubble staying inside its own box (report, 2026-08-07).
  *
- * The bubble is positioned at `left: percent%` of the rail. Centring it there with a flat
+ * The bubble is positioned at `inset-inline-start: percent%` of the rail. Centring it there
+ * with a flat
  * `translateX(-50%)` leaves half of it outside the component at 0 and at 100 — and a
  * component cannot assume its host does not clip: an ordinary scrollable form is enough to
  * cut the number in two. Translating by the same percentage pins its edges to the ends of
  * the rail and keeps it centred in between, so the geometry — not the colour — is what
  * these assertions pin.
+ *
+ * The same geometry has to survive mirroring. `inset-inline-start` measures from the right
+ * under RTL by itself, but `translateX` has no logical form, so the sign of the shift is
+ * restated there — and pinned here, because getting it wrong reintroduces exactly the
+ * overflow this spec exists to prevent, only at the opposite end.
  *
  * jsdom performs no layout, so the assertions read the published stylesheet (the component
  * uses `ViewEncapsulation.None`) instead of measuring boxes.
@@ -61,9 +67,9 @@ describe('hub-slider value bubble (regression: it never overflows the rail)', ()
 	});
 
 	it('translates the single bubble by its own position percentage', () => {
-		const bubble = declarationsFor(publishedCss(), /\.hub-slider__bubble\s*$/).join('\n');
+		const bubble = declarationsFor(publishedCss(), /^\s*\.hub-slider__bubble\s*$/).join('\n');
 
-		expect(bubble).toMatch(/left:\s*calc\(var\(--hub-slider-percent\)\s*\*\s*1%\)/);
+		expect(bubble).toMatch(/inset-inline-start:\s*calc\(var\(--hub-slider-percent\)\s*\*\s*1%\)/);
 		expect(bubble).toMatch(/transform:\s*translateX\(calc\(var\(--hub-slider-percent\)\s*\*\s*-1%\)\)/);
 		expect(bubble).not.toMatch(/translateX\(\s*-50%\s*\)/);
 	});
@@ -75,5 +81,15 @@ describe('hub-slider value bubble (regression: it never overflows the rail)', ()
 
 		expect(lower).toMatch(/transform:\s*translateX\(calc\(var\(--hub-slider-from\)\s*\*\s*-1%\)\)/);
 		expect(upper).toMatch(/transform:\s*translateX\(calc\(var\(--hub-slider-to\)\s*\*\s*-1%\)\)/);
+	});
+
+	it('flips the sign of the shift under RTL, for every bubble', () => {
+		const css = publishedCss();
+		const rtl = (suffix: string) =>
+			declarationsFor(css, new RegExp(`\\[dir=['"]?rtl['"]?\\]\\s+\\.hub-slider__bubble${suffix}\\s*$`)).join('\n');
+
+		expect(rtl('')).toMatch(/transform:\s*translateX\(calc\(var\(--hub-slider-percent\)\s*\*\s*1%\)\)/);
+		expect(rtl('--lower')).toMatch(/transform:\s*translateX\(calc\(var\(--hub-slider-from\)\s*\*\s*1%\)\)/);
+		expect(rtl('--upper')).toMatch(/transform:\s*translateX\(calc\(var\(--hub-slider-to\)\s*\*\s*1%\)\)/);
 	});
 });

@@ -156,6 +156,22 @@ export class HubSegmentedComponent extends HubFieldControl {
 					this._destroyRef.onDestroy(() => observer.disconnect());
 				}
 
+				// A direction flip re-lays the options out without resizing anything, so the
+				// ResizeObserver never fires and the pill stays at the coordinate it was last
+				// measured at — which under RTL can be a whole bar away from the option it marks.
+				//
+				// Watched across the whole subtree rather than on the document root alone: an
+				// application may flip `dir` on a container instead of on `<html>` — an RTL island
+				// inside an LTR page is an ordinary thing to build, and it is the only shape a
+				// docs example can demonstrate. `attributeFilter` keeps the cost to a rejected
+				// check on attribute mutations that are not `dir`.
+				if (typeof MutationObserver !== 'undefined') {
+					const root = bar.ownerDocument.documentElement;
+					const observer = new MutationObserver(() => this.updateIndicator());
+					if (root) observer.observe(root, { attributes: true, attributeFilter: ['dir'], subtree: true });
+					this._destroyRef.onDestroy(() => observer.disconnect());
+				}
+
 				this.updateIndicator();
 			});
 		}

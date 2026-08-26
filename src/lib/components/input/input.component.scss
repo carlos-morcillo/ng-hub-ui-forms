@@ -91,24 +91,46 @@ hub-input.hidden-control {
 		padding-inline-end: calc(var(--hub-input-affix-inset) + var(--hub-input-icon-size) + var(--hub-input-affix-gap));
 	}
 
-	// Floating label.
+	// Floating label. Geometry from the shared `--hub-field-floating-*` tokens, never from
+	// numbers of its own: see the block that declares them in `styles/_tokens.scss`.
 	&__group--floating {
 		.hub-field__control {
-			padding-top: calc(var(--hub-input-padding-y) + 0.625rem);
-			padding-bottom: calc(var(--hub-input-padding-y) - 0.125rem);
+			padding-top: calc(var(--hub-input-padding-y) + var(--hub-field-floating-inset));
+			padding-bottom: var(--hub-input-padding-y);
 		}
 
+		// Centred in the FIELD, not on the value it stands in for. Sitting it on the value
+		// looks right in a filled field and wrong in an empty one, which is the state most of
+		// a form is in: the value rides low to leave room for the lifted label, so a label
+		// pinned to it left the top third of every empty box blank and the text stranded at
+		// the bottom. Centred, an empty field reads as a field; Material's does the same.
 		.hub-input__label--floating {
+			// The FIELD's size, not the label's: at rest this label stands in for the
+			// placeholder, so it has to be indistinguishable from one.
+			font-size: var(--hub-input-font-size);
 			position: absolute;
 			top: 0;
-			left: 0;
+			inset-inline-start: 0;
+			display: flex;
+			align-items: center;
 			height: 100%;
-			padding: var(--hub-input-padding-y) var(--hub-input-padding-x);
+			padding: 0 var(--hub-input-padding-x);
 			margin: 0;
 			color: var(--hub-input-placeholder-color);
 			font-weight: var(--hub-ref-font-weight-base, 400);
 			pointer-events: none;
 			transform-origin: 0 0;
+
+			// The origin has to flip too, and no logical keyword for it has usable
+			// support, and `:host-context()` is inert here: these components declare
+			// `ViewEncapsulation.None`, so Angular never runs the shim that would translate it and
+			// the selector ships literally, matching nothing. A plain descendant does the job.
+			// `inset-inline-start` already pins the label to the right edge under
+			// RTL; left at `0 0` the scale would still shrink it toward the LEFT, walking
+			// it away from the very edge it is pinned to.
+			[dir='rtl'] & {
+				transform-origin: 100% 0;
+			}
 			transition:
 				opacity 0.1s ease-in-out,
 				transform 0.1s ease-in-out;
@@ -116,7 +138,8 @@ hub-input.hidden-control {
 
 		.hub-field__control:focus ~ .hub-input__label--floating,
 		.hub-field__control:not(:placeholder-shown) ~ .hub-input__label--floating {
-			transform: scale(0.85) translateY(-0.5rem);
+			transform: scale(var(--hub-field-floating-scale))
+				translateY(calc(-1 * var(--hub-field-floating-travel)));
 			opacity: 0.9;
 		}
 	}
@@ -140,12 +163,12 @@ hub-input.hidden-control {
 		cursor: pointer;
 
 		&:first-child {
-			border-right: 0;
+			border-inline-end: 0;
 			border-radius: var(--hub-input-border-radius) 0 0 var(--hub-input-border-radius);
 		}
 
 		&:last-child {
-			border-left: 0;
+			border-inline-start: 0;
 			border-radius: 0 var(--hub-input-border-radius) var(--hub-input-border-radius) 0;
 		}
 
@@ -209,7 +232,7 @@ hub-input.hidden-control {
 		color: var(--hub-input-group-addon-color);
 		background: var(--hub-input-group-addon-bg);
 		border: 0;
-		border-right: var(--hub-input-border-width) solid var(--hub-input-border-color);
+		border-inline-end: var(--hub-input-border-width) solid var(--hub-input-border-color);
 		font-size: var(--hub-input-font-size);
 		white-space: nowrap;
 		cursor: pointer;
@@ -292,8 +315,8 @@ hub-input.hidden-control {
 		}
 
 		> .hub-input__addon--append {
-			border-top-right-radius: 0;
-			border-bottom-right-radius: 0;
+			border-start-end-radius: 0;
+			border-end-end-radius: 0;
 		}
 
 		> .hub-input__clear,
@@ -419,20 +442,20 @@ hub-input.hidden-control {
 				content: '';
 				position: absolute;
 				top: 50%;
-				left: 0.125rem;
+				inset-inline-start: 0.125rem;
 				width: calc(var(--hub-switch-height) - 0.25rem);
 				height: calc(var(--hub-switch-height) - 0.25rem);
 				border-radius: 50%;
 				background: var(--hub-switch-thumb);
 				transform: translateY(-50%);
-				transition: left 0.15s ease-in-out;
+				transition: inset-inline-start 0.15s ease-in-out;
 			}
 
 			&:checked {
 				background: var(--hub-switch-track-on);
 
 				&::after {
-					left: calc(100% - var(--hub-switch-height) + 0.125rem);
+					inset-inline-start: calc(100% - var(--hub-switch-height) + 0.125rem);
 				}
 			}
 		}

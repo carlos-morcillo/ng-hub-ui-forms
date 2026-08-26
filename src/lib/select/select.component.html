@@ -5,7 +5,7 @@
 	[class.hub-field--readonly]="readonly()"
 	[class.hub-field--invalid]="isInvalid"
 >
-	@if (label() || required()) {
+	@if ((label() || required()) && !showsFloatingLabel()) {
 		<label [for]="id" class="hub-field__label">
 			{{ label() }}
 			@if (required()) {
@@ -27,6 +27,8 @@
 				-->
 				<div
 					class="hub-select__group"
+					[class.hub-select__group--floating]="showsFloatingLabel()"
+					[class.hub-select__group--raised]="showsFloatingLabel() && isLabelRaised()"
 					[class.hub-select__group--has-prepend]="hasPrepend() || hasPrependTpl()"
 					[class.hub-select__group--has-append]="hasAppend() || hasAppendTpl()"
 				>
@@ -37,6 +39,22 @@
 					}
 					@for (addon of _prepend(); track $index) {
 						<span class="hub-select__addon hub-select__addon--prepend">{{ addon }}</span>
+					}
+					<!--
+						The floating label hangs off a zero-width anchor placed exactly where the
+						control starts, not off the group. A group can open with an addon or an
+						attached button, and a label pinned to the group's own leading edge would
+						print on top of it.
+					-->
+					@if (showsFloatingLabel()) {
+						<span class="hub-select__label-anchor">
+							<label [for]="id" class="hub-field__label hub-select__label--floating">
+								{{ label() }}
+								@if (required()) {
+									<span class="hub-field__required" aria-hidden="true">*</span>
+								}
+							</label>
+						</span>
 					}
 					<ng-select
 						class="hub-select__control"
@@ -66,8 +84,8 @@
 						[inputAttrs]="a11yInputAttrs()"
 						[ngModel]="_value()"
 						(ngModelChange)="setValue($event)"
-						(focus)="onFocus.emit($event)"
-						(blur)="onBlur.emit($event)"
+						(focus)="handleControlFocus($event)"
+						(blur)="handleControlBlur($event)"
 						(open)="onOpen.emit()"
 						(close)="onClose.emit()"
 						(clear)="onClear.emit()"

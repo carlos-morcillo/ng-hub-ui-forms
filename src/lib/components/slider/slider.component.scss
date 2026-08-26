@@ -37,6 +37,15 @@ hub-slider.hidden-control {
 			calc(var(--hub-slider-percent) * 1%) 100%,
 			100% 100%;
 		border-radius: var(--hub-slider-track-border-radius);
+
+		// The native range runs the other way under RTL — value 0 sits at the right
+		// edge — but `background-position` has no logical form and the shorthand above
+		// resets it to the left. Without this the fill grows from the wrong end.
+		[dir='rtl'] & {
+			background-position:
+				100% 0,
+				0 0;
+		}
 		cursor: pointer;
 
 		&:disabled {
@@ -96,7 +105,7 @@ hub-slider.hidden-control {
 	&__bubble {
 		position: absolute;
 		top: 0;
-		left: calc(var(--hub-slider-percent) * 1%);
+		inset-inline-start: calc(var(--hub-slider-percent) * 1%);
 		transform: translateX(calc(var(--hub-slider-percent) * -1%));
 		padding: 0.1rem 0.4rem;
 		color: var(--hub-slider-tooltip-color);
@@ -107,14 +116,30 @@ hub-slider.hidden-control {
 		white-space: nowrap;
 		pointer-events: none;
 
+		// `inset-inline-start` measures from the right under RTL on its own, but
+		// `translateX` has no logical counterpart: the shift that keeps the bubble
+		// inside the rail has to change sign with the direction, or it pushes the
+		// value out of the component at exactly the ends this was written to protect.
+		[dir='rtl'] & {
+			transform: translateX(calc(var(--hub-slider-percent) * 1%));
+		}
+
 		&--lower {
-			left: calc(var(--hub-slider-from) * 1%);
+			inset-inline-start: calc(var(--hub-slider-from) * 1%);
 			transform: translateX(calc(var(--hub-slider-from) * -1%));
+
+			[dir='rtl'] & {
+				transform: translateX(calc(var(--hub-slider-from) * 1%));
+			}
 		}
 
 		&--upper {
-			left: calc(var(--hub-slider-to) * 1%);
+			inset-inline-start: calc(var(--hub-slider-to) * 1%);
 			transform: translateX(calc(var(--hub-slider-to) * -1%));
+
+			[dir='rtl'] & {
+				transform: translateX(calc(var(--hub-slider-to) * 1%));
+			}
 		}
 	}
 
@@ -151,6 +176,14 @@ hub-slider.hidden-control {
 				calc(var(--hub-slider-from) / max(100 - var(--hub-slider-to) + var(--hub-slider-from), 1) * 100%) center,
 				0 0;
 			pointer-events: none;
+
+			// Mirrored, the band starts at `100 - to` from the left edge; the free
+			// space it is divided by is symmetric and stays as it is.
+			[dir='rtl'] & {
+				background-position:
+					calc((100 - var(--hub-slider-to)) / max(100 - var(--hub-slider-to) + var(--hub-slider-from), 1) * 100%) center,
+					0 0;
+			}
 		}
 
 		// Both inputs overlap; only their thumbs receive pointer events.

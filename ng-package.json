@@ -8,7 +8,7 @@
 	"assets": [
 		{
 			"input": "src/lib/styles",
-			"glob": "**/*",
+			"glob": "**/*.scss",
 			"output": "styles"
 		}
 	]

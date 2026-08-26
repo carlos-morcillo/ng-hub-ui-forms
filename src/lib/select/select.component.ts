@@ -190,7 +190,16 @@ export class HubSelectComponent extends HubFieldControl {
 	/** Label text. */
 	readonly label = input<string>('');
 
-	/** Label display type (`stacked`, `horizontal`). */
+	/**
+	 * Label display type (`stacked`, `floating`, `horizontal`).
+	 *
+	 * `floating` lays the label inside the control and lifts it once the field is focused or
+	 * holds a value — the same contract as `hub-input`, so a form can float every label instead
+	 * of floating the text fields and stacking the selects beside them.
+	 *
+	 * Only the `dropdown` format can float: the deprecated `buttons` / `checkbox` / `radio`
+	 * formats have no box to float into, and fall back to a stacked label rather than losing it.
+	 */
 	readonly labelType = input<HubLabelType>(this._labelTypes.Stacked);
 
 	/**
@@ -322,6 +331,44 @@ export class HubSelectComponent extends HubFieldControl {
 	/** Emits when the dropdown list is scrolled to the end (infinite loading). */
 	readonly scrollToEnd = output<any>();
 
+	/**
+	 * Whether the control currently holds focus.
+	 *
+	 * Tracked here rather than read off the engine's `ng-select-focused` host class, because the
+	 * floating label is a SIBLING of the control and the state has to reach the group that wraps
+	 * both. A CSS-only reading would need `:has()`, which fails silently where it is unsupported —
+	 * and a label that never lifts looks exactly like a label that was never asked to.
+	 */
+	private readonly _focused = signal<boolean>(false);
+
+	/**
+	 * Whether the label is laid inside the control. Only the dropdown format has a box to float
+	 * into; the deprecated ones fall back to a stacked label rather than dropping it.
+	 */
+	protected readonly showsFloatingLabel = computed<boolean>(
+		() =>
+			this.labelType() === this._labelTypes.Floating &&
+			this.format() === this._selectFormats.Dropdown &&
+			(!!this.label() || !!this.required())
+	);
+
+	/** Whether the control holds a value. An empty multiselect is empty, not filled. */
+	protected readonly isFilled = computed<boolean>(() => {
+		const value = this._value();
+
+		if (Array.isArray(value)) {
+			return value.length > 0;
+		}
+
+		return value !== null && value !== undefined && value !== '';
+	});
+
+	/**
+	 * Whether the floating label sits lifted rather than over the value. Focus counts as well as
+	 * a value: while the panel is open the placeholder and the search term need the room.
+	 */
+	protected readonly isLabelRaised = computed<boolean>(() => this._focused() || this.isFilled());
+
 	/** Whether the current format selects multiple values. */
 	protected readonly isMulti = computed<boolean>(() => {
 		switch (this.format()) {
@@ -347,6 +394,30 @@ export class HubSelectComponent extends HubFieldControl {
 		this._value.set(value ?? null);
 		this.onChange?.(value);
 		this.valueChange.emit(value);
+	}
+
+	/**
+	 * Records focus for the floating label, then republishes the engine's event untouched.
+	 *
+	 * Named apart from the base class's `handleBlur`, which is the host-level `focusout` that marks
+	 * the field touched: these two ride the engine's own focus events and answer a different
+	 * question — where the label should sit, not whether the control has been visited.
+	 *
+	 * @param event - The focus event emitted by the control.
+	 */
+	protected handleControlFocus(event: any): void {
+		this._focused.set(true);
+		this.onFocus.emit(event);
+	}
+
+	/**
+	 * Records the loss of focus for the floating label, then republishes the engine's event.
+	 *
+	 * @param event - The blur event emitted by the control.
+	 */
+	protected handleControlBlur(event: any): void {
+		this._focused.set(false);
+		this.onBlur.emit(event);
 	}
 
 	/**

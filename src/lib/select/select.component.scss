@@ -35,7 +35,7 @@ hub-select.hidden-control {
 	// Horizontal padding lives on the value container so the arrow/clear stay aligned.
 	.ng-value-container {
 		align-items: center;
-		padding-left: var(--hub-select-padding-x);
+		padding-inline-start: var(--hub-select-padding-x);
 	}
 
 	.ng-placeholder {
@@ -55,8 +55,8 @@ hub-select.hidden-control {
 		.ng-value-container .ng-input {
 			top: 50%;
 			transform: translateY(-50%);
-			padding-left: var(--hub-select-padding-x);
-			padding-right: 3rem;
+			padding-inline-start: var(--hub-select-padding-x);
+			padding-inline-end: 3rem;
 		}
 	}
 
@@ -74,7 +74,7 @@ hub-select.hidden-control {
 	&.ng-select-multiple {
 		.ng-value-container {
 			padding-top: 0;
-			padding-left: var(--hub-select-padding-x);
+			padding-inline-start: var(--hub-select-padding-x);
 			gap: 0.25rem;
 		}
 
@@ -107,7 +107,8 @@ hub-select.hidden-control {
 		}
 
 		.ng-input {
-			padding: 0 0 0.2rem 0.25rem;
+			padding-block: 0 0.2rem;
+			padding-inline: 0.25rem 0;
 		}
 	}
 
@@ -150,6 +151,110 @@ hub-select.hidden-control {
 	&.hub-select__control--invalid.ng-select-focused .ng-select-container {
 		box-shadow: 0 0 0 var(--hub-form-focus-ring-width) var(--hub-form-invalid-focus-ring-color);
 	}
+}
+
+// ── Floating label ──────────────────────────────────────────────────────────
+//
+// After the engine theme on purpose, not before it. Several of the rules below tie on
+// specificity with the theme's own (`.ng-select-multiple .ng-value-container` zeroes the
+// very padding the floating layout adds), and a tie is settled by source order — so read
+// first, the floating label worked on a single select and sat on top of the chips of a
+// multiple one.
+
+.hub-select__group--floating {
+	// The anchor takes no room and is not seen; it exists so the label can be
+	// positioned against the control's leading edge rather than the group's.
+	//
+	// Raised on purpose, and by this much. The engine draws its own box on
+	// `.ng-select-container`, which is `position: relative` (its rule, not ours) and comes
+	// later in the DOM — so at the same layer it paints last, and the label went under an
+	// opaque background and vanished. A `z-index: 1` fixed the closed field and not the open
+	// one: while the panel is up the engine lifts that same container to `z-index: 1001`
+	// (`vendor/lib/ng-select.component.scss`, `&.ng-select-opened`), so the label went out
+	// for exactly as long as you were choosing — the one moment you are looking at the field.
+	//
+	// A literal above that constant rather than a token: this is not a taste anybody should
+	// be tuning, it is the number the vendored engine uses, and the vendored source is
+	// re-synced from upstream so it cannot be edited on this side.
+	//
+	// The label carries no pointer events, so the control underneath stays fully operable.
+	.hub-select__label-anchor {
+		position: relative;
+		z-index: 1002;
+		flex: 0 0 0;
+		width: 0;
+		align-self: stretch;
+	}
+
+	// The same rules as `hub-input`'s floating label, down to reading the same tokens.
+	//
+	// The size is the FIELD's, not `.hub-field__label`'s: at rest this label is standing in
+	// for the placeholder, so it has to BE the placeholder — same size, same colour, same
+	// place. Taking the label size instead left it a shade smaller than the placeholder of
+	// the plain field above it, which reads as two kinds of field in one form. Up top it is
+	// this same text scaled, which is all a floating label is.
+	.hub-select__label--floating {
+		font-size: var(--hub-select-font-size);
+		position: absolute;
+		top: 0;
+		inset-inline-start: 0;
+		display: flex;
+		align-items: center;
+		height: 100%;
+		padding: 0 var(--hub-select-padding-x);
+		margin: 0;
+		color: var(--hub-select-placeholder-color);
+		font-weight: var(--hub-ref-font-weight-base, 400);
+		white-space: nowrap;
+		// The label stands where the value is typed; clicks belong to the control under it.
+		pointer-events: none;
+		transform-origin: 0 0;
+
+		// The origin has to flip too, and no logical keyword for it has usable
+		// support, and `:host-context()` is inert here: these components declare
+			// `ViewEncapsulation.None`, so Angular never runs the shim that would translate it and
+			// the selector ships literally, matching nothing. A plain descendant does the job.
+			// `inset-inline-start` already pins the label to the right edge under
+		// RTL; left at `0 0` the scale would still shrink it toward the LEFT, walking
+		// it away from the very edge it is pinned to.
+		[dir='rtl'] & {
+			transform-origin: 100% 0;
+		}
+		transition:
+			opacity 0.1s ease-in-out,
+			transform 0.1s ease-in-out;
+	}
+
+	// Room for the lifted label, on top of the height the field already had.
+	.hub-select__control.ng-select .ng-select-container,
+	.hub-select__control.ng-select.ng-select-single .ng-select-container {
+		height: auto;
+		min-height: calc(var(--hub-select-min-height) + var(--hub-field-floating-inset));
+	}
+
+	.hub-select__control.ng-select .ng-value-container {
+		padding-block-start: var(--hub-field-floating-inset);
+	}
+
+	// The search box of a single select is positioned against the container, so the padding
+	// above does not move it: it has to be told about half the same offset, which is where
+	// the value it replaces now sits.
+	.hub-select__control.ng-select.ng-select-single .ng-select-container .ng-value-container .ng-input {
+		top: calc(50% + var(--hub-field-floating-inset) / 2);
+	}
+
+	// At rest the label occupies the placeholder's place, so both would print in the
+	// same pixels. The placeholder comes back the moment the label lifts, which is the
+	// only moment it says anything the label does not.
+	&:not(.hub-select__group--raised) .ng-placeholder {
+		visibility: hidden;
+	}
+}
+
+.hub-select__group--floating.hub-select__group--raised .hub-select__label--floating {
+	transform: scale(var(--hub-field-floating-scale))
+		translateY(calc(-1 * var(--hub-field-floating-travel)));
+	opacity: 0.9;
 }
 
 // Dropdown panel (appended to the control by default).
@@ -225,17 +330,17 @@ hub-select.hidden-control {
 	// Joined group: collapse the shared border between adjacent buttons and round
 	// only the outer corners, so the buttons read as one connected control.
 	&:not(:first-child) {
-		margin-left: calc(-1 * var(--hub-select-border-width));
+		margin-inline-start: calc(-1 * var(--hub-select-border-width));
 	}
 
 	&:first-child {
-		border-top-left-radius: var(--hub-select-border-radius);
-		border-bottom-left-radius: var(--hub-select-border-radius);
+		border-start-start-radius: var(--hub-select-border-radius);
+		border-end-start-radius: var(--hub-select-border-radius);
 	}
 
 	&:last-child {
-		border-top-right-radius: var(--hub-select-border-radius);
-		border-bottom-right-radius: var(--hub-select-border-radius);
+		border-start-end-radius: var(--hub-select-border-radius);
+		border-end-end-radius: var(--hub-select-border-radius);
 	}
 
 	&:hover,
@@ -264,7 +369,7 @@ hub-select.hidden-control {
 // Vertical group: stack the buttons and collapse their shared horizontal borders.
 .hub-select__buttons--vertical .hub-select__button {
 	&:not(:first-child) {
-		margin-left: 0;
+		margin-inline-start: 0;
 		margin-top: calc(-1 * var(--hub-select-border-width));
 	}
 

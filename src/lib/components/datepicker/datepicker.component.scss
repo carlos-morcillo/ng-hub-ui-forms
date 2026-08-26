@@ -17,19 +17,72 @@ hub-datepicker.hidden-control {
 		position: relative;
 	}
 
+	// Floating label. Same three `--hub-field-floating-*` tokens the input and the select read,
+	// so the three fields that can float a label are one field rather than three that resemble
+	// each other — which is exactly how the select had drifted before it was given these.
+	//
+	// Driven by a class rather than by `:focus` / `:placeholder-shown` the way the input is: the
+	// calendar is an overlay, so opening it takes focus out of the input, and a pseudo-class rule
+	// would drop the label back over the value at the one moment the reader is using the field.
+	&__group--floating {
+		.hub-field__control {
+			padding-top: calc(var(--hub-input-padding-y) + var(--hub-field-floating-inset));
+			padding-bottom: var(--hub-input-padding-y);
+		}
+
+		// Centred in the FIELD, not on the value: an empty field is the state most of a form is
+		// in, and a label pinned to the value leaves its top third blank.
+		.hub-datepicker__label--floating {
+			// The FIELD's size, not the label's: at rest it stands in for the placeholder and
+			// has to be indistinguishable from one.
+			font-size: var(--hub-input-font-size);
+			position: absolute;
+			top: 0;
+			inset-inline-start: 0;
+			display: flex;
+			align-items: center;
+			height: 100%;
+			padding: 0 var(--hub-input-padding-x);
+			margin: 0;
+			color: var(--hub-input-placeholder-color);
+			font-weight: var(--hub-ref-font-weight-base, 400);
+			pointer-events: none;
+			transform-origin: 0 0;
+
+			// `transform-origin` has no logical keyword with usable support, and
+			// `:host-context()` is inert here — this component declares `ViewEncapsulation.None`,
+			// so the selector would ship literally and match nothing. Without this the label
+			// anchors to the right edge under RTL and then shrinks away from it.
+			[dir='rtl'] & {
+				transform-origin: 100% 0;
+			}
+
+			transition:
+				opacity 0.1s ease-in-out,
+				transform 0.1s ease-in-out;
+		}
+	}
+
+	&__group--raised {
+		.hub-datepicker__label--floating {
+			transform: scale(var(--hub-field-floating-scale)) translateY(calc(-1 * var(--hub-field-floating-travel)));
+			opacity: 0.9;
+		}
+	}
+
 	&__input {
-		padding-right: var(--hub-datepicker-icon-width);
+		padding-inline-end: var(--hub-datepicker-icon-width);
 		cursor: pointer;
 
 		&--clearable {
-			padding-right: calc(var(--hub-datepicker-icon-width) + 1.5rem);
+			padding-inline-end: calc(var(--hub-datepicker-icon-width) + 1.5rem);
 		}
 	}
 
 	&__clear {
 		position: absolute;
 		top: 0;
-		right: var(--hub-datepicker-icon-width);
+		inset-inline-end: var(--hub-datepicker-icon-width);
 		height: 100%;
 		width: 1.5rem;
 		padding: 0;
@@ -48,7 +101,7 @@ hub-datepicker.hidden-control {
 	&__icon {
 		position: absolute;
 		top: 0;
-		right: 0;
+		inset-inline-end: 0;
 		width: var(--hub-datepicker-icon-width);
 		height: 100%;
 		padding: 0;
@@ -209,13 +262,13 @@ hub-datepicker.hidden-control {
 		}
 
 		&--range-start {
-			border-top-right-radius: 0;
-			border-bottom-right-radius: 0;
+			border-start-end-radius: 0;
+			border-end-end-radius: 0;
 		}
 
 		&--range-end {
-			border-top-left-radius: 0;
-			border-bottom-left-radius: 0;
+			border-start-start-radius: 0;
+			border-end-start-radius: 0;
 		}
 
 		&--selected,
@@ -282,13 +335,13 @@ hub-datepicker.hidden-control {
 		}
 
 		&--range-start {
-			border-top-right-radius: 0;
-			border-bottom-right-radius: 0;
+			border-start-end-radius: 0;
+			border-end-end-radius: 0;
 		}
 
 		&--range-end {
-			border-top-left-radius: 0;
-			border-bottom-left-radius: 0;
+			border-start-start-radius: 0;
+			border-end-start-radius: 0;
 		}
 
 		&--selected,
@@ -364,7 +417,7 @@ hub-datepicker.hidden-control {
 	}
 
 	.hub-datepicker__time-meridiem {
-		margin-left: 0.25rem;
+		margin-inline-start: 0.25rem;
 		padding: 0.2rem 0.4rem;
 		color: var(--hub-daterangepicker-cell-color);
 		font-family: inherit;

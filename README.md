@@ -99,6 +99,7 @@ mode — no Bootstrap dependency.
 - **Validators & helpers** — `hubAreEqual` cross-field validator, the file validators (`hubAcceptedFiles`, `hubMaxFileSize`, `hubMinFileSize`, `hubMaxTotalSize`, `hubMaxFiles`, `hubMinFiles`), `hubValidationError` / `hubFormText` projection directives, and a set of utility pipes.
 - **Signal Forms ready** — an opt-in [`ng-hub-ui-forms/signals`](#-signal-forms-opt-in) secondary entry point integrates Angular Signal Forms; the core stays Reactive-Forms-based and Angular-21-safe.
 - **Theming** — every colour, border, radius and spacing is a `--hub-*` CSS custom property; ships shared SCSS tokens for consumers.
+- **Right-to-left** — every field mirrors under `dir="rtl"`: the primitives use logical CSS properties throughout, and the three whose geometry is only half CSS are handled explicitly — the slider (a native range mirrors, but the background image that fills its track does not), the switch (its knob and the transition that names it move together) and the segmented control (which re-measures its indicator when direction changes, since a flip re-lays the options out without resizing anything).
 - **Cross-library adapter** — `hubFormControlAdapter` lets other libraries render `hub-input` / `hub-select` on demand without hard-depending on this package (see below).
 
 ---
@@ -231,6 +232,28 @@ provideHubForms({
 <!-- grouped -->
 <hub-select formControlName="city" label="City" [items]="cities" bindLabel="name" bindValue="id" groupBy="country" />
 ```
+
+#### Floating label
+
+```html
+<hub-select formControlName="country" labelType="floating" label="Country" [items]="countries" bindLabel="name" bindValue="code" />
+```
+
+The label sits inside the control and lifts on focus or on a value, on the same travel as
+`hub-input` and `hub-datepicker` — so a form can float every label instead of floating its text fields and
+stacking the selects beside them. A `placeholder` set as well is shown only once the label
+has lifted, since until then the label is standing in its place.
+
+Only the `dropdown` format floats. The deprecated `buttons` / `checkbox` / `radio` have no
+box to float into and keep a stacked label.
+
+`hub-datepicker` floats the same way, and drives it from the field's state rather than from
+`:focus`: its calendar is an overlay, so opening it takes focus out of the input, and a label
+keyed on the pseudo-class would drop back over the value at the one moment you are using it.
+
+The geometry is shared by all three through three tokens, so they float alike and are tuned in
+one place: `--hub-field-floating-inset` (how far the value drops), `--hub-field-floating-travel`
+(how far the label rises) and `--hub-field-floating-scale`.
 
 #### Addons and attached content
 
