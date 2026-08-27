@@ -7,6 +7,7 @@ import { HubDatepickerComponent } from '../components/datepicker/datepicker.comp
 import { HubInputComponent } from '../components/input/input.component';
 import { HubTextareaComponent } from '../components/textarea/textarea.component';
 import { HubSelectComponent } from '../select/select.component';
+import { HubTimepickerComponent } from '../components/timepicker/timepicker.component';
 
 /**
  * The corner flattening has to REACH the element that paints the box.
@@ -571,4 +572,209 @@ describe('a slot that projects more than one element', () => {
 			});
 		}
 	}
+});
+
+/**
+ * A slot can hold a whole field, and one that does had no coverage here.
+ *
+ * The strip above projects buttons, which carry their own border and radius on the very
+ * element the slot selects. A field carries neither on its host, so the flattening at the
+ * bottom of the stylesheet — a **descendant** rule on purpose, because the box that paints
+ * a field is not always a child of the group — reaches the projected field's control as
+ * readily as the group's own. Its comment states the assumption: "nothing else inside a
+ * group carries these classes". A projected field is exactly something else that does.
+ *
+ * The result was a field with all four corners square sitting behind the group's rounded
+ * outer edge: measured in a browser as `0 0 0 0` on a number prepended to a select, while
+ * the select beside it correctly kept `0 6px 6px 0`.
+ */
+@Component({
+	standalone: true,
+	imports: [HubInputComponent, HubSelectComponent, HubPrependDirective, HubAppendDirective],
+	template: `
+		<hub-select [items]="[]">
+			<ng-template hubPrepend>
+				<hub-input />
+			</ng-template>
+		</hub-select>
+		<hub-input>
+			<ng-template hubAppend>
+				<hub-select [items]="[]" />
+			</ng-template>
+		</hub-input>
+		<hub-input classlist="case-appended-input">
+			<ng-template hubAppend>
+				<hub-input />
+			</ng-template>
+		</hub-input>
+	`
+})
+class ProjectedFieldHostComponent {}
+
+describe('a slot that projects a whole field', () => {
+	let fixture: ReturnType<typeof TestBed.createComponent<ProjectedFieldHostComponent>>;
+
+	beforeEach(() => {
+		fixture = TestBed.configureTestingModule({ imports: [ProjectedFieldHostComponent] }).createComponent(
+			ProjectedFieldHostComponent
+		);
+		fixture.detectChanges();
+	});
+
+	it('leaves the number prepended to a select its outer corners', () => {
+		const wrapper = fixture.nativeElement.querySelector('.hub-select__attached--prepend') as HTMLElement;
+		expect(wrapper).toBeTruthy();
+
+		const control = wrapper.querySelector('.hub-field__control') as HTMLElement;
+		expect(control).toBeTruthy();
+
+		// The seam it shares with the select: square, which is what attaching means.
+		expect(isSquare(winningCorner(control, 'border-start-end-radius'))).toBe(true);
+		expect(isSquare(winningCorner(control, 'border-end-end-radius'))).toBe(true);
+
+		// And the edge the reader sees, which is the group's own outer edge.
+		expect(isSquare(winningCorner(control, 'border-start-start-radius'))).toBe(false);
+		expect(isSquare(winningCorner(control, 'border-end-start-radius'))).toBe(false);
+	});
+
+	/**
+	 * The append case that actually breaks.
+	 *
+	 * A projected SELECT is never reached by the flattening rule — its box is
+	 * `.ng-select-container`, which carries neither `.hub-field__control` nor the group's own
+	 * `__control` class — so the test below it passes with the fix and without it. Deleting the
+	 * whole append half of the fix left the suite green while the corner measured `0px` in a
+	 * browser. A projected INPUT is the one the rule can see, and the one that has to be pinned.
+	 */
+	it('leaves an input appended to an input its outer corners', () => {
+		const wrapper = fixture.nativeElement.querySelector('.case-appended-input .hub-input__attached--append') as HTMLElement;
+		expect(wrapper).toBeTruthy();
+
+		const control = wrapper.querySelector('.hub-field__control') as HTMLElement;
+		expect(control).toBeTruthy();
+
+		// The seam it shares with the control it is attached to.
+		expect(isSquare(winningCorner(control, 'border-start-start-radius'))).toBe(true);
+		expect(isSquare(winningCorner(control, 'border-end-start-radius'))).toBe(true);
+
+		// And the group's own outer edge, which the flattening rule had been taking.
+		expect(isSquare(winningCorner(control, 'border-start-end-radius'))).toBe(false);
+		expect(isSquare(winningCorner(control, 'border-end-end-radius'))).toBe(false);
+	});
+
+	it('leaves a select appended to an input its outer corners', () => {
+		const wrapper = fixture.nativeElement.querySelector('.hub-input__attached--append') as HTMLElement;
+		expect(wrapper).toBeTruthy();
+
+		const container = wrapper.querySelector('.ng-select-container') as HTMLElement;
+		expect(container).toBeTruthy();
+
+		expect(isSquare(winningCorner(container, 'border-start-start-radius'))).toBe(true);
+		expect(isSquare(winningCorner(container, 'border-end-start-radius'))).toBe(true);
+
+		expect(isSquare(winningCorner(container, 'border-start-end-radius'))).toBe(false);
+		expect(isSquare(winningCorner(container, 'border-end-end-radius'))).toBe(false);
+	});
+});
+
+/**
+ * `hub-timepicker` came late — after the list of fields that can carry a group was written — and
+ * arrived without one: it rendered a bare control inside `hub-field__body`, with no `__group`, no
+ * addon inputs and no slots. A field that renders as a box with a value and cannot be attached to
+ * anything is the odd one out of the four that can, and "from [09:00] to [18:00]" is the shape a
+ * time field is most often asked for.
+ *
+ * Both directions of the relationship are pinned here: a timepicker that HOSTS a group, and a
+ * timepicker PROJECTED into somebody else's slot. The second is what the seam and outer-corner
+ * rules in the stylesheet had to learn about, and neither had a test.
+ */
+@Component({
+	standalone: true,
+	imports: [HubTimepickerComponent, HubInputComponent, HubPrependDirective, HubAppendDirective],
+	template: `
+		<hub-timepicker classlist="case-tp-addons" prepend="From" append="UTC" />
+		<hub-timepicker classlist="case-tp-slot">
+			<ng-template hubAppend>
+				<button type="button">now</button>
+			</ng-template>
+		</hub-timepicker>
+		<hub-input classlist="case-tp-projected-append">
+			<ng-template hubAppend>
+				<hub-timepicker />
+			</ng-template>
+		</hub-input>
+		<hub-input classlist="case-tp-projected-prepend">
+			<ng-template hubPrepend>
+				<hub-timepicker />
+			</ng-template>
+		</hub-input>
+	`
+})
+class TimepickerGroupHostComponent {}
+
+describe('hub-timepicker carries a group like every other box-shaped field', () => {
+	let fixture: ReturnType<typeof TestBed.createComponent<TimepickerGroupHostComponent>>;
+
+	beforeEach(() => {
+		fixture = TestBed.configureTestingModule({ imports: [TimepickerGroupHostComponent] }).createComponent(
+			TimepickerGroupHostComponent
+		);
+		fixture.detectChanges();
+	});
+
+	function q(selector: string): HTMLElement {
+		return fixture.nativeElement.querySelector(selector) as HTMLElement;
+	}
+
+	it('renders a group, and marks the side that carries something', () => {
+		const group = q('.case-tp-addons .hub-timepicker__group');
+		expect(group).toBeTruthy();
+		expect(group.classList.contains('hub-timepicker__group--has-prepend')).toBe(true);
+		expect(group.classList.contains('hub-timepicker__group--has-append')).toBe(true);
+
+		// A text addon on each edge, in the order they were given.
+		const addons = Array.from(group.querySelectorAll('.hub-timepicker__addon')).map((a) => a.textContent?.trim());
+		expect(addons).toEqual(['From', 'UTC']);
+	});
+
+	it('squares the control against whatever it is attached to, and only there', () => {
+		const control = q('.case-tp-addons .hub-timepicker__control');
+
+		expect(isSquare(winningCorner(control, 'border-start-start-radius'))).toBe(true);
+		expect(isSquare(winningCorner(control, 'border-start-end-radius'))).toBe(true);
+	});
+
+	it('accepts a projected slot, not only text addons', () => {
+		const strip = q('.case-tp-slot .hub-timepicker__attached--append');
+		expect(strip).toBeTruthy();
+		expect(strip.querySelector('button')?.textContent?.trim()).toBe('now');
+
+		const control = q('.case-tp-slot .hub-timepicker__control');
+		expect(isSquare(winningCorner(control, 'border-start-end-radius'))).toBe(true);
+		expect(isSquare(winningCorner(control, 'border-start-start-radius'))).toBe(false);
+	});
+
+	it('keeps its outer corners when projected into another field, appended', () => {
+		const control = q('.case-tp-projected-append .hub-timepicker__control');
+		expect(control).toBeTruthy();
+
+		// The seam it shares with the host control.
+		expect(isSquare(winningCorner(control, 'border-start-start-radius'))).toBe(true);
+		expect(isSquare(winningCorner(control, 'border-end-start-radius'))).toBe(true);
+
+		// And the group's own outer edge, which the flattening rule would otherwise take.
+		expect(isSquare(winningCorner(control, 'border-start-end-radius'))).toBe(false);
+		expect(isSquare(winningCorner(control, 'border-end-end-radius'))).toBe(false);
+	});
+
+	it('keeps its outer corners when projected into another field, prepended', () => {
+		const control = q('.case-tp-projected-prepend .hub-timepicker__control');
+		expect(control).toBeTruthy();
+
+		expect(isSquare(winningCorner(control, 'border-start-end-radius'))).toBe(true);
+		expect(isSquare(winningCorner(control, 'border-end-end-radius'))).toBe(true);
+
+		expect(isSquare(winningCorner(control, 'border-start-start-radius'))).toBe(false);
+		expect(isSquare(winningCorner(control, 'border-end-start-radius'))).toBe(false);
+	});
 });

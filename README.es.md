@@ -236,7 +236,7 @@ en un solo sitio: `--hub-field-floating-inset` (cuánto baja el valor),
 #### Addons y contenido acoplado
 
 `prepend` / `append` son addons de grupo que llevan **texto** — una moneda, una unidad, un
-protocolo. Disponibles en `hub-input`, `hub-select`, `hub-textarea` y `hub-datepicker`: todos los
+protocolo. Disponibles en `hub-input`, `hub-select`, `hub-textarea`, `hub-datepicker` y `hub-timepicker`: todos los
 campos que se dibujan como una caja con un valor.
 
 ```html
@@ -277,7 +277,7 @@ en cada fila.
 </hub-input>
 ```
 
-`hub-input`, `hub-select`, `hub-textarea` y `hub-datepicker` son los cuatro que cierran a ras, y
+`hub-input`, `hub-select`, `hub-textarea`, `hub-datepicker` y `hub-timepicker` son los cinco que cierran a ras, y
 sólo como **hijo directo** de la plantilla: envuelve uno en un `<div>` y recibe el trato de una
 acción.
 

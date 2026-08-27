@@ -1,16 +1,20 @@
-import { KeyValuePipe } from '@angular/common';
+import { KeyValuePipe, NgTemplateOutlet } from '@angular/common';
 import {
 	booleanAttribute,
 	ChangeDetectionStrategy,
 	Component,
 	computed,
+	contentChild,
 	input,
 	numberAttribute,
 	signal,
+	TemplateRef,
 	ViewEncapsulation
 } from '@angular/core';
 import { FormTextType, FormTextTypes, HubLabelType, HubLabelTypes } from '../../interfaces/common.interface';
 import { HubFieldControl } from '../../shared/hub-field-control';
+import { HubAppendDirective } from '../../directives/append.directive';
+import { HubPrependDirective } from '../../directives/prepend.directive';
 
 /**
  * Time field (`hub-timepicker`): a time of day, as `HH:MM`.
@@ -32,7 +36,7 @@ import { HubFieldControl } from '../../shared/hub-field-control';
 @Component({
 	selector: 'hub-timepicker',
 	standalone: true,
-	imports: [KeyValuePipe],
+	imports: [KeyValuePipe, NgTemplateOutlet],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	encapsulation: ViewEncapsulation.None,
 	host: {
@@ -57,23 +61,45 @@ import { HubFieldControl } from '../../shared/hub-field-control';
 			}
 
 			<div class="hub-field__body">
-				<input
-					type="time"
-					class="hub-field__control hub-timepicker__control"
-					[class.hub-field__control--invalid]="isInvalid"
-					[class.hub-field__control--valid]="showsValid"
-					[id]="id"
-					[value]="value() ?? ''"
-					[attr.min]="min() || null"
-					[attr.max]="max() || null"
-					[attr.step]="step() || null"
-					[attr.aria-required]="required() ? 'true' : null"
-					[attr.aria-invalid]="isInvalid ? 'true' : null"
-					[disabled]="disabled()"
-					[readOnly]="readonly()"
-					(input)="onInput($event)"
-					(blur)="onTouched()"
-				/>
+				<div
+					class="hub-timepicker__group"
+					[class.hub-timepicker__group--has-prepend]="hasPrepend()"
+					[class.hub-timepicker__group--has-append]="hasAppend()"
+				>
+					@if (_prependTpl(); as tpl) {
+						<span class="hub-timepicker__attached hub-timepicker__attached--prepend">
+							<ng-container [ngTemplateOutlet]="tpl" />
+						</span>
+					}
+					@for (addon of _prependAddons(); track $index) {
+						<span class="hub-timepicker__addon hub-timepicker__addon--prepend">{{ addon }}</span>
+					}
+					<input
+						type="time"
+						class="hub-field__control hub-timepicker__control"
+						[class.hub-field__control--invalid]="isInvalid"
+						[class.hub-field__control--valid]="showsValid"
+						[id]="id"
+						[value]="value() ?? ''"
+						[attr.min]="min() || null"
+						[attr.max]="max() || null"
+						[attr.step]="step() || null"
+						[attr.aria-required]="required() ? 'true' : null"
+						[attr.aria-invalid]="isInvalid ? 'true' : null"
+						[disabled]="disabled()"
+						[readOnly]="readonly()"
+						(input)="onInput($event)"
+						(blur)="onTouched()"
+					/>
+					@for (addon of _appendAddons(); track $index) {
+						<span class="hub-timepicker__addon hub-timepicker__addon--append">{{ addon }}</span>
+					}
+					@if (_appendTpl(); as tpl) {
+						<span class="hub-timepicker__attached hub-timepicker__attached--append">
+							<ng-container [ngTemplateOutlet]="tpl" />
+						</span>
+					}
+				</div>
 
 				@if (formText()) {
 					<div class="hub-field__form-text" [class.hub-field__form-text--disabled]="disabled()">
@@ -144,6 +170,35 @@ export class HubTimepickerComponent extends HubFieldControl {
 
 	/** Renders the field read-only. */
 	readonly readonly = input(false, { transform: booleanAttribute });
+
+	// ── Group addons and attached content ───────────────────────────────────────
+
+	/**
+	 * Text shown before the control as a group addon — a unit, a currency, a label. A string, or
+	 * an array for a run of them.
+	 */
+	readonly prepend = input<string | string[]>('');
+
+	/** Text shown after the control as a group addon. See {@link prepend}. */
+	readonly append = input<string | string[]>('');
+
+	/** Projected content attached to the leading edge (`[hubPrepend]`). */
+	protected readonly _prependTpl = contentChild(HubPrependDirective, { read: TemplateRef });
+
+	/** Projected content attached to the trailing edge (`[hubAppend]`). */
+	protected readonly _appendTpl = contentChild(HubAppendDirective, { read: TemplateRef });
+
+	protected readonly _prependAddons = computed<string[]>(() => this.#toAddonList(this.prepend()));
+	protected readonly _appendAddons = computed<string[]>(() => this.#toAddonList(this.append()));
+
+	/** Whether anything is attached to each edge, which squares off that side. */
+	protected readonly hasPrepend = computed<boolean>(() => this._prependAddons().length > 0 || !!this._prependTpl());
+	protected readonly hasAppend = computed<boolean>(() => this._appendAddons().length > 0 || !!this._appendTpl());
+
+	/** Drops empty entries so `prepend=""` renders nothing rather than an empty box. */
+	#toAddonList(value: string | string[]): string[] {
+		return Array.isArray(value) ? value.filter((item) => item != null && item !== '') : value ? [value] : [];
+	}
 
 	/**
 	 * Publishes `HH:MM`, and nothing else.

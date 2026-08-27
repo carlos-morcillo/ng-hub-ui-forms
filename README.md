@@ -258,8 +258,8 @@ one place: `--hub-field-floating-inset` (how far the value drops), `--hub-field-
 #### Addons and attached content
 
 `prepend` / `append` are group addons carrying **text** — a currency, a unit, a protocol.
-Available on `hub-input`, `hub-select`, `hub-textarea` and `hub-datepicker`: every field that
-renders as a box with a value.
+Available on `hub-input`, `hub-select`, `hub-textarea`, `hub-datepicker` and `hub-timepicker`:
+every field that renders as a box with a value.
 
 ```html
 <hub-input formControlName="amount" label="Amount" prepend="€" append=".00" />
@@ -299,8 +299,8 @@ reader put it back together on every row.
 </hub-input>
 ```
 
-`hub-input`, `hub-select`, `hub-textarea` and `hub-datepicker` are the four that close flush, and
-only as a **direct child** of the template — wrap one in a `<div>` and it falls back to the
+`hub-input`, `hub-select`, `hub-textarea`, `hub-datepicker` and `hub-timepicker` are the five that
+close flush, and only as a **direct child** of the template — wrap one in a `<div>` and it falls back to the
 treatment an action gets.
 
 Whatever is projected wears the field's border, radius and height rather than its own, so a

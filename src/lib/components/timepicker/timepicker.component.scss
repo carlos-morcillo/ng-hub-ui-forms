@@ -1,3 +1,4 @@
+@use '../../styles/group-addons';
 /**
  * The time field wears the family's field shape and lets the platform draw the rest.
  *
@@ -25,3 +26,5 @@
 		}
 	}
 }
+
+@include group-addons.group-addons('timepicker');

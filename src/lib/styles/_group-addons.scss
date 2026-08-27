@@ -232,7 +232,8 @@
 		> hub-input,
 		> hub-select,
 		> hub-textarea,
-		> hub-datepicker {
+		> hub-datepicker,
+		> hub-timepicker {
 			padding-inline: 0;
 			border: 0;
 			border-radius: 0;
@@ -241,17 +242,65 @@
 		&--prepend > hub-input .hub-field__control,
 		&--prepend > hub-select .ng-select-container,
 		&--prepend > hub-textarea .hub-field__control,
-		&--prepend > hub-datepicker .hub-field__control {
+		&--prepend > hub-datepicker .hub-field__control,
+		&--prepend > hub-timepicker .hub-field__control {
 			border-start-end-radius: 0;
 			border-end-end-radius: 0;
+		}
+
+		// And the outer corner handed back, because something else has just taken it.
+		//
+		// The flattening at the bottom of this file is a **descendant** rule on purpose —
+		// the box that paints a field is not always a child of the group — and it reads
+		// `.hub-field__control` inside a group as "the control this group is built around".
+		// A projected field puts a second one of those inside the same scope, so it was
+		// flattened by the rule meant for the main control **and** by the seam rule above
+		// it: all four corners square, on a field whose outer edge is the group's own
+		// rounded edge. Measured on a select with a number prepended: `0 0 0 0` on the
+		// projected input while the select beside it correctly kept `0 6px 6px 0`.
+		//
+		// The comment on that rule states the assumption this breaks — "nothing else
+		// inside a group carries these classes" — which was true until a slot could hold
+		// a field. Given back here rather than excluded there, because the exclusion needs
+		// a complex `:not()` and this says plainly which corner belongs to whom.
+		//
+		// Only the element actually on the outside: a slot may hold two, and the second
+		// one's leading edge is a seam like any other, which `> *:not(:first-child)`
+		// already squares on the host.
+		&--prepend > hub-input:first-child .hub-field__control,
+		&--prepend > hub-textarea:first-child .hub-field__control,
+		&--prepend > hub-datepicker:first-child .hub-field__control,
+		&--prepend > hub-timepicker:first-child .hub-field__control {
+			border-start-start-radius: var(--hub-input-border-radius);
+			border-end-start-radius: var(--hub-input-border-radius);
+		}
+
+		&--prepend > hub-select:first-child .ng-select-container {
+			border-start-start-radius: var(--hub-select-border-radius);
+			border-end-start-radius: var(--hub-select-border-radius);
 		}
 
 		&--append > hub-input .hub-field__control,
 		&--append > hub-select .ng-select-container,
 		&--append > hub-textarea .hub-field__control,
-		&--append > hub-datepicker .hub-field__control {
+		&--append > hub-datepicker .hub-field__control,
+		&--append > hub-timepicker .hub-field__control {
 			border-start-start-radius: 0;
 			border-end-start-radius: 0;
+		}
+
+		// The same on the other side, and for the same reason. See above.
+		&--append > hub-input:last-child .hub-field__control,
+		&--append > hub-textarea:last-child .hub-field__control,
+		&--append > hub-datepicker:last-child .hub-field__control,
+		&--append > hub-timepicker:last-child .hub-field__control {
+			border-start-end-radius: var(--hub-input-border-radius);
+			border-end-end-radius: var(--hub-input-border-radius);
+		}
+
+		&--append > hub-select:last-child .ng-select-container {
+			border-start-end-radius: var(--hub-select-border-radius);
+			border-end-end-radius: var(--hub-select-border-radius);
 		}
 	}
 

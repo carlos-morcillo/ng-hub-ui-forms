@@ -5,6 +5,37 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.26.0] - 2026-08-27
+
+### Added
+
+- **`hub-timepicker` carries an input group, like every other field that renders as a box with a value.** It arrived after the list of fields that could was written, and arrived without one: a bare control inside `hub-field__body`, with no `__group`, no `prepend` / `append` inputs and no `hubPrepend` / `hubAppend` slots. "From [09:00] to [18:00]" is the shape a time field is asked for most often, and it was the one shape it could not make.
+
+    Both directions of the relationship, because a field that can only host or only be hosted is half a field:
+
+    - **As a host**: text addons on either edge, projected content in either slot, and the control squared against whatever it is attached to. The addons are drawn from the same tokens as every other field's, so a time field in a form of them is not a different shade of grey.
+    - **As projected content**: a timepicker put into somebody else's slot gives up its own border and radius, takes the seam on the side it is attached to, and keeps the group's own outer corner. Those rules named four field elements and now name five.
+
+    Verified in a browser across the seven combinations — addon on each edge and both, a projected button, a projected field, and a timepicker projected into another field on each side — in both directions. The painted corners mirror correctly under RTL, which is the check that matters: the rules are logical, and the field beneath them declares its radius with a physical shorthand.
+
+### Fixed
+
+- **The append half of 22.25.1's corner fix had no test.** Its spec projected a **select** into the append slot, whose box is `.ng-select-container` — an element the flattening rule cannot reach, carrying neither `.hub-field__control` nor the group's own `__control` class. That case passes with the fix and without it: deleting the whole append half left the suite green while the corner measured `0px` in a browser instead of `6px`. A projected **input** is the case the rule can see, and it is pinned now.
+
+## [22.25.1] - 2026-08-26
+
+### Fixed
+
+- **A field projected into a slot lost its outer corners as well as its seam.** Attaching a number to the front of a select — `cada [1] [Mes]` — drew the number with all four corners square behind the group's own rounded edge. Measured in a browser: `0 0 0 0` on the projected input while the select beside it correctly kept `0 6px 6px 0`.
+
+    Two rules were reaching the same element. The seam rule squares the corner the projected field shares with the control, which is right. The **corner flattening at the bottom of the sheet** is a descendant rule on purpose — the box that paints a field is not always a child of the group — and it reads `.hub-field__control` inside a group as "the control this group is built around". A projected field puts a second one of those inside the same scope, so it took the flattening meant for the main control too.
+
+    The comment on that rule states the assumption this breaks: *"nothing else inside a group carries these classes"*. True until a slot could hold a field, which is what 22.13.1 onwards made possible.
+
+    The outer corner is handed back where the seam is squared, rather than excluded where it is flattened: the exclusion needs a complex `:not()` and this says plainly which corner belongs to whom. Scoped to the element actually on the outside — `:first-child` on a prepend strip, `:last-child` on an append one — because a slot may hold two fields, and the second one's leading edge is a seam like any other.
+
+    The `group-flattening` spec projected **buttons** only, which carry border and radius on the very element the slot selects, so the case that broke had no coverage. It now projects a whole field in both directions and asserts the cascade winner on each corner, which is what fails without the fix.
+
 ## [22.23.2] - 2026-08-24
 
 ### Fixed
