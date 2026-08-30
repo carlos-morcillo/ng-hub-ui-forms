@@ -5,6 +5,12 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.27.0] - 2026-08-30
+
+### Added
+
+- **`hub-input` can hold the mixed state.** A `checkbox` accepts `indeterminate`, which reflects the native DOM property — the only place that state exists — so a screen reader announces it as mixed. It is a `model`, because the reader is the one who resolves it: clicking a mixed checkbox picks a side, the browser drops the native state, and the component now clears the input and tells the caller instead of fighting the browser back on the next render. That is what a "select all" over a partially selected list needs, and it was the one thing our checkbox could not say. The `switch` format ignores it: a switch is on or off, and ARIA gives it no third state. The state is drawn as a dash through the new `--hub-check-input-indeterminate-bg` / `-border-color` / `-icon` tokens: without them the mixed box rendered empty, which is what "nothing selected" looks like — the opposite of what it means.
+
 ## [22.26.0] - 2026-08-27
 
 ### Added
