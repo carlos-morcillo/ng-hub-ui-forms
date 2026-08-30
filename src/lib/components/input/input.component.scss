@@ -415,6 +415,14 @@ hub-input.hidden-control {
 			border-color: var(--hub-check-input-checked-border-color);
 		}
 
+		// The mixed state reads as a dash. Without this it renders as an empty box —
+		// indistinguishable from "nothing selected", which is the opposite of what it means.
+		&:indeterminate {
+			background: var(--hub-check-input-indeterminate-bg) var(--hub-check-input-indeterminate-icon) center / 0.85rem
+				no-repeat;
+			border-color: var(--hub-check-input-indeterminate-border-color);
+		}
+
 		&:focus-visible {
 			outline: 0;
 			box-shadow: var(--hub-input-focus-box-shadow);

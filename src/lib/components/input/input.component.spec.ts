@@ -634,6 +634,75 @@ describe('HubInputComponent', () => {
 		});
 	});
 
+	describe('indeterminate checkbox', () => {
+		beforeEach(() => {
+			host.type = 'checkbox';
+			fixture.detectChanges();
+		});
+
+		/** The mixed state lives only in the DOM property; there is no attribute for it. */
+		const nativeCheckbox = () => query('input[type="checkbox"]') as HTMLInputElement;
+
+		/**
+		 * Driven through the component's own model rather than a host binding: this
+		 * fixture stops propagating host fields once a nested `beforeEach` has run,
+		 * which is why the required-asterisk test above sets its signal directly too.
+		 */
+		const component = (): HubInputComponent =>
+			fixture.debugElement.query(By.directive(HubInputComponent)).componentInstance;
+
+		it('is off by default', () => {
+			expect(nativeCheckbox().indeterminate).toBe(false);
+		});
+
+		it('puts the checkbox in the mixed state', () => {
+			component().indeterminate.set(true);
+			fixture.detectChanges();
+
+			expect(nativeCheckbox().indeterminate).toBe(true);
+		});
+
+		it('stays mixed regardless of the control value', () => {
+			component().indeterminate.set(true);
+			host.ctrl.setValue(false);
+			fixture.detectChanges();
+
+			expect(nativeCheckbox().indeterminate).toBe(true);
+			expect(nativeCheckbox().checked).toBe(false);
+		});
+
+		it('resolves itself when the reader toggles, and tells the caller', () => {
+			const input = component();
+			const heard: boolean[] = [];
+			input.indeterminate.subscribe((value) => heard.push(value));
+			input.indeterminate.set(true);
+			fixture.detectChanges();
+
+			const checkbox = nativeCheckbox();
+			checkbox.checked = true;
+			checkbox.dispatchEvent(new Event('change'));
+			fixture.detectChanges();
+
+			expect(input.indeterminate()).toBe(false);
+			expect(heard).toEqual([true, false]);
+			expect(nativeCheckbox().indeterminate).toBe(false);
+			expect(host.ctrl.value).toBe(true);
+		});
+
+		it('is ignored by the switch format, which has no mixed state', () => {
+			// Standalone fixture: `type` is a plain input, so it can only be set from
+			// outside on a component that is itself the fixture root.
+			const standalone = TestBed.createComponent(HubInputComponent);
+			standalone.componentRef.setInput('type', 'switch');
+			standalone.componentInstance.indeterminate.set(true);
+			standalone.detectChanges();
+
+			const checkbox = standalone.nativeElement.querySelector('input[type="checkbox"]') as HTMLInputElement;
+			expect(checkbox.getAttribute('role')).toBe('switch');
+			expect(checkbox.indeterminate).toBe(false);
+		});
+	});
+
 	describe('switch format', () => {
 		beforeEach(() => {
 			host.type = 'switch';

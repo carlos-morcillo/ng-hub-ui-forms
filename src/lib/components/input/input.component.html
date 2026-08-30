@@ -17,6 +17,7 @@
 				[attr.role]="type() === _inputFormats.Switch ? 'switch' : null"
 				[id]="id"
 				[checked]="$any(_value())"
+				[indeterminate]="isIndeterminate()"
 				(change)="setValue($event)"
 				[disabled]="disabled() || readonly()"
 				[required]="!!required()"

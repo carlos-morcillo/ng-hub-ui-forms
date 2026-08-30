@@ -297,6 +297,9 @@
 	--hub-check-input-checked-bg: var(--hub-sys-color-primary, #0d6efd);
 	--hub-check-input-checked-border-color: var(--hub-sys-color-primary, #0d6efd);
 	--hub-check-input-checked-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23fff' stroke-width='2.5' d='M3 8.5 6.5 12 13 4.5'/%3E%3C/svg%3E");
+	--hub-check-input-indeterminate-bg: var(--hub-sys-color-primary, #0d6efd);
+	--hub-check-input-indeterminate-border-color: var(--hub-sys-color-primary, #0d6efd);
+	--hub-check-input-indeterminate-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23fff' stroke-width='2.5' d='M3 8h10'/%3E%3C/svg%3E");
 	--hub-check-label-gap: var(--hub-ref-space-2, 0.5rem);
 	--hub-check-radio-border-radius: 50%;
 

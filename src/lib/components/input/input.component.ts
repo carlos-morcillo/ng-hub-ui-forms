@@ -207,6 +207,21 @@ export class HubInputComponent extends HubFieldControl {
 	 */
 	readonly clearable = input(false, { transform: booleanAttribute });
 
+	/**
+	 * Mixed state of a `checkbox`: neither on nor off, the answer a "select all"
+	 * gives while only some of its children are selected.
+	 *
+	 * It is two-way because the reader resolves it: clicking a mixed checkbox picks
+	 * a side, so the model clears itself and the caller hears about it. The `switch`
+	 * format ignores it — a switch is on or off, and ARIA gives it no third state.
+	 */
+	readonly indeterminate = model(false);
+
+	/** Mixed state as the native checkbox should actually receive it. */
+	protected readonly isIndeterminate = computed<boolean>(
+		() => this.indeterminate() && this.type() === this._inputFormats.Checkbox
+	);
+
 	/** Whether the internal clear button should be shown right now. */
 	protected readonly showClear = computed<boolean>(
 		() => this.clearable() && !this.disabled() && !this.readonly() && this._value() != null && this._value() !== ''
@@ -381,6 +396,12 @@ export class HubInputComponent extends HubFieldControl {
 
 		if (this.isCheckable()) {
 			newValue = hasTarget ? !!event.target.checked : !!event;
+			// A click on a mixed checkbox is the reader picking a side, and the
+			// browser has already dropped the native mixed state. Keeping the input
+			// true here would fight it back on the next render.
+			if (this.indeterminate()) {
+				this.indeterminate.set(false);
+			}
 		} else if (this.type() === this._inputFormats.Number || this.type() === this._inputFormats.Counter) {
 			newValue = hasTarget
 				? isNaN(event.target.valueAsNumber)
