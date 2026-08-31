@@ -5,6 +5,20 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.28.0] - 2026-08-31
+
+### Fixed
+
+- **`<hub-datepicker>` no longer opens its calendar behind a modal.** The overlay the calendar lives in takes the dropdown layer (`--hub-overlay-zindex`, `--hub-sys-zindex-dropdown`, `1000`) and its backdrop `999` — both below `HubModal` (`--hub-sys-zindex-modal`, `1055`). A date field inside a dialog therefore opened a calendar nobody could see, and a backdrop under the dialog that swallowed no click, so the one gesture that dismisses it did nothing either. Measured in a real product: `1000` against `1055`, correct only once the application patched the token itself.
+
+    The sibling control had already answered this: `hub-select` stacks its panel above the modal by default. The datepicker now does the same, and for the same reason — two controls of one package should not disagree about where a panel opened inside a dialog belongs.
+
+    The layer is set by redefining the overlay's own token rather than by declaring `z-index`, because `OverlayRef` writes the z-index **inline** as `var(--hub-overlay-zindex, 1000)` and no stylesheet beats an inline declaration; feeding the variable is the way in, and it leaves the overlay's contract untouched. The rules are two classes deep so they win regardless of which stylesheet the application loads last.
+
+### Added
+
+- **`--hub-datepicker-overlay-zindex`** — the calendar's stacking hook, defaulting to `calc(var(--hub-sys-zindex-modal, 1055) + 5)`, the same layer `--hub-select-dropdown-zindex` takes. One token moves both surfaces: the backdrop follows one layer under the calendar, which is where it has to be — over the dialog so it catches the click, under the calendar so it does not cover it. It is read through its `var()` fallback and never declared, so setting it anywhere in the cascade wins without fighting a `:root` declaration.
+
 ## [22.27.0] - 2026-08-30
 
 ### Added

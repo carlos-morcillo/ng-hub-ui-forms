@@ -135,6 +135,38 @@ hub-datepicker.hidden-control {
 	box-shadow: none;
 }
 
+// ── Panel stacking ───────────────────────────────────────────────────────────
+// The overlay opens on the dropdown layer (1000) and its backdrop on 999 — both under
+// `HubModal` (`--hub-sys-zindex-modal`, 1055) — so a datepicker inside a dialog drew a
+// calendar nobody could see, behind a backdrop that caught none of the clicks meant to
+// dismiss it. It now sits where `hub-select` already puts its own panel
+// (`--hub-select-dropdown-zindex`): two controls of one package, one answer.
+//
+// Set by feeding the overlay's token rather than by declaring `z-index`, because
+// `OverlayRef` writes the z-index INLINE as `var(--hub-overlay-zindex, 1000)` and no
+// stylesheet outranks that. The variable is the way in — and it leaves the overlay's
+// contract alone, unlike `OverlayConfig.zIndex`, which would freeze the layer at a
+// number no theme could reach.
+//
+// Two classes deep because `overlay.scss` declares the same token on
+// `.hub-overlay-container`, and load order is not a library's to decide. The default
+// stays in the `var()` fallback and is never declared here: an element-scoped
+// declaration would silently beat a consumer setting the token at `:root` — the trap
+// `--hub-field-stack-gap` documents in `_tokens.scss`. Held in a Sass variable because
+// panel and backdrop are siblings in `document.body`, so the backdrop cannot inherit
+// the panel's resolved layer and both rules must spell the expression out.
+$panel-zindex: var(--hub-datepicker-overlay-zindex, calc(var(--hub-sys-zindex-modal, 1055) + 5));
+
+.hub-overlay-container.hub-datepicker__overlay {
+	--hub-overlay-zindex: #{$panel-zindex};
+}
+
+// Under its own panel, over the dialog. Both halves matter: at 999 the backdrop sits
+// beneath the modal and the click that should close the calendar lands on the dialog.
+.hub-overlay-backdrop.hub-datepicker__backdrop {
+	--hub-overlay-backdrop-zindex: calc(#{$panel-zindex} - 1);
+}
+
 .hub-datepicker__panel {
 	width: max-content;
 	padding: var(--hub-daterangepicker-padding-y, var(--hub-ref-space-3, 1rem))

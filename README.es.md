@@ -522,6 +522,14 @@ hub-input {
 
 **`hub-select` dentro de un modal** — el panel del desplegable se apila con `--hub-select-dropdown-zindex` (por defecto `calc(var(--hub-sys-zindex-modal, 1055) + 5)`; la grafía anterior `--hub-select-dropdown-z-index` queda deprecada pero se sigue respetando), así que un select abierto dentro de un `HubModal` se renderiza por encima del diálogo en vez de quedar recortado debajo.
 
+**`hub-datepicker` dentro de un modal** — la misma garantía, con `--hub-datepicker-overlay-zindex` (por defecto `calc(var(--hub-sys-zindex-modal, 1055) + 5)`): un calendario abierto dentro de un `HubModal` se dibuja por encima del diálogo, y su backdrop una capa por debajo del calendario pero aún por encima del diálogo, así que el clic fuera lo cierra. Un solo token mueve los dos:
+
+```css
+:root {
+	--hub-datepicker-overlay-zindex: 2000;
+}
+```
+
 **Variantes y theming de `hub-segmented`** — el input `color` tiñe el segmento seleccionado desde las familias semánticas (`<hub-segmented color="primary">`); puedes fijar cualquier slot `--hub-segmented-*` directamente, o en una llamada con el mixin SCSS:
 
 ```scss

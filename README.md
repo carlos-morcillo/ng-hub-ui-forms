@@ -559,6 +559,14 @@ hub-input {
 
 **`hub-select` inside a modal** — the dropdown panel stacks through `--hub-select-dropdown-zindex` (default `calc(var(--hub-sys-zindex-modal, 1055) + 5)`; the previous `--hub-select-dropdown-z-index` spelling is deprecated but still honoured), so a select opened inside a `HubModal` renders above the dialog instead of being clipped underneath it.
 
+**`hub-datepicker` inside a modal** — the same guarantee, through `--hub-datepicker-overlay-zindex` (default `calc(var(--hub-sys-zindex-modal, 1055) + 5)`): a calendar opened inside a `HubModal` is drawn over the dialog, and its backdrop one layer under the calendar but still over the dialog, so clicking outside closes it. One token moves both:
+
+```css
+:root {
+	--hub-datepicker-overlay-zindex: 2000;
+}
+```
+
 **`hub-segmented` variants & theming** — the `color` input tints the selected segment from the semantic families (`<hub-segmented color="primary">`); any of the `--hub-segmented-*` slots can be set directly, or in one call with the SCSS mixin:
 
 ```scss
