@@ -9,6 +9,7 @@ export interface NgOption {
 	marked?: boolean;
 	label?: string;
 	value?: string | any;
+	classes?: string;
 	parent?: NgOption;
 	children?: NgOption[];
 }
@@ -20,7 +21,7 @@ export enum KeyCode {
 	Space = ' ',
 	ArrowUp = 'ArrowUp',
 	ArrowDown = 'ArrowDown',
-	Backspace = 'Backspace'
+	Backspace = 'Backspace',
 }
 
 export type DropdownPosition = 'top' | 'right' | 'bottom' | 'left' | 'auto';

@@ -838,7 +838,7 @@ const diacritics = {
 	'\u03CB': '\u03C5',
 	'\u03B0': '\u03C5',
 	'\u03C9': '\u03C9',
-	'\u03C2': '\u03C3'
+	'\u03C2': '\u03C3',
 };
 
 export function stripSpecialChars(text: string): string {
