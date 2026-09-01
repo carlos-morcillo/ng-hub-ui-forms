@@ -25,10 +25,11 @@ import { HubDatepickerComponent } from './datepicker.component';
 @Component({
 	standalone: true,
 	imports: [HubDatepickerComponent],
-	template: `<hub-datepicker [locale]="locale()" label="Fecha" />`
+	template: `<hub-datepicker [locale]="locale()" [monthFormat]="monthFormat()" label="Fecha" />`
 })
 class LocalizedHostComponent {
 	readonly locale = signal('es');
+	readonly monthFormat = signal<'short' | 'long'>('short');
 }
 
 /** Every shipped rule whose selector mentions the given class, in source order. */
@@ -88,6 +89,17 @@ describe('HubDatepickerComponent capitalization', () => {
 
 	it('puts the untouched Intl phrase in the DOM under a Spanish locale', () => {
 		expect(title()).toBeTruthy();
+		// Abbreviated since the panel took its width from the day grid: spelled out, the
+		// header was the widest child and the calendar resized as you paged through the
+		// year. `[monthFormat]="'long'"` asks for the phrase back, particle and all, which
+		// is why the casing rules below still have a job to do.
+		expect(title().textContent!.trim()).toBe('ago 2026');
+	});
+
+	it('still writes the whole phrase when the long month is asked for', () => {
+		fixture.componentInstance.monthFormat.set('long');
+		fixture.detectChanges();
+
 		expect(title().textContent!.trim()).toBe('agosto de 2026');
 	});
 

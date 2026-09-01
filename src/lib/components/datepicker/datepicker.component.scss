@@ -168,7 +168,16 @@ $panel-zindex: var(--hub-datepicker-overlay-zindex, calc(var(--hub-sys-zindex-mo
 }
 
 .hub-datepicker__panel {
-	width: max-content;
+	// The day grid decides how wide the calendar is, because the day grid is what the
+	// calendar is for. Under `max-content` the panel sized itself to whichever child was
+	// widest, and that child was the header: paging from «Mayo de 2026» to «Septiembre de
+	// 2026» made the whole panel jump — measured across twelve months, 270px to 318px —
+	// while the seven columns it frames never moved a pixel. The grid's own width is
+	// arithmetic, not a guess: seven cells and the six gaps between them.
+	width: calc(
+		7 * var(--hub-daterangepicker-cell-size) + 6 * var(--hub-datepicker-grid-gap, 0.125rem) +
+			2 * var(--hub-daterangepicker-padding-x, var(--hub-ref-space-3, 1rem))
+	);
 	padding: var(--hub-daterangepicker-padding-y, var(--hub-ref-space-3, 1rem))
 		var(--hub-daterangepicker-padding-x, var(--hub-ref-space-3, 1rem));
 	color: var(--hub-daterangepicker-color);
@@ -223,6 +232,15 @@ $panel-zindex: var(--hub-datepicker-overlay-zindex, calc(var(--hub-sys-zindex-mo
 	// labels below keep `capitalize` instead: those are `inline-flex`, where this rule would
 	// silently do nothing and drop their capital altogether.
 	.hub-datepicker__title {
+		// Takes what the nav groups leave and not a pixel more. Without `min-width: 0` a
+		// flex item refuses to shrink below its text, which is how the header came to
+		// dictate the panel's width in the first place.
+		flex: 1 1 auto;
+		min-width: 0;
+		overflow: hidden;
+		text-align: center;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 		font-weight: var(--hub-ref-font-weight-medium, 500);
 		text-transform: none;
 
@@ -235,7 +253,9 @@ $panel-zindex: var(--hub-datepicker-overlay-zindex, calc(var(--hub-sys-zindex-mo
 	.hub-datepicker__grid {
 		display: grid;
 		grid-template-columns: repeat(7, var(--hub-daterangepicker-cell-size));
-		gap: 0.125rem;
+		// The same token the panel measures itself with. Written twice as a literal, the
+		// two would drift the first time anybody tuned one of them.
+		gap: var(--hub-datepicker-grid-gap, 0.125rem);
 	}
 
 	.hub-datepicker__weekday {

@@ -216,6 +216,19 @@ export class HubDatepickerComponent extends HubFieldControl {
 	readonly weekdayFormat = input<'short' | 'narrow' | 'long' | undefined>(undefined);
 
 	/**
+	 * How the month is written in the panel's header.
+	 *
+	 * `short` by default, and that default is what keeps the panel still: the panel is as
+	 * wide as its widest child, and with the month spelled out that child was the header —
+	 * so the calendar grew and shrank as you paged through the year while the day grid it
+	 * frames never moved. Measured in Spanish at 1rem: «Septiembre de 2026» needs 152px
+	 * against the 104px the header has left over once the two nav groups have taken theirs,
+	 * so nothing but an abbreviation fits. Ask for `long` where the panel has room and the
+	 * spelled-out month is worth the movement.
+	 */
+	readonly monthFormat = input<'short' | 'long'>('short');
+
+	/**
 	 * How the selected value is displayed in the input. Accepts `Intl` options (the original
 	 * contract), an Angular date pattern such as `'dd/MM/yyyy HH:mm'`, or a formatting function.
 	 * Falls back to the global config.
@@ -462,7 +475,10 @@ export class HubDatepickerComponent extends HubFieldControl {
 	);
 
 	protected readonly monthYearLabel = computed<string>(() =>
-		new Intl.DateTimeFormat(this.locale(), { month: 'long', year: 'numeric' }).format(this._viewDate())
+		new Intl.DateTimeFormat(this.locale(), {
+			month: this.monthFormat(),
+			year: 'numeric'
+		}).format(this._viewDate())
 	);
 
 	/** Header title of the period panel: the year for months, the decade for years. */
