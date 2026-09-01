@@ -5,6 +5,33 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.29.0] - 2026-09-01
+
+### Changed
+
+- **`hub-datepicker`: the panel is as wide as the day grid, and stays that width all
+  year.** It used `width: max-content`, so it sized itself to whichever child was widest
+  — and with the month spelled out that child was the header, not the calendar. Paging
+  from «Mayo de 2026» to «Septiembre de 2026» grew the whole panel around a grid whose
+  seven columns never moved: measured across twelve months in Spanish, 270px to 318px.
+  The width is now arithmetic on the grid's own tokens — seven cells, the six gaps
+  between them, and the panel's padding — and the header title is a flexible item that
+  takes what the nav groups leave. Measured after: 268px flat, every month.
+
+  The period grid already declared `min-width: cell-size * 7` with the note that «three
+  wide cells read as the same block as seven narrow ones»; the panel simply never
+  honoured it.
+
+- **The header writes the month abbreviated by default** (`ago 2026`, not `agosto de
+  2026`). This is what makes the width above possible rather than merely stable: once the
+  two nav groups have taken theirs, 104px are left for the title, and the longest Spanish
+  month needs 152px spelled out. New input `[monthFormat]` takes it back to `'long'` for
+  a consumer whose panel has room — the header's casing rules still apply to the phrase,
+  particle and all.
+
+- `--hub-datepicker-grid-gap` (default `0.125rem`) replaces the literal the day grid used,
+  because the panel now measures itself with the same value and two literals drift.
+
 ## [22.28.0] - 2026-08-31
 
 ### Fixed
