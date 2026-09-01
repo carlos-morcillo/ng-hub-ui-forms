@@ -116,7 +116,7 @@ import { provideHubPaginableFormControls } from 'ng-hub-ui-paginable';
 import { hubFormControlAdapter } from 'ng-hub-ui-forms';
 
 export const appConfig: ApplicationConfig = {
-  providers: [provideHubPaginableFormControls(hubFormControlAdapter)]
+	providers: [provideHubPaginableFormControls(hubFormControlAdapter)]
 };
 ```
 
@@ -163,12 +163,7 @@ Project a leading / trailing icon **inside** the field, emit a debounced term on
 
 ```html
 <!-- Project any icon (any pack via the shorthand) + debounced search + built-in clear -->
-<hub-input
-	label="Search frameworks"
-	[clearable]="true"
-	[debounceTime]="300"
-	(search)="onSearch($event)"
->
+<hub-input label="Search frameworks" [clearable]="true" [debounceTime]="300" (search)="onSearch($event)">
 	<hub-icon hubInputPrefix name="fa:solid:magnifying-glass" />
 </hub-input>
 
@@ -190,13 +185,7 @@ Project a leading / trailing icon **inside** the field, emit a debounced term on
 `type="password"` renders a masked field with an integrated reveal toggle inside the input group (a trailing addon, not a detached button):
 
 ```html
-<hub-input
-	formControlName="password"
-	type="password"
-	label="Password"
-	autocomplete="new-password"
-	passwordStrength
-/>
+<hub-input formControlName="password" type="password" label="Password" autocomplete="new-password" passwordStrength />
 ```
 
 - `[(passwordRevealed)]` — two-way model for the reveal state; drive it externally or read it.
@@ -237,7 +226,14 @@ provideHubForms({
 #### Floating label
 
 ```html
-<hub-select formControlName="country" labelType="floating" label="Country" [items]="countries" bindLabel="name" bindValue="code" />
+<hub-select
+	formControlName="country"
+	labelType="floating"
+	label="Country"
+	[items]="countries"
+	bindLabel="name"
+	bindValue="code"
+/>
 ```
 
 The label sits inside the control and lifts on focus or on a value, on the same travel as
@@ -316,8 +312,7 @@ because a field keeps its box on the control rather than on its host.
 ### Datepicker
 
 ```html
-<hub-datepicker formControlName="date" label="Date" />
-<hub-datepicker formControlName="range" mode="range" label="Stay" />
+<hub-datepicker formControlName="date" label="Date" /> <hub-datepicker formControlName="range" mode="range" label="Stay" />
 ```
 
 `granularity` sets how precise each picked point is, and selects the panel with it. It is
@@ -332,12 +327,37 @@ one is.
 <hub-datepicker formControlName="billingPeriod" granularity="month" />
 ```
 
-| `granularity` | Panel | Value (default `valueFormat`) |
-| --- | --- | --- |
-| `year` | Decade grid | `"2026"` |
-| `month` | 12-month grid | `"2026-09"` |
-| `day` *(default)* | Calendar | `"2026-09-01"` |
+| `granularity`                | Panel                 | Value (default `valueFormat`) |
+| ---------------------------- | --------------------- | ----------------------------- |
+| `year`                       | Decade grid           | `"2026"`                      |
+| `month`                      | 12-month grid         | `"2026-09"`                   |
+| `day` _(default)_            | Calendar              | `"2026-09-01"`                |
 | `hour` / `minute` / `second` | Calendar + time strip | `"2026-09-01T09:30:00+02:00"` |
+
+#### Panel width and the month name
+
+The panel is exactly as wide as the day grid it frames — seven cells, the six gaps between them
+and the panel's own padding — so paging through the year never resizes it. Its header takes what
+the two nav groups leave, which is about **102px**, and that is why the month is **abbreviated by
+default**.
+
+```html
+<!-- the month spelled out; only where the panel has been widened to fit it -->
+<hub-datepicker formControlName="date" [monthFormat]="'long'" />
+```
+
+Asked for at the default width, `long` is clipped with an ellipsis: «septiembre de 2026» needs
+about 152px against the 102 available. Widen the panel first — both tokens feed the same
+arithmetic, and both have to be declared **globally**: the calendar renders in an overlay
+attached to `document.body`, outside the field's subtree, so a custom property set on the
+component never reaches it.
+
+```css
+:root {
+	--hub-daterangepicker-cell-size: 2.5rem; /* seven of these */
+	--hub-datepicker-grid-gap: 0.25rem; /* six of these */
+}
+```
 
 **The value's timezone.** At `day` and coarser it is a bare calendar date with no zone attached,
 exactly as before. From `hour` onwards it is a full ISO 8601 timestamp carrying **the reader's
@@ -382,7 +402,7 @@ Drag & drop, clipboard paste, constraints and previews. The control value stays 
 />
 ```
 
-`accept`, `maxSize`, `maxFiles` and friends **filter**: an offending file never reaches the value and surfaces through `(rejected)` with a typed reason. They are enforced by hand, because the native `accept` attribute only filters the operating-system dialog — a drop or a paste bypasses it. To make the *control* invalid as well (worth doing when a value can also be patched in programmatically), add the matching validators:
+`accept`, `maxSize`, `maxFiles` and friends **filter**: an offending file never reaches the value and surfaces through `(rejected)` with a typed reason. They are enforced by hand, because the native `accept` attribute only filters the operating-system dialog — a drop or a paste bypasses it. To make the _control_ invalid as well (worth doing when a value can also be patched in programmatically), add the matching validators:
 
 ```ts
 new FormControl<File[]>([], [hubMaxFiles(3), hubMaxFileSize(5 * 1024 * 1024), hubAcceptedFiles('image/*,.pdf')]);
@@ -482,7 +502,7 @@ error is surfaced by the fieldset/form — no manual error markup anywhere.
 
 The **invalid** state is always automatic: a touched, invalid field shows its
 error styling and message with no configuration. The **valid / success** state is
-strictly **opt-in** — success is *never* shown automatically. Enable it per field
+strictly **opt-in** — success is _never_ shown automatically. Enable it per field
 with the `showValid` input, and optionally add a `validFeedback` message that
 renders below the control once the field is touched and valid:
 

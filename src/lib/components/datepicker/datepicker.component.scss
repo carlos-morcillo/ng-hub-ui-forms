@@ -175,8 +175,8 @@ $panel-zindex: var(--hub-datepicker-overlay-zindex, calc(var(--hub-sys-zindex-mo
 	// while the seven columns it frames never moved a pixel. The grid's own width is
 	// arithmetic, not a guess: seven cells and the six gaps between them.
 	width: calc(
-		7 * var(--hub-daterangepicker-cell-size) + 6 * var(--hub-datepicker-grid-gap, 0.125rem) +
-			2 * var(--hub-daterangepicker-padding-x, var(--hub-ref-space-3, 1rem))
+		7 * var(--hub-daterangepicker-cell-size) + 6 * var(--hub-datepicker-grid-gap, 0.125rem) + 2 *
+			var(--hub-daterangepicker-padding-x, var(--hub-ref-space-3, 1rem))
 	);
 	padding: var(--hub-daterangepicker-padding-y, var(--hub-ref-space-3, 1rem))
 		var(--hub-daterangepicker-padding-x, var(--hub-ref-space-3, 1rem));

@@ -2,6 +2,29 @@
 
 This document tracks all breaking changes in the `ng-hub-ui-forms` library.
 
+## Version 22.29.0
+
+### The calendar header abbreviates the month by default
+
+- **Change**: the panel header formatted the month with `Intl.DateTimeFormat({ month: 'long' })` and now uses the new `monthFormat` input, which defaults to `'short'`. «septiembre de 2026» becomes «sept 2026».
+- **Why**: the panel used `width: max-content`, so it sized itself to its widest child — and with the month spelled out that child was the header, not the calendar. Paging from «Mayo de 2026» to «Septiembre de 2026» grew the whole panel around a grid whose seven columns never moved: measured across twelve months in Spanish, 270px to 318px. The width is arithmetic on the grid's own tokens now, and 102px are left for the header once the nav groups have taken theirs — where the longest Spanish month needs 152 spelled out.
+- **Impact**: visual, on every datepicker, and the compiler cannot warn about it. Anything asserting the header's text — a screenshot test, an end-to-end selector matching «septiembre» — sees the abbreviation instead.
+- **Migration**: ask for the old form back, and widen the panel so it fits. Both are needed: at the default width the spelled-out month is ellipsised.
+
+```html
+<hub-datepicker [monthFormat]="'long'" />
+```
+
+```css
+:root {
+	--hub-daterangepicker-cell-size: 2.5rem;
+	--hub-datepicker-grid-gap: 0.25rem;
+}
+```
+
+- **Widening is global.** The calendar renders in an overlay attached to `document.body`, outside the field's own subtree, so a custom property set on the component never reaches it. Measured: `:root` takes the panel from 268px to 336px and the month fits; the same declaration on the field changes nothing.
+- **Why it is a minor**: in this family the major states which Angular major the library targets, so it cannot be spent on a change of appearance. That is what this file is for.
+
 ## Version 22.25.0
 
 ### `@angular/cdk` is no longer a peer dependency

@@ -140,12 +140,7 @@ Proyecta un icono inicial o final **dentro** del campo, emite el término con _d
 
 ```html
 <!-- Proyecta cualquier icono (cualquier pack con el atajo) + búsqueda con debounce + limpiar integrado -->
-<hub-input
-	label="Buscar frameworks"
-	[clearable]="true"
-	[debounceTime]="300"
-	(search)="onSearch($event)"
->
+<hub-input label="Buscar frameworks" [clearable]="true" [debounceTime]="300" (search)="onSearch($event)">
 	<hub-icon hubInputPrefix name="fa:solid:magnifying-glass" />
 </hub-input>
 
@@ -167,13 +162,7 @@ Proyecta un icono inicial o final **dentro** del campo, emite el término con _d
 `type="password"` renderiza un campo enmascarado con un botón integrado para mostrar/ocultar dentro del input-group (un addon final, no un botón suelto):
 
 ```html
-<hub-input
-	formControlName="password"
-	type="password"
-	label="Password"
-	autocomplete="new-password"
-	passwordStrength
-/>
+<hub-input formControlName="password" type="password" label="Password" autocomplete="new-password" passwordStrength />
 ```
 
 - `[(passwordRevealed)]` — modelo bidireccional del estado de visibilidad; contrólalo desde fuera o léelo.
@@ -214,7 +203,14 @@ provideHubForms({
 #### Etiqueta flotante
 
 ```html
-<hub-select formControlName="country" labelType="floating" label="Country" [items]="countries" bindLabel="name" bindValue="code" />
+<hub-select
+	formControlName="country"
+	labelType="floating"
+	label="Country"
+	[items]="countries"
+	bindLabel="name"
+	bindValue="code"
+/>
 ```
 
 La etiqueta se coloca dentro del control y sube al enfocarlo o al tener valor, con el mismo
@@ -294,8 +290,7 @@ guarda su caja en el control, no en su host.
 ### Datepicker
 
 ```html
-<hub-datepicker formControlName="date" label="Date" />
-<hub-datepicker formControlName="range" mode="range" label="Stay" />
+<hub-datepicker formControlName="date" label="Date" /> <hub-datepicker formControlName="range" mode="range" label="Stay" />
 ```
 
 `granularity` define con qué precisión se elige cada punto, y con ella el panel que se dibuja. Es
@@ -309,12 +304,37 @@ ortogonal a `mode`: `mode` dice cuántos puntos se eligen, `granularity` con qu�
 <hub-datepicker formControlName="billingPeriod" granularity="month" />
 ```
 
-| `granularity` | Panel | Valor (`valueFormat` por defecto) |
-| --- | --- | --- |
-| `year` | Rejilla de década | `"2026"` |
-| `month` | Rejilla de 12 meses | `"2026-09"` |
-| `day` *(por defecto)* | Calendario | `"2026-09-01"` |
-| `hour` / `minute` / `second` | Calendario + franja de hora | `"2026-09-01T09:30:00+02:00"` |
+| `granularity`                | Panel                       | Valor (`valueFormat` por defecto) |
+| ---------------------------- | --------------------------- | --------------------------------- |
+| `year`                       | Rejilla de década           | `"2026"`                          |
+| `month`                      | Rejilla de 12 meses         | `"2026-09"`                       |
+| `day` _(por defecto)_        | Calendario                  | `"2026-09-01"`                    |
+| `hour` / `minute` / `second` | Calendario + franja de hora | `"2026-09-01T09:30:00+02:00"`     |
+
+#### Ancho del panel y nombre del mes
+
+El panel mide exactamente lo que la rejilla de días que enmarca — siete celdas, los seis huecos
+entre ellas y su propio relleno —, así que pasar meses no lo redimensiona. Su cabecera se queda
+con lo que dejan los dos grupos de navegación, unos **102px**, y por eso el mes sale **abreviado
+por defecto**.
+
+```html
+<!-- el mes completo; solo donde se haya ensanchado el panel para que quepa -->
+<hub-datepicker formControlName="date" [monthFormat]="'long'" />
+```
+
+Pedido al ancho por defecto, `long` se recorta con puntos suspensivos: «septiembre de 2026»
+necesita unos 152px frente a los 102 disponibles. Ensancha primero el panel — los dos tokens
+alimentan la misma aritmética, y los dos hay que declararlos **globalmente**: el calendario se
+dibuja en un overlay colgado de `document.body`, fuera del subárbol del campo, así que una
+variable puesta en el componente nunca le llega.
+
+```css
+:root {
+	--hub-daterangepicker-cell-size: 2.5rem; /* siete de estas */
+	--hub-datepicker-grid-gap: 0.25rem; /* seis de estos */
+}
+```
 
 **La zona horaria del valor.** En `day` y en las unidades más gruesas es una fecha de calendario
 sin zona asociada, exactamente como antes. A partir de `hour` es una marca de tiempo ISO 8601
@@ -359,7 +379,7 @@ Arrastrar y soltar, pegado desde el portapapeles, restricciones y previsualizaci
 />
 ```
 
-`accept`, `maxSize`, `maxFiles` y compañía **filtran**: un fichero que incumple no llega nunca al valor y aparece en `(rejected)` con un motivo tipado. Se aplican a mano, porque el atributo `accept` nativo solo filtra el diálogo del sistema operativo — soltar o pegar lo esquiva. Para que además el *control* quede inválido (conviene cuando el valor también puede llegar por `patchValue`), añade los validadores correspondientes:
+`accept`, `maxSize`, `maxFiles` y compañía **filtran**: un fichero que incumple no llega nunca al valor y aparece en `(rejected)` con un motivo tipado. Se aplican a mano, porque el atributo `accept` nativo solo filtra el diálogo del sistema operativo — soltar o pegar lo esquiva. Para que además el _control_ quede inválido (conviene cuando el valor también puede llegar por `patchValue`), añade los validadores correspondientes:
 
 ```ts
 new FormControl<File[]>([], [hubMaxFiles(3), hubMaxFileSize(5 * 1024 * 1024), hubAcceptedFiles('image/*,.pdf')]);
@@ -444,7 +464,7 @@ Al enviar, cada campo inválido muestra su error y el error cross-field de
 
 El estado **inválido** siempre es automático: un campo tocado e inválido muestra
 su estilo de error y su mensaje sin configuración. El estado **válido / de éxito**
-es estrictamente **opt-in** — el éxito *nunca* se muestra automáticamente. Actívalo
+es estrictamente **opt-in** — el éxito _nunca_ se muestra automáticamente. Actívalo
 por campo con el input `showValid` y, opcionalmente, añade un mensaje
 `validFeedback` que se renderiza debajo del control cuando el campo está tocado y es
 válido:
@@ -547,8 +567,7 @@ En modo single, la píldora seleccionada se desliza entre opciones (`--hub-segme
 ## ✨ Signal Forms (opt-in)
 
 `ng-hub-ui-forms/signals` es un entry point secundario — el único sitio que importa
-`@angular/forms/signals`, de modo que el núcleo sigue siendo compatible con Angular
-21. Recomendado en Angular ≥ 22.
+`@angular/forms/signals`, de modo que el núcleo sigue siendo compatible con Angular 21. Recomendado en Angular ≥ 22.
 
 ```ts
 import { HubSignalFieldControl, hubSignalErrorMessages } from 'ng-hub-ui-forms/signals';

@@ -18,12 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   between them, and the panel's padding — and the header title is a flexible item that
   takes what the nav groups leave. Measured after: 268px flat, every month.
 
-  The period grid already declared `min-width: cell-size * 7` with the note that «three
-  wide cells read as the same block as seven narrow ones»; the panel simply never
-  honoured it.
+    The period grid already declared `min-width: cell-size * 7` with the note that «three
+    wide cells read as the same block as seven narrow ones»; the panel simply never
+    honoured it.
 
 - **The header writes the month abbreviated by default** (`ago 2026`, not `agosto de
-  2026`). This is what makes the width above possible rather than merely stable: once the
+2026`). This is what makes the width above possible rather than merely stable: once the
   two nav groups have taken theirs, 104px are left for the title, and the longest Spanish
   month needs 152px spelled out. New input `[monthFormat]` takes it back to `'long'` for
   a consumer whose panel has room — the header's casing rules still apply to the phrase,
@@ -31,6 +31,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `--hub-datepicker-grid-gap` (default `0.125rem`) replaces the literal the day grid used,
   because the panel now measures itself with the same value and two literals drift.
+
+- **The header now abbreviates the month by default**, which is a visible change on every datepicker and one the compiler cannot warn about. Announced in `BREAKING_CHANGES.md`, with the two-part migration: `[monthFormat]="'long'"` asks for the old form back, and the panel has to be widened at `:root` for it to fit.
+
+## [22.29.0] - 2026-09-01
+
+### Changed
+
+- **`hub-datepicker`: the panel is as wide as the day grid, and stays that width all
+  year.** It used `width: max-content`, so it sized itself to whichever child was widest
+  — and with the month spelled out that child was the header, not the calendar. Paging
+  from «Mayo de 2026» to «Septiembre de 2026» grew the whole panel around a grid whose
+  seven columns never moved: measured across twelve months in Spanish, 270px to 318px.
+  The width is now arithmetic on the grid's own tokens — seven cells, the six gaps
+  between them, and the panel's padding — and the header title is a flexible item that
+  takes what the nav groups leave. Measured after: 268px flat, every month.
+
+    The period grid already declared `min-width: cell-size * 7` with the note that «three
+    wide cells read as the same block as seven narrow ones»; the panel simply never
+    honoured it.
+
+- **The header writes the month abbreviated by default** (`ago 2026`, not `agosto de
+2026`). This is what makes the width above possible rather than merely stable: once the
+  two nav groups have taken theirs, 104px are left for the title, and the longest Spanish
+  month needs 152px spelled out. New input `[monthFormat]` takes it back to `'long'` for
+  a consumer whose panel has room — the header's casing rules still apply to the phrase,
+  particle and all.
+
+- `--hub-datepicker-grid-gap` (default `0.125rem`) replaces the literal the day grid used,
+  because the panel now measures itself with the same value and two literals drift.
+
+- **The header now abbreviates the month by default**, which is a visible change on every datepicker and one the compiler cannot warn about. Announced in `BREAKING_CHANGES.md`, with the two-part migration: `[monthFormat]="'long'"` asks for the old form back, and the panel has to be widened at `:root` for it to fit.
 
 ## [22.28.0] - 2026-08-31
 
@@ -77,7 +108,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
     Two rules were reaching the same element. The seam rule squares the corner the projected field shares with the control, which is right. The **corner flattening at the bottom of the sheet** is a descendant rule on purpose — the box that paints a field is not always a child of the group — and it reads `.hub-field__control` inside a group as "the control this group is built around". A projected field puts a second one of those inside the same scope, so it took the flattening meant for the main control too.
 
-    The comment on that rule states the assumption this breaks: *"nothing else inside a group carries these classes"*. True until a slot could hold a field, which is what 22.13.1 onwards made possible.
+    The comment on that rule states the assumption this breaks: _"nothing else inside a group carries these classes"_. True until a slot could hold a field, which is what 22.13.1 onwards made possible.
 
     The outer corner is handed back where the seam is squared, rather than excluded where it is flattened: the exclusion needs a complex `:not()` and this says plainly which corner belongs to whom. Scoped to the element actually on the outside — `:first-child` on a prepend strip, `:last-child` on an append one — because a slot may hold two fields, and the second one's leading edge is a seam like any other.
 
@@ -172,10 +203,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
     Worth recording how this arrived: the zeroing shipped first on its own, writing a token that no rule read. It was inert, and measurable as such — raising the token to `20px` on a live field left the margin at `0px` in a form and in a table alike. The write is only a fix now that the token is declared and the host reads it.
 
-
 ### Fixed
 
-- **A control `hubFormControlAdapter` creates no longer keeps a form field's stacking margin.** Field hosts carry `margin-bottom: var(--hub-field-stack-gap)` so that fields written one under another in a form breathe. A control created *into another component's chrome* — a table's search group, a paginator's row — is in no such list and never was, and the gap it kept made the group taller than the field: anything stretching beside it came out taller too. A table's search button overshot its own field by exactly that margin, 54px against 38px, and the two stopped reading as one control.
+- **A control `hubFormControlAdapter` creates no longer keeps a form field's stacking margin.** Field hosts carry `margin-bottom: var(--hub-field-stack-gap)` so that fields written one under another in a form breathe. A control created _into another component's chrome_ — a table's search group, a paginator's row — is in no such list and never was, and the gap it kept made the group taller than the field: anything stretching beside it came out taller too. A table's search button overshot its own field by exactly that margin, 54px against 38px, and the two stopped reading as one control.
 
     The adapter is the only place that knows a control is being embedded, so it says it there: the token is zeroed on the host as the component is created. Every library that wires the adapter gets it, rather than each one discovering the same margin separately and patching it from outside — which is what happened first, twice, in the wrong places: a `::ng-deep` rule in the host library, then a block in the consuming application.
 
