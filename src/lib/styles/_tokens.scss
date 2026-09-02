@@ -40,6 +40,26 @@
 	--hub-form-text-font-size: var(--hub-ref-font-size-sm, 0.875rem);
 	--hub-form-text-margin-top: var(--hub-ref-space-1, 0.25rem);
 
+	// ── Helper-text tooltip trigger (`formTextType="tooltip"`) ───────────────
+	// The question mark that stands at the end of the label row. Drawn from these
+	// tokens rather than from an icon font: `ng-hub-ui-icons` is not a dependency of
+	// this package, and taking one on for a single glyph would make every consumer of
+	// a text input install an icon set.
+	//
+	// Sized in `em` of the label, not in `rem`: the mark belongs to the label it sits
+	// beside, so a form that scales its labels down scales the mark with them instead
+	// of leaving a circle that grows relative to the words next to it.
+	--hub-form-hint-size: 1.15em;
+	--hub-form-hint-font-size: var(--hub-ref-font-size-xs, 0.75rem);
+	--hub-form-hint-font-weight: var(--hub-ref-font-weight-bold, 700);
+	--hub-form-hint-color: var(--hub-sys-text-muted, #6c757d);
+	--hub-form-hint-bg: transparent;
+	--hub-form-hint-border-width: 1px;
+	--hub-form-hint-border-color: var(--hub-sys-border-color-default, #dee2e6);
+	--hub-form-hint-hover-color: var(--hub-sys-text-primary, #212529);
+	--hub-form-hint-hover-bg: var(--hub-sys-surface-elevated, #f8f9fa);
+	--hub-form-hint-hover-border-color: var(--hub-sys-border-color-default, #dee2e6);
+
 	--hub-form-focus-ring-width: var(--hub-sys-focus-ring-width, 0.25rem);
 	--hub-form-focus-ring-color: var(--hub-sys-focus-ring-color, rgba(13, 110, 253, 0.25));
 

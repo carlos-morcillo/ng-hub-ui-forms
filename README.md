@@ -149,6 +149,40 @@ npm install ng-hub-ui-forms @angular/cdk
 
 ## ⚙️ Usage
 
+### Helper text
+
+Every field takes `formText`, and `formTextType` says where it goes.
+
+```html
+<!-- one sentence: below, where it is read without being asked for -->
+<hub-input label="Name" formText="As it appears on the card." />
+
+<!-- more than one: behind a question mark at the end of the label row -->
+<hub-input
+	label="IBAN"
+	formTextType="tooltip"
+	formText="The account the refund is paid into. It must belong to the cardholder — a transfer to a third party is rejected by the bank."
+/>
+```
+
+The rule the product settled on is **one sentence below, more than one in the tooltip**. A paragraph
+under every field turns a form into a document, pushes the next field off the screen, and is read by
+nobody who already knew what the field was for.
+
+The mark is pushed to the end of the label row, so a column of fields lines its question marks up
+instead of scattering them wherever each label happens to stop. It is a `<button>` beside the label
+and never inside it: activating a label focuses the control it names, so a mark nested in one would
+open the tooltip _and_ jump the caret into the field. Its accessible name is the helper text itself.
+
+`formTextType="tooltip"` needs the tooltip stylesheet, which this package does not pull in for you:
+
+```scss
+@use 'ng-hub-ui-utils/styles/tooltip';
+```
+
+A projected `hubFormText` template keeps its block below even in tooltip mode. The tooltip takes a
+string, so asking it to carry markup would drop the markup silently.
+
 ### Input
 
 ```html
@@ -213,9 +247,9 @@ provideHubForms({
 #### Plain-text fields
 
 `readonly` and `plaintext` are the two halves of a shut field, and the difference is who the
-field is for. `readonly` is a *state* of a field somebody is still filling in, and a theme can
+field is for. `readonly` is a _state_ of a field somebody is still filling in, and a theme can
 give it a box — `--hub-input-readonly-bg`, `--hub-input-readonly-border-color`, `-color` and
-`-cursor` exist to be set. `plaintext` is for a value that is merely being *shown*: a record
+`-cursor` exist to be set. `plaintext` is for a value that is merely being _shown_: a record
 open for consultation, a figure the server settled, a field a plan has locked. There the box is
 noise, and having none is what `plaintext` is rather than a colour it happens to wear.
 
@@ -228,8 +262,8 @@ noise, and having none is what `plaintext` is rather than a colour it happens to
 >
 > ```css
 > .hub-field--readonly {
->   --hub-input-readonly-bg: var(--hub-sys-surface-sunken);
->   --hub-input-readonly-border-color: var(--hub-sys-border-subtle);
+> 	--hub-input-readonly-bg: var(--hub-sys-surface-sunken);
+> 	--hub-input-readonly-border-color: var(--hub-sys-border-subtle);
 > }
 > ```
 
@@ -246,7 +280,6 @@ none above, the field's whole vertical padding below. Nothing above puts the val
 its label — a label and its value are one thing and should read as a pair — while twice the
 padding below holds the control at exactly an editable field's height, so a grid mixing the two
 still lines up. Replace it with a single value and you give up one of the two.
-
 
 ```html
 <!-- being filled in, so it keeps the box -->

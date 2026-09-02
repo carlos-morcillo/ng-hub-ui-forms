@@ -18,8 +18,8 @@ import {
 	viewChild,
 	ViewEncapsulation
 } from '@angular/core';
-import { HUB_DROPDOWN_POSITIONS, OverlayRef, OverlayService } from 'ng-hub-ui-utils';
-import { FormTextType, FormTextTypes, HubLabelType, HubLabelTypes } from '../../interfaces/common.interface';
+import { HUB_DROPDOWN_POSITIONS, HubTooltipDirective, OverlayRef, OverlayService } from 'ng-hub-ui-utils';
+import { HubLabelType, HubLabelTypes } from '../../interfaces/common.interface';
 import {
 	HubDatepickerGranularity,
 	HubDatepickerLabels,
@@ -104,7 +104,13 @@ interface DatepickerCell {
  */
 @Component({
 	selector: 'hub-datepicker',
-	imports: [NgTemplateOutlet, KeyValuePipe, HubDatepickerTimeFieldComponent, HubDatepickerPeriodGridComponent],
+	imports: [
+		NgTemplateOutlet,
+		KeyValuePipe,
+		HubDatepickerTimeFieldComponent,
+		HubDatepickerPeriodGridComponent,
+		HubTooltipDirective
+	],
 	templateUrl: './datepicker.component.html',
 	styleUrl: './datepicker.component.scss',
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -138,7 +144,6 @@ export class HubDatepickerComponent extends HubFieldControl {
 	readonly #config = inject(HUB_FORMS_CONFIG).datepicker;
 
 	protected readonly _labelTypes = HubLabelTypes;
-	protected readonly _formTextTypes = FormTextTypes;
 
 	/**
 	 * The selection, as local `Date`s. This — not the serialized value — is the component's single
@@ -284,12 +289,6 @@ export class HubDatepickerComponent extends HubFieldControl {
 
 	/** Whether the picker is read-only. */
 	readonly readonly = input(false, { transform: booleanAttribute });
-
-	/** Helper text shown below the control. */
-	readonly formText = input<string>('');
-
-	/** Helper text placement. Only `bottom` is supported. */
-	readonly formTextType = input<FormTextType>(FormTextTypes.Bottom);
 
 	/** Extra CSS classes applied to the host element. */
 	readonly classlist = input<string>('');

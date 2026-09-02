@@ -15,7 +15,7 @@ import {
 } from '@angular/core';
 import { Subject } from 'rxjs';
 import { FormsModule } from '@angular/forms';
-import { FormTextType, FormTextTypes, HubLabelType, HubLabelTypes } from '../interfaces/common.interface';
+import { HubLabelType, HubLabelTypes } from '../interfaces/common.interface';
 import { HubSelectFormat, HubSelectFormats } from '../interfaces/select.interface';
 import { HubSelectSuffixDirective } from '../directives/select-suffix.directive';
 import { HubAppendDirective } from '../directives/append.directive';
@@ -33,6 +33,7 @@ import {
 	NgOptgroupTemplateDirective,
 	NgOptionTemplateDirective
 } from './vendor/lib/ng-templates.directive';
+import { HubTooltipDirective } from 'ng-hub-ui-utils';
 
 /**
  * Accessible select / multiselect / autocomplete built on the vendored ng-select engine, with the
@@ -61,7 +62,8 @@ import {
 		NgMultiLabelTemplateDirective,
 		NgHeaderTemplateDirective,
 		NgFooterTemplateDirective,
-		NgNotFoundTemplateDirective
+		NgNotFoundTemplateDirective,
+		HubTooltipDirective
 	],
 	templateUrl: './select.component.html',
 	styleUrl: './select.component.scss',
@@ -81,7 +83,6 @@ export class HubSelectComponent extends HubFieldControl {
 	protected readonly _ngSelectConfig = inject(NgSelectConfig);
 
 	protected readonly _labelTypes = HubLabelTypes;
-	protected readonly _formTextTypes = FormTextTypes;
 	protected readonly _selectFormats = HubSelectFormats;
 	protected readonly _value = signal<any>(null);
 
@@ -275,12 +276,6 @@ export class HubSelectComponent extends HubFieldControl {
 	 * by id). When omitted, the vendor's built-in comparison applies.
 	 */
 	readonly compareWith = input<((a: any, b: any) => boolean) | undefined>(undefined);
-
-	/** Helper text shown below the control. */
-	readonly formText = input<string>('');
-
-	/** Helper text placement. Only `bottom` is supported. */
-	readonly formTextType = input<FormTextType>(FormTextTypes.Bottom);
 
 	/** Extra CSS classes applied to the host element. */
 	readonly classlist = input<string>('');

@@ -11,10 +11,11 @@ import {
 	TemplateRef,
 	ViewEncapsulation
 } from '@angular/core';
-import { FormTextType, FormTextTypes, HubLabelType, HubLabelTypes } from '../../interfaces/common.interface';
+import { HubLabelType, HubLabelTypes } from '../../interfaces/common.interface';
 import { HubFieldControl } from '../../shared/hub-field-control';
 import { HubAppendDirective } from '../../directives/append.directive';
 import { HubPrependDirective } from '../../directives/prepend.directive';
+import { HubTooltipDirective } from 'ng-hub-ui-utils';
 
 /**
  * Time field (`hub-timepicker`): a time of day, as `HH:MM`.
@@ -36,7 +37,7 @@ import { HubPrependDirective } from '../../directives/prepend.directive';
 @Component({
 	selector: 'hub-timepicker',
 	standalone: true,
-	imports: [KeyValuePipe, NgTemplateOutlet],
+	imports: [KeyValuePipe, NgTemplateOutlet, HubTooltipDirective],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	encapsulation: ViewEncapsulation.None,
 	host: {
@@ -51,14 +52,36 @@ import { HubPrependDirective } from '../../directives/prepend.directive';
 			[class.hub-field--invalid]="isInvalid"
 			[class.hub-field--valid]="showsValid"
 		>
-			@if (label() || required()) {
+			@if (showsFormTextTooltip()) {
+				<!--
+					The row exists because the hint does, not because the label does. A field with a
+					floating label — or no label at all — still has helper text to offer, and the mark
+					is the only place left to offer it from once the block below stands down.
+				-->
+				<div class="hub-field__label-row">
+					@if (label() || required()) {
+						<ng-container [ngTemplateOutlet]="hubFieldLabelTpl" />
+					}
+					<button
+						type="button"
+						class="hub-field__hint"
+						[attr.aria-label]="formText()"
+						[hubTooltip]="formText()"
+						hubTooltipPlacement="top"
+					></button>
+				</div>
+			} @else if (label() || required()) {
+				<ng-container [ngTemplateOutlet]="hubFieldLabelTpl" />
+			}
+
+			<ng-template #hubFieldLabelTpl>
 				<label class="hub-field__label" [attr.for]="id">
 					{{ label() }}
 					@if (required()) {
 						<span class="hub-field__required" aria-hidden="true">*</span>
 					}
 				</label>
-			}
+			</ng-template>
 
 			<div class="hub-field__body">
 				<div
@@ -101,7 +124,7 @@ import { HubPrependDirective } from '../../directives/prepend.directive';
 					}
 				</div>
 
-				@if (formText()) {
+				@if (!showsFormTextTooltip() && formText()) {
 					<div class="hub-field__form-text" [class.hub-field__form-text--disabled]="disabled()">
 						{{ formText() }}
 					</div>
@@ -133,7 +156,6 @@ import { HubPrependDirective } from '../../directives/prepend.directive';
 })
 export class HubTimepickerComponent extends HubFieldControl {
 	protected readonly _labelTypes = HubLabelTypes;
-	protected readonly _formTextTypes = FormTextTypes;
 
 	/** Extra classes forwarded to the host, as every field of the family accepts. */
 	readonly classlist = input<string>('');
@@ -146,12 +168,6 @@ export class HubTimepickerComponent extends HubFieldControl {
 
 	/** Label placement. */
 	readonly labelType = input<HubLabelType>(HubLabelTypes.Stacked);
-
-	/** Helper text shown below the field. */
-	readonly formText = input<string>('');
-
-	/** Helper-text placement. */
-	readonly formTextType = input<FormTextType>(FormTextTypes.Bottom);
 
 	/** Earliest time the field accepts, as `HH:MM`. */
 	readonly min = input<string>('');

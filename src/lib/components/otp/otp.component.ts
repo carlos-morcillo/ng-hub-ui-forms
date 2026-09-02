@@ -1,4 +1,4 @@
-import { KeyValuePipe } from '@angular/common';
+import { KeyValuePipe, NgTemplateOutlet } from '@angular/common';
 import {
 	booleanAttribute,
 	ChangeDetectionStrategy,
@@ -12,8 +12,9 @@ import {
 	viewChildren,
 	ViewEncapsulation
 } from '@angular/core';
-import { FormTextType, FormTextTypes, HubLabelType, HubLabelTypes } from '../../interfaces/common.interface';
+import { HubLabelType, HubLabelTypes } from '../../interfaces/common.interface';
 import { HubFieldControl } from '../../shared/hub-field-control';
+import { HubTooltipDirective } from 'ng-hub-ui-utils';
 
 /** Character set accepted by the OTP field. */
 export type HubOtpMode = 'numeric' | 'alphanumeric' | 'alpha';
@@ -32,7 +33,7 @@ export type HubOtpMode = 'numeric' | 'alphanumeric' | 'alpha';
 @Component({
 	selector: 'hub-otp-input',
 	standalone: true,
-	imports: [KeyValuePipe],
+	imports: [KeyValuePipe, NgTemplateOutlet, HubTooltipDirective],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	encapsulation: ViewEncapsulation.None,
 	host: {
@@ -47,14 +48,36 @@ export type HubOtpMode = 'numeric' | 'alphanumeric' | 'alpha';
 			[class.hub-field--invalid]="isInvalid"
 			[class.hub-field--valid]="showsValid"
 		>
-			@if (label() || required()) {
+			@if (showsFormTextTooltip()) {
+				<!--
+					The row exists because the hint does, not because the label does. A field with a
+					floating label — or no label at all — still has helper text to offer, and the mark
+					is the only place left to offer it from once the block below stands down.
+				-->
+				<div class="hub-field__label-row">
+					@if (label() || required()) {
+						<ng-container [ngTemplateOutlet]="hubFieldLabelTpl" />
+					}
+					<button
+						type="button"
+						class="hub-field__hint"
+						[attr.aria-label]="formText()"
+						[hubTooltip]="formText()"
+						hubTooltipPlacement="top"
+					></button>
+				</div>
+			} @else if (label() || required()) {
+				<ng-container [ngTemplateOutlet]="hubFieldLabelTpl" />
+			}
+
+			<ng-template #hubFieldLabelTpl>
 				<label class="hub-field__label">
 					{{ label() }}
 					@if (required()) {
 						<span class="hub-field__required" aria-hidden="true">*</span>
 					}
 				</label>
-			}
+			</ng-template>
 
 			<div class="hub-field__body">
 				<div class="hub-otp__cells" role="group" [attr.aria-label]="label() || null" (focusout)="onFocusOut($event)">
@@ -83,7 +106,7 @@ export type HubOtpMode = 'numeric' | 'alphanumeric' | 'alpha';
 					}
 				</div>
 
-				@if (formText()) {
+				@if (!showsFormTextTooltip() && formText()) {
 					<div class="hub-field__form-text" [class.hub-field__form-text--disabled]="disabled()">{{ formText() }}</div>
 				}
 
@@ -113,7 +136,6 @@ export type HubOtpMode = 'numeric' | 'alphanumeric' | 'alpha';
 })
 export class HubOtpInputComponent extends HubFieldControl {
 	protected readonly _labelTypes = HubLabelTypes;
-	protected readonly _formTextTypes = FormTextTypes;
 
 	/** Number of cells / characters in the code. */
 	readonly length = input(6, { transform: numberAttribute });
@@ -126,12 +148,6 @@ export class HubOtpInputComponent extends HubFieldControl {
 
 	/** Label placement. */
 	readonly labelType = input<HubLabelType>(this._labelTypes.Stacked);
-
-	/** Helper text shown below the cells. */
-	readonly formText = input<string>('');
-
-	/** Helper-text placement. */
-	readonly formTextType = input<FormTextType>(FormTextTypes.Bottom);
 
 	/** Masks the characters like a password. */
 	readonly secret = input(false, { transform: booleanAttribute });

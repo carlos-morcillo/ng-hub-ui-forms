@@ -19,7 +19,7 @@ import {
 	ViewEncapsulation
 } from '@angular/core';
 import { FormsModule, Validators } from '@angular/forms';
-import { FormTextType, FormTextTypes, HubLabelType, HubLabelTypes } from '../../interfaces/common.interface';
+import { HubLabelType, HubLabelTypes } from '../../interfaces/common.interface';
 import { HubInputFormat, HubInputFormats, HubPasswordStrengthScore } from '../../interfaces/input.interface';
 import { HubInputPrefixDirective } from '../../directives/input-prefix.directive';
 import { HubInputSuffixDirective } from '../../directives/input-suffix.directive';
@@ -30,6 +30,7 @@ import { controlHasMinOrMaxValidator, isDefined } from '../../utils/utils';
 import { applyMask, isMaskActive } from '../../utils/mask';
 import { scorePasswordStrength } from '../../utils/password-strength';
 import { HUB_FORMS_CONFIG } from '../../services/forms-config';
+import { HubTooltipDirective } from 'ng-hub-ui-utils';
 
 /** Value held by a `<hub-input>` across its supported formats. */
 type HubInputValue = number | string | boolean | File | FileList | null;
@@ -60,7 +61,7 @@ type HubInputValue = number | string | boolean | File | FileList | null;
  */
 @Component({
 	selector: 'hub-input',
-	imports: [NgTemplateOutlet, KeyValuePipe, FormsModule],
+	imports: [NgTemplateOutlet, KeyValuePipe, FormsModule, HubTooltipDirective],
 	templateUrl: './input.component.html',
 	styleUrl: './input.component.scss',
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -73,7 +74,6 @@ type HubInputValue = number | string | boolean | File | FileList | null;
 export class HubInputComponent extends HubFieldControl {
 	protected readonly _inputFormats = HubInputFormats;
 	protected readonly _labelTypes = HubLabelTypes;
-	protected readonly _formTextTypes = FormTextTypes;
 	protected readonly _value = signal<HubInputValue>('');
 
 	/**
@@ -182,12 +182,6 @@ export class HubInputComponent extends HubFieldControl {
 	 * invisible input.
 	 */
 	readonly plaintext = input(false, { transform: booleanAttribute });
-
-	/** Helper text shown below the control. */
-	readonly formText = input<string>('');
-
-	/** Helper text placement. Only `bottom` is supported. */
-	readonly formTextType = input<FormTextType>(FormTextTypes.Bottom);
 
 	/** Text shown before the control as an input-group addon (text-like formats). */
 	readonly prepend = input<string | string[]>('');

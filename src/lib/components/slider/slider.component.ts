@@ -11,8 +11,9 @@ import {
 	ViewEncapsulation
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { FormTextType, FormTextTypes, HubLabelType, HubLabelTypes } from '../../interfaces/common.interface';
+import { HubLabelType, HubLabelTypes } from '../../interfaces/common.interface';
 import { HubFieldControl } from '../../shared/hub-field-control';
+import { HubTooltipDirective } from 'ng-hub-ui-utils';
 
 /** Value of `<hub-slider>`: a number in single mode, a `[lower, upper]` tuple in range mode. */
 export type HubSliderValue = number | [number, number];
@@ -33,7 +34,7 @@ export type HubSliderValue = number | [number, number];
  */
 @Component({
 	selector: 'hub-slider',
-	imports: [NgTemplateOutlet, KeyValuePipe, FormsModule],
+	imports: [NgTemplateOutlet, KeyValuePipe, FormsModule, HubTooltipDirective],
 	templateUrl: './slider.component.html',
 	styleUrl: './slider.component.scss',
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -45,7 +46,6 @@ export type HubSliderValue = number | [number, number];
 })
 export class HubSliderComponent extends HubFieldControl {
 	protected readonly _labelTypes = HubLabelTypes;
-	protected readonly _formTextTypes = FormTextTypes;
 	protected readonly _value = signal<HubSliderValue>(0);
 
 	/** Label text. */
@@ -68,12 +68,6 @@ export class HubSliderComponent extends HubFieldControl {
 
 	/** Whether to show the value bubble(s) above the thumb(s). */
 	readonly showValue = input(true, { transform: booleanAttribute });
-
-	/** Helper text shown below the control. */
-	readonly formText = input<string>('');
-
-	/** Helper text placement. Only `bottom` is supported. */
-	readonly formTextType = input<FormTextType>(FormTextTypes.Bottom);
 
 	/** Extra CSS classes applied to the host element. */
 	readonly classlist = input<string>('');

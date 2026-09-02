@@ -9,39 +9,84 @@
 	[class.hub-field--valid]="showsValid"
 >
 	@if (isCheckable()) {
-		<label class="hub-input__check" [class.hub-input__check--switch]="type() === _inputFormats.Switch">
-			<input
-				type="checkbox"
-				class="hub-input__check-input"
-				[class.hub-input__check-input--switch]="type() === _inputFormats.Switch"
-				[class.hub-input__check-input--invalid]="isInvalid"
-				[attr.role]="type() === _inputFormats.Switch ? 'switch' : null"
-				[id]="id"
-				[checked]="$any(_value())"
-				[indeterminate]="isIndeterminate()"
-				(change)="setValue($event)"
-				[disabled]="disabled() || _isReadonly()"
-				[required]="!!required()"
-				[attr.aria-invalid]="isInvalid"
-			/>
-			@if (label() || required()) {
-				<span class="hub-input__check-label">
-					{{ label() }}
-					@if (required()) {
-						<span class="hub-field__required" aria-hidden="true">*</span>
-					}
-				</span>
-			}
-		</label>
+		@if (showsFormTextTooltip()) {
+			<!--
+				The mark has to sit OUTSIDE the check's `<label>`, which here wraps the control
+				itself: nested in it, activating the mark would toggle the switch — and a switch
+				carrying a two-sentence warning is exactly the one that must not flip because
+				somebody asked what it does.
+			-->
+			<div class="hub-field__label-row">
+				<ng-container [ngTemplateOutlet]="hubCheckTpl" />
+				<button
+					type="button"
+					class="hub-field__hint"
+					[attr.aria-label]="formText()"
+					[hubTooltip]="formText()"
+					hubTooltipPlacement="top"
+				></button>
+			</div>
+		} @else {
+			<ng-container [ngTemplateOutlet]="hubCheckTpl" />
+		}
+
+		<ng-template #hubCheckTpl>
+			<label class="hub-input__check" [class.hub-input__check--switch]="type() === _inputFormats.Switch">
+				<input
+					type="checkbox"
+					class="hub-input__check-input"
+					[class.hub-input__check-input--switch]="type() === _inputFormats.Switch"
+					[class.hub-input__check-input--invalid]="isInvalid"
+					[attr.role]="type() === _inputFormats.Switch ? 'switch' : null"
+					[id]="id"
+					[checked]="$any(_value())"
+					[indeterminate]="isIndeterminate()"
+					(change)="setValue($event)"
+					[disabled]="disabled() || _isReadonly()"
+					[required]="!!required()"
+					[attr.aria-invalid]="isInvalid"
+				/>
+				@if (label() || required()) {
+					<span class="hub-input__check-label">
+						{{ label() }}
+						@if (required()) {
+							<span class="hub-field__required" aria-hidden="true">*</span>
+						}
+					</span>
+				}
+			</label>
+		</ng-template>
 	} @else {
-		@if ((label() || required()) && labelType() !== _labelTypes.Floating) {
+		@if (showsFormTextTooltip()) {
+			<!--
+				The row exists because the hint does, not because the label does. A field with a
+				floating label — or no label at all — still has helper text to offer, and the mark
+				is the only place left to offer it from once the block below stands down.
+			-->
+			<div class="hub-field__label-row">
+				@if ((label() || required()) && labelType() !== _labelTypes.Floating) {
+					<ng-container [ngTemplateOutlet]="hubFieldLabelTpl" />
+				}
+				<button
+					type="button"
+					class="hub-field__hint"
+					[attr.aria-label]="formText()"
+					[hubTooltip]="formText()"
+					hubTooltipPlacement="top"
+				></button>
+			</div>
+		} @else if ((label() || required()) && labelType() !== _labelTypes.Floating) {
+			<ng-container [ngTemplateOutlet]="hubFieldLabelTpl" />
+		}
+
+		<ng-template #hubFieldLabelTpl>
 			<label [for]="id" class="hub-field__label">
 				{{ label() }}
 				@if (required()) {
 					<span class="hub-field__required" aria-hidden="true">*</span>
 				}
 			</label>
-		}
+		</ng-template>
 
 		<div class="hub-field__body hub-input__row">
 			@switch (type()) {
@@ -242,7 +287,7 @@
 		</div>
 	}
 
-	@if (formText() || formTextTmp()) {
+	@if (!showsFormTextTooltip() && (formText() || formTextTmp())) {
 		<div class="hub-field__form-text" [class.hub-field__form-text--disabled]="disabled()">
 			@if (formTextTmp()) {
 				<ng-container [ngTemplateOutlet]="formTextTmp()!"></ng-container>

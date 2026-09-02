@@ -5,6 +5,75 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.31.0] - 2026-09-02
+
+### Added
+
+- **`formTextType="tooltip"`: helper text behind a question mark at the end of the label
+  row.** `formTextType` has been a public input on every field since the beginning and
+  has only ever accepted one answer — `bottom` — so helper text has always been a line
+  drawn under the control. That works for a sentence. It stops working the moment the
+  text explains something: a paragraph under every field turns a form into a document,
+  pushes the next field off the screen, and is read by nobody who already knew what the
+  field was for. The rule the product settles on is **one sentence, below; more than one,
+  tooltip** — and the second half of it had no implementation.
+
+  Set `formTextType="tooltip"` and the label row becomes `label + (*) … ?`: the mark is
+  pushed to the end of the row with an auto margin, so a column of fields lines its
+  question marks up instead of scattering them wherever each label happens to stop. The
+  block below stands down. Available on all nine fields that carry helper text —
+  `hub-input`, `hub-textarea`, `hub-select`, `hub-datepicker`, `hub-timepicker`,
+  `hub-otp-input`, `hub-segmented`, `hub-slider` and `hub-file-input`. `hub-segmented`
+  gains `formTextType` in the process; it was the one field that declared `formText`
+  without it.
+
+  **The trigger is a `<button>` outside the `<label>`, deliberately.** Activating a label
+  focuses the control it names, so a button nested in one would open the tooltip *and*
+  jump the caret into the field — a shortcut nobody asked for, and one that reads as
+  correct in a review. It sits beside the label in a `.hub-field__label-row` instead,
+  which keeps it reachable by keyboard on its own. Its accessible name is the helper text
+  itself, so a screen reader is told what a pointer learns by hovering, without waiting
+  for a tooltip it cannot see.
+
+  **The mark is drawn from CSS, not from an icon.** `ng-hub-ui-icons` is not a dependency
+  of this package, and taking one on for a single glyph would make everyone who wants a
+  text input install an icon set. It is a circle and a `?` built from
+  `--hub-form-hint-size`, `-font-size`, `-font-weight`, `-color`, `-bg`, `-border-width`,
+  `-border-color` and the three `-hover-` variants. The size is in `em` of the label, not
+  in `rem`: the mark belongs to the label beside it, so a form that scales its labels down
+  takes the mark with them.
+
+  The tooltip itself is `[hubTooltip]` from `ng-hub-ui-utils`, already a peer dependency.
+  Its element is appended to `<body>`, out of reach of this package's styles, so an
+  application that wants it dressed needs the tooltip's own sheet:
+  `@use 'ng-hub-ui-utils/styles/tooltip';`. Without it the mark still works and still
+  speaks; only the label it opens comes out unstyled.
+
+  Three behaviours worth knowing before reaching for it. A field with a **floating label,
+  or no label at all**, still renders the row — the mark alone, at the end — because the
+  helper text has nowhere else to go once the block below stands down, and dropping it
+  silently is worse than a lone question mark. A **projected `hubFormText` template** keeps
+  its place under the control even in tooltip mode: the tooltip carries a string, so
+  handing it markup would throw the markup away without a word. And on a **checkbox or
+  switch**, where the `<label>` wraps the control itself rather than pointing at it, the
+  mark is lifted out into a row beside that label: nested inside it, activating the mark
+  would toggle the control — and a switch carrying a two-sentence warning is precisely the
+  one that must not flip because somebody asked what it does.
+
+### Changed
+
+- **`formText` and `formTextType` now live on `HubFieldControl`.** They were declared,
+  identically, in each of the nine fields; the tooltip needed one derived state built from
+  the pair, and nine copies of it is how the fields drift apart. No public API moves — an
+  input inherited from the base directive is still an input on the component.
+
+- **The horizontal label's grid column now survives being wrapped.** `_field.scss` placed
+  it with `.hub-field--horizontal > .hub-field__label`, a direct child selector. The
+  tooltip variant puts a row between the two, which would have taken the column away from
+  every horizontal field in the library — the kind of breakage that surfaces as "the form
+  looks wrong" three screens from the change. Both shapes are addressed now, and a spec
+  holds them there.
+
 ## [22.30.0] - 2026-09-02
 
 ### Added

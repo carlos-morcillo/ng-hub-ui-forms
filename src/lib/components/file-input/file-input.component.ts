@@ -20,7 +20,6 @@ import { Subscription } from 'rxjs';
 import { HubFileIconDirective } from '../../directives/file-icon.directive';
 import { HubFileDropzoneNoticeDirective } from '../../directives/file-dropzone-notice.directive';
 import { HubFilePreviewContext, HubFilePreviewDirective } from '../../directives/file-preview.directive';
-import { FormTextType, FormTextTypes } from '../../interfaces/common.interface';
 import {
 	HubFileItem,
 	HubFilePreview,
@@ -35,6 +34,7 @@ import { matchesAccept } from '../../utils/file-accept';
 import { fileKey } from '../../utils/file-key';
 import { HubFileValue, toFileArray } from '../../utils/file-value';
 import { uuid } from '../../utils/utils';
+import { HubTooltipDirective } from 'ng-hub-ui-utils';
 
 /**
  * Accessible file field with drag-and-drop, clipboard paste, per-file constraints, previews and
@@ -76,7 +76,7 @@ import { uuid } from '../../utils/utils';
  */
 @Component({
 	selector: 'hub-file-input',
-	imports: [NgTemplateOutlet, KeyValuePipe],
+	imports: [NgTemplateOutlet, KeyValuePipe, HubTooltipDirective],
 	templateUrl: './file-input.component.html',
 	styleUrl: './file-input.component.scss',
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -93,7 +93,6 @@ export class HubFileInputComponent extends HubFieldControl {
 	readonly #isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 	readonly #subscriptions = new Map<string, Subscription>();
 
-	protected readonly _formTextTypes = FormTextTypes;
 	protected readonly _items = signal<HubFileItem[]>([]);
 
 	/** Depth counter for `dragenter`/`dragleave`: children of the dropzone fire their own events. */
@@ -156,12 +155,6 @@ export class HubFileInputComponent extends HubFieldControl {
 
 	/** Overrides the auto-generated hint that summarizes the active constraints. Pass `''` to hide it. */
 	readonly hint = input<string | null>(null);
-
-	/** Helper text shown below the control. */
-	readonly formText = input<string>('');
-
-	/** Helper text placement. Only `bottom` is supported. */
-	readonly formTextType = input<FormTextType>(FormTextTypes.Bottom);
 
 	/** Extra CSS classes applied to the host element. */
 	readonly classlist = input<string>('');
@@ -760,6 +753,6 @@ export class HubFileInputComponent extends HubFieldControl {
 
 		// A screen reader ignores a live region whose text did not change; the zero-width space makes
 		// two consecutive identical messages differ.
-		this.announcement.set(this.announcement() === message ? `${message}​` : message);
+		this.announcement.set(this.announcement() === message ? `${message}\u200b` : message);
 	}
 }

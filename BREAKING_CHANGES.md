@@ -2,6 +2,24 @@
 
 This document tracks all breaking changes in the `ng-hub-ui-forms` library.
 
+## v22.31.0
+
+### `HubFieldControl` now declares `formText` and `formTextType`
+
+- **Change**: both inputs moved onto the exported base class
+  (`src/lib/shared/hub-field-control.ts`) so every field inherits one declaration instead of
+  repeating it. The nine fields in this package were updated with it.
+- **Impact**: a class of your own that extends `HubFieldControl` and declares its own `formText`
+  or `formTextType` **stops compiling**: `TS4114: This member must have an 'override' modifier
+  because it overrides a member in the base class 'HubFieldControl'`. This is not hypothetical —
+  `ng-hub-ui-signature` is exactly such a subclass and broke on it, which is how it was found.
+- **Migration**: delete your declaration and inherit the base one, which is `input<string>('')`
+  and `input<FormTextType>(FormTextTypes.Bottom)`. Only add `override` if you genuinely need a
+  different default; two declarations of one input is how they drift apart.
+- **Also worth knowing**: inheriting the input does not render the tooltip. The mark is drawn by
+  each field's own template, so a subclass that has not added a `.hub-field__label-row` will
+  accept `formTextType="tooltip"` and go on showing the block below.
+
 ## Version 22.29.0
 
 ### The calendar header abbreviates the month by default

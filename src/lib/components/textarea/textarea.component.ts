@@ -14,10 +14,11 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HubAutoresizeDirective } from '../../directives/autoresize.directive';
-import { FormTextType, FormTextTypes, HubLabelType, HubLabelTypes } from '../../interfaces/common.interface';
+import { HubLabelType, HubLabelTypes } from '../../interfaces/common.interface';
 import { HubAppendDirective } from '../../directives/append.directive';
 import { HubPrependDirective } from '../../directives/prepend.directive';
 import { HubFieldControl } from '../../shared/hub-field-control';
+import { HubTooltipDirective } from 'ng-hub-ui-utils';
 
 /**
  * Accessible multi-line text field with optional auto-resize, character counter and automatic
@@ -33,7 +34,7 @@ import { HubFieldControl } from '../../shared/hub-field-control';
  */
 @Component({
 	selector: 'hub-textarea',
-	imports: [NgTemplateOutlet, KeyValuePipe, FormsModule, HubAutoresizeDirective],
+	imports: [NgTemplateOutlet, KeyValuePipe, FormsModule, HubAutoresizeDirective, HubTooltipDirective],
 	templateUrl: './textarea.component.html',
 	styleUrl: './textarea.component.scss',
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -70,7 +71,6 @@ export class HubTextareaComponent extends HubFieldControl {
 	}
 
 	protected readonly _labelTypes = HubLabelTypes;
-	protected readonly _formTextTypes = FormTextTypes;
 	protected readonly _value = signal<string>('');
 
 	/** Label text. */
@@ -109,12 +109,6 @@ export class HubTextareaComponent extends HubFieldControl {
 	 * selectable, and it only loses the box. Implies `readonly`.
 	 */
 	readonly plaintext = input(false, { transform: booleanAttribute });
-
-	/** Helper text shown below the control. */
-	readonly formText = input<string>('');
-
-	/** Helper text placement. Only `bottom` is supported in the MVP. */
-	readonly formTextType = input<FormTextType>(FormTextTypes.Bottom);
 
 	/** Extra CSS classes applied to the host element. */
 	readonly classlist = input<string>('');

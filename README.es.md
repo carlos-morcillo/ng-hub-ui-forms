@@ -126,6 +126,41 @@ npm install ng-hub-ui-forms @angular/cdk
 
 ## ⚙️ Uso
 
+### Texto de ayuda
+
+Todos los campos aceptan `formText`, y `formTextType` dice dónde va.
+
+```html
+<!-- una frase: debajo, donde se lee sin tener que pedirla -->
+<hub-input label="Nombre" formText="Tal como aparece en la tarjeta." />
+
+<!-- más de una: tras un signo de interrogación al final de la fila de la etiqueta -->
+<hub-input
+	label="IBAN"
+	formTextType="tooltip"
+	formText="La cuenta en la que se abona la devolución. Debe pertenecer al titular de la tarjeta: una transferencia a un tercero la rechaza el banco."
+/>
+```
+
+La regla que zanja esto es **una frase debajo, más de una en el tooltip**. Un párrafo bajo cada campo
+convierte el formulario en un documento, empuja el siguiente campo fuera de la pantalla y no lo lee
+nadie que ya supiera para qué servía el campo.
+
+El signo se empuja al final de la fila de la etiqueta, así que una columna de campos alinea sus
+interrogaciones en vez de esparcirlas allí donde termine cada etiqueta. Es un `<button>` **junto** a
+la etiqueta y nunca dentro: activar una etiqueta enfoca el control que nombra, así que un signo
+anidado en ella abriría el tooltip _y_ metería el cursor en el campo. Su nombre accesible es el
+propio texto de ayuda.
+
+`formTextType="tooltip"` necesita la hoja de estilos del tooltip, que este paquete no arrastra por ti:
+
+```scss
+@use 'ng-hub-ui-utils/styles/tooltip';
+```
+
+Una plantilla proyectada con `hubFormText` conserva su bloque de abajo incluso en modo tooltip: el
+tooltip recibe una cadena, así que pedirle que lleve marcado lo descartaría en silencio.
+
 ### Input
 
 ```html
@@ -190,11 +225,11 @@ provideHubForms({
 #### Campos en texto plano
 
 `readonly` y `plaintext` son las dos mitades de un campo cerrado, y la diferencia está en para
-quién es el campo. `readonly` es un *estado* de un campo que alguien sigue rellenando, y un tema
+quién es el campo. `readonly` es un _estado_ de un campo que alguien sigue rellenando, y un tema
 puede darle caja: `--hub-input-readonly-bg`, `--hub-input-readonly-border-color`, `-color` y
-`-cursor` están para ajustarse. `plaintext` es para un valor que solo se *muestra* —un registro
+`-cursor` están para ajustarse. `plaintext` es para un valor que solo se _muestra_ —un registro
 abierto para consulta, una cifra que fijó el servidor, un campo que un plan ha bloqueado—. Ahí
-la caja es ruido, y no tenerla es lo que `plaintext` *es*, no un color que le haya tocado.
+la caja es ruido, y no tenerla es lo que `plaintext` _es_, no un color que le haya tocado.
 
 > **Con los valores por defecto, `readonly` ya no dibuja caja**: los dos tokens valen
 > `transparent`, y es deliberado — un valor de solo lectura está para leerse y solo pierde el
@@ -205,8 +240,8 @@ la caja es ruido, y no tenerla es lo que `plaintext` *es*, no un color que le ha
 >
 > ```css
 > .hub-field--readonly {
->   --hub-input-readonly-bg: var(--hub-sys-surface-sunken);
->   --hub-input-readonly-border-color: var(--hub-sys-border-subtle);
+> 	--hub-input-readonly-bg: var(--hub-sys-surface-sunken);
+> 	--hub-input-readonly-border-color: var(--hub-sys-border-subtle);
 > }
 > ```
 
@@ -224,7 +259,6 @@ su etiqueta —una etiqueta y su valor son una sola cosa y deben leerse como par
 doble del relleno abajo mantiene el control exactamente a la altura de un campo editable, así que
 una rejilla que mezcle los dos sigue cuadrando. Si lo sustituyes por un solo valor, renuncias a
 una de las dos cosas.
-
 
 ```html
 <!-- se está rellenando, así que conserva la caja -->

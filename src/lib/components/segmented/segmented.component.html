@@ -5,14 +5,36 @@
 	[class.hub-field--invalid]="isInvalid"
 	[class.hub-field--valid]="showsValid"
 >
-	@if (label() || required()) {
+	@if (showsFormTextTooltip()) {
+		<!--
+			The row exists because the hint does, not because the label does. A field with a
+			floating label — or no label at all — still has helper text to offer, and the mark
+			is the only place left to offer it from once the block below stands down.
+		-->
+		<div class="hub-field__label-row">
+			@if (label() || required()) {
+				<ng-container [ngTemplateOutlet]="hubFieldLabelTpl" />
+			}
+			<button
+				type="button"
+				class="hub-field__hint"
+				[attr.aria-label]="formText()"
+				[hubTooltip]="formText()"
+				hubTooltipPlacement="top"
+			></button>
+		</div>
+	} @else if (label() || required()) {
+		<ng-container [ngTemplateOutlet]="hubFieldLabelTpl" />
+	}
+
+	<ng-template #hubFieldLabelTpl>
 		<label [for]="id" class="hub-field__label">
 			{{ label() }}
 			@if (required()) {
 				<span class="hub-field__required" aria-hidden="true">*</span>
 			}
 		</label>
-	}
+	</ng-template>
 
 	<div class="hub-field__body">
 		<div
@@ -61,7 +83,7 @@
 		</div>
 	</div>
 
-	@if (formText() || formTextTmp()) {
+	@if (!showsFormTextTooltip() && (formText() || formTextTmp())) {
 		<div class="hub-field__form-text" [class.hub-field__form-text--disabled]="disabled()">
 			@if (formTextTmp()) {
 				<ng-container [ngTemplateOutlet]="formTextTmp()!"></ng-container>

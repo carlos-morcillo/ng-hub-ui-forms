@@ -7,6 +7,13 @@
 //
 //   // styles.scss
 //   @use 'ng-hub-ui-forms/styles';
+//
+// Fields using `formTextType="tooltip"` also need the tooltip's own sheet, which
+// ships with `ng-hub-ui-utils`: the tooltip element is appended to `<body>`, out of
+// reach of anything declared here. Without it the mark still works and still speaks
+// to a screen reader, but the label it opens is unstyled.
+//
+//   @use 'ng-hub-ui-utils/styles/tooltip';
 // ─────────────────────────────────────────────────────────────────────────
 
 @use 'tokens';

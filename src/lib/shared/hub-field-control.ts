@@ -1,6 +1,7 @@
 import {
 	AfterContentInit,
 	ChangeDetectorRef,
+	computed,
 	contentChild,
 	contentChildren,
 	Directive,
@@ -14,6 +15,7 @@ import {
 import { ControlContainer, ControlValueAccessor, NgControl, ValidationErrors } from '@angular/forms';
 import { takeUntil } from 'rxjs';
 import { HubFormTextDirective } from '../directives/form-text.directive';
+import { FormTextType, FormTextTypes } from '../interfaces/common.interface';
 import { HubValidationErrorDirective } from '../directives/validation-error.directive';
 import { HUB_FORMS_CONFIG } from '../services/forms-config';
 import { HubFormControl } from './hub-form-control';
@@ -56,6 +58,19 @@ export abstract class HubFieldControl extends HubFormControl implements ControlV
 	/** Query for a projected `hubFormText` helper template. */
 	readonly formTextTmp = contentChild(HubFormTextDirective, { read: TemplateRef });
 
+	/** Helper text for the field. Where it is shown is {@link formTextType}'s business. */
+	readonly formText = input<string>('');
+
+	/**
+	 * Where the helper text is shown: under the control (`bottom`, the default) or behind
+	 * a question mark at the end of the label row (`tooltip`).
+	 *
+	 * The rule the product settled on: one sentence goes below, where it is read without
+	 * being asked for; anything longer goes in the tooltip, because a paragraph under
+	 * every field turns a form into a document and pushes the next field off the screen.
+	 */
+	readonly formTextType = input<FormTextType>(FormTextTypes.Bottom);
+
 	/** Query for projected `hubValidationError` templates. */
 	readonly errorTpts = contentChildren(HubValidationErrorDirective);
 
@@ -75,6 +90,19 @@ export abstract class HubFieldControl extends HubFormControl implements ControlV
 
 	/** Optional success message shown below the control while {@link showsValid}. */
 	readonly validFeedback = input<string | null>(null);
+
+	/**
+	 * Whether the helper text is carried by the label-row trigger instead of the block
+	 * below the control.
+	 *
+	 * Gated on `formText()` having content, and that is the whole reason a projected
+	 * `hubFormText` template still renders below in tooltip mode: the tooltip takes a
+	 * string, so asking it to carry markup would drop the markup silently. A field with
+	 * a template keeps its helper text where the template can actually be shown.
+	 */
+	protected readonly showsFormTextTooltip = computed(
+		() => this.formTextType() === FormTextTypes.Tooltip && !!this.formText()
+	);
 
 	onChange: (value: any) => void = () => {};
 	onTouched: () => void = () => {};

@@ -20,7 +20,7 @@ import { isPlatformBrowser, KeyValuePipe, NgTemplateOutlet } from '@angular/comm
 import { HubLabelType, HubLabelTypes } from '../../interfaces/common.interface';
 import { HubSegmentedOptionDirective } from '../../directives/segmented-option.directive';
 import { HubFieldControl } from '../../shared/hub-field-control';
-import { resolveHubAccent } from 'ng-hub-ui-utils';
+import { HubTooltipDirective, resolveHubAccent } from 'ng-hub-ui-utils';
 
 /** A single choice rendered by {@link HubSegmentedComponent}. */
 export interface HubSegmentedOption {
@@ -61,7 +61,7 @@ export type HubSegmentedSize = 'sm' | 'md' | 'lg';
 @Component({
 	selector: 'hub-segmented',
 	standalone: true,
-	imports: [NgTemplateOutlet, KeyValuePipe],
+	imports: [NgTemplateOutlet, KeyValuePipe, HubTooltipDirective],
 	templateUrl: './segmented.component.html',
 	styleUrl: './segmented.component.scss',
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -104,9 +104,6 @@ export class HubSegmentedComponent extends HubFieldControl {
 
 	/** Label display type (`stacked`, `horizontal`). */
 	readonly labelType = input<HubLabelType>(this._labelTypes.Stacked);
-
-	/** Helper text shown below the control. */
-	readonly formText = input<string>('');
 
 	/** When `true`, options toggle independently and the value is an array. */
 	readonly multiple = input(false, { transform: booleanAttribute });

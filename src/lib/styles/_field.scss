@@ -47,10 +47,21 @@ hub-timepicker {
 
 		// Label sits in the first column, aligned to the control row. It is capped
 		// at the max width and ellipsizes when its text is longer.
-		> .hub-field__label {
+		//
+		// Two selectors because the label is not always a direct child: with
+		// `formTextType="tooltip"` it shares a `__label-row` with the hint trigger.
+		// Whichever of the two the grid actually lays out takes the column and the cap;
+		// the ellipsis always belongs to the label, wrapped or not.
+		> .hub-field__label,
+		> .hub-field__label-row {
 			grid-column: 1;
-			display: block;
 			max-width: var(--hub-form-label-horizontal-max-width);
+		}
+
+		> .hub-field__label,
+		> .hub-field__label-row > .hub-field__label {
+			display: block;
+			min-width: 0;
 			overflow: hidden;
 			white-space: nowrap;
 			text-overflow: ellipsis;
@@ -77,11 +88,86 @@ hub-timepicker {
 		font-weight: var(--hub-label-font-weight);
 	}
 
+	/**
+	 * Label row: the label at one end, the helper-text trigger at the other.
+	 *
+	 * Only rendered when a field asks for `formTextType="tooltip"`. The label stays a
+	 * direct child of `.hub-field` in every other case, because that is what the
+	 * horizontal grid and a good deal of existing markup address.
+	 *
+	 * The mark is pushed to the end with an auto margin rather than with
+	 * `justify-content: space-between`, which only separates two children: a floating-label
+	 * field puts the hint in the row on its own, and space-between would leave it hanging at
+	 * the start. The auto margin sends it to the end either way, so a column of fields lines
+	 * its question marks up instead of scattering them wherever each label happens to stop.
+	 */
+	&__label-row {
+		display: flex;
+		align-items: center;
+		gap: var(--hub-form-field-gap);
+
+		> .hub-field__label {
+			min-width: 0;
+		}
+
+		> .hub-field__hint {
+			margin-inline-start: auto;
+		}
+	}
+
 	&__required {
 		color: var(--hub-form-required-color);
 	}
 
-	&--disabled .hub-field__label {
+	/**
+	 * The helper-text trigger — a question mark in a circle.
+	 *
+	 * A `<button>`, and deliberately outside the `<label>`: activating a label focuses
+	 * the control it names, so a trigger nested in one would fire the tooltip *and*
+	 * jump the caret into the field. Its accessible name is the helper text itself, so
+	 * a screen reader gets what a pointer gets from hovering, without waiting for a
+	 * tooltip it cannot see.
+	 */
+	&__hint {
+		flex: none;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		inline-size: var(--hub-form-hint-size);
+		block-size: var(--hub-form-hint-size);
+		padding: 0;
+		color: var(--hub-form-hint-color);
+		background-color: var(--hub-form-hint-bg);
+		border: var(--hub-form-hint-border-width) solid var(--hub-form-hint-border-color);
+		border-radius: 50%;
+		font-family: inherit;
+		font-size: var(--hub-form-hint-font-size);
+		font-weight: var(--hub-form-hint-font-weight);
+		line-height: 1;
+		cursor: help;
+		transition: var(--hub-form-transition);
+
+		// The glyph is decorative: the button already carries the text as its name, and
+		// an `aria-label` overrides generated content anyway.
+		&::before {
+			content: '?';
+		}
+
+		&:hover {
+			color: var(--hub-form-hint-hover-color);
+			background-color: var(--hub-form-hint-hover-bg);
+			border-color: var(--hub-form-hint-hover-border-color);
+		}
+
+		&:focus-visible {
+			outline: 0;
+			color: var(--hub-form-hint-hover-color);
+			box-shadow: 0 0 0 var(--hub-form-focus-ring-width) var(--hub-form-focus-ring-color);
+		}
+	}
+
+	&--disabled .hub-field__label,
+	&--disabled .hub-field__hint {
 		opacity: var(--hub-form-disabled-opacity);
 	}
 }
