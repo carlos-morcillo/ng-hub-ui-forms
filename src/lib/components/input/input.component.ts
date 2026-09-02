@@ -169,6 +169,20 @@ export class HubInputComponent extends HubFieldControl {
 	/** Whether the input is read-only. */
 	readonly readonly = input(false, { transform: booleanAttribute });
 
+	/**
+	 * Render the value as plain text, with no field styling around it.
+	 *
+	 * For the value that belongs in a form but is not the reader's to change: a figure
+	 * the server settled, a field a plan has locked, the whole of a record shown for
+	 * consultation. It stays a real `<input>` — so the label keeps pointing at a control
+	 * and the text stays selectable — and only loses the box, which on something that
+	 * refuses input was a promise it could not keep.
+	 *
+	 * Implies `readonly`: a field with no box that still accepted typing would be an
+	 * invisible input.
+	 */
+	readonly plaintext = input(false, { transform: booleanAttribute });
+
 	/** Helper text shown below the control. */
 	readonly formText = input<string>('');
 
@@ -222,9 +236,17 @@ export class HubInputComponent extends HubFieldControl {
 		() => this.indeterminate() && this.type() === this._inputFormats.Checkbox
 	);
 
+	/**
+	 * Read-only as the control actually behaves, which is what the template binds to.
+	 *
+	 * `plaintext` implies it, so the two never have to be passed together and cannot be
+	 * passed in disagreement.
+	 */
+	protected readonly _isReadonly = computed<boolean>(() => this.readonly() || this.plaintext());
+
 	/** Whether the internal clear button should be shown right now. */
 	protected readonly showClear = computed<boolean>(
-		() => this.clearable() && !this.disabled() && !this.readonly() && this._value() != null && this._value() !== ''
+		() => this.clearable() && !this.disabled() && !this._isReadonly() && this._value() != null && this._value() !== ''
 	);
 
 	/** Whether an inline-start affix (projected prefix) is present. */

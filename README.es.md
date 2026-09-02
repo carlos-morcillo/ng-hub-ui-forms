@@ -187,6 +187,67 @@ provideHubForms({
 });
 ```
 
+#### Campos en texto plano
+
+`readonly` y `plaintext` son las dos mitades de un campo cerrado, y la diferencia está en para
+quién es el campo. `readonly` es un *estado* de un campo que alguien sigue rellenando, y un tema
+puede darle caja: `--hub-input-readonly-bg`, `--hub-input-readonly-border-color`, `-color` y
+`-cursor` están para ajustarse. `plaintext` es para un valor que solo se *muestra* —un registro
+abierto para consulta, una cifra que fijó el servidor, un campo que un plan ha bloqueado—. Ahí
+la caja es ruido, y no tenerla es lo que `plaintext` *es*, no un color que le haya tocado.
+
+> **Con los valores por defecto, `readonly` ya no dibuja caja**: los dos tokens valen
+> `transparent`, y es deliberado — un valor de solo lectura está para leerse y solo pierde el
+> cromo que promete que puedes escribir en él. Sin tocar nada, los dos se diferencian en el
+> relleno horizontal (12px frente a 0), la anchura del borde lateral, el cursor y las
+> affordances. Fija los dos tokens y el modo lectura recupera la caja que trae el `readonly` de
+> Bootstrap, mientras `plaintext` sigue plano:
+>
+> ```css
+> .hub-field--readonly {
+>   --hub-input-readonly-bg: var(--hub-sys-surface-sunken);
+>   --hub-input-readonly-border-color: var(--hub-sys-border-subtle);
+> }
+> ```
+
+El valor retrocede un tono. Dentro de una caja, la caja hace la separación; sin ella, etiqueta y
+valor tenían el mismo color y dos píxeles de diferencia de tamaño, así que una columna de ellos se
+leía como líneas indistinguibles. La etiqueta se deja exactamente como la de cualquier otro campo
+—mismos tokens, mismo peso, porque las etiquetas de un formulario mantienen un solo ritmo sea cual
+sea el estado de cada campo— y es `--hub-input-plaintext-color` el que mueve el valor, a `gray-700`
+frente al `gray-900` editable, con `--hub-input-plaintext-font-weight` un paso más ligero para
+que no compita con su propia etiqueta.
+
+El relleno vertical se desplaza en vez de encogerse, con `--hub-input-plaintext-padding-block`:
+nada arriba y todo el relleno vertical del campo abajo. Nada arriba deja el valor justo debajo de
+su etiqueta —una etiqueta y su valor son una sola cosa y deben leerse como pareja— mientras que el
+doble del relleno abajo mantiene el control exactamente a la altura de un campo editable, así que
+una rejilla que mezcle los dos sigue cuadrando. Si lo sustituyes por un solo valor, renuncias a
+una de las dos cosas.
+
+
+```html
+<!-- se está rellenando, así que conserva la caja -->
+<hub-input formControlName="reference" label="Referencia" [readonly]="true" />
+
+<!-- solo se está leyendo, así que la caja sobra -->
+<hub-input formControlName="customer" label="Cliente" [plaintext]="true" />
+<hub-textarea formControlName="notes" label="Notas" [rows]="3" [plaintext]="true" />
+```
+
+Está modelado sobre el `.form-control-plaintext` de Bootstrap, y es deliberado: el control sigue
+siendo un `<input>` / `<textarea>` real, así que el `<label for>` sigue apuntando a algo
+etiquetable y el texto se puede seleccionar. Un `<span>` habría roto las dos cosas sin dejar de
+parecer correcto.
+
+El relleno horizontal desaparece y el borde se vuelve transparente **sin perder su anchura**, de
+modo que un valor en texto plano cae sobre la misma línea base que un vecino editable y un
+formulario que mezcla los dos no se escalona. `plaintext` implica `readonly` y las dos
+presentaciones son excluyentes, así que nunca pueden pasarse en desacuerdo. Todas las
+affordances se van con la caja: el botón de limpiar, un caret proyectado, el icono de un
+datepicker y el contador de caracteres de un textarea, que dice cuánto espacio queda para
+escribir y por tanto promete que se puede escribir.
+
 ### Select
 
 ```html

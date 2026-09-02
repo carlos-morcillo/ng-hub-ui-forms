@@ -106,6 +106,26 @@
 	--hub-input-readonly-border-color: transparent;
 	--hub-input-readonly-color: var(--hub-input-color);
 	--hub-input-readonly-cursor: default;
+
+	// Plain-text fields. The label is left exactly as every other field's - same tokens, same
+	// weight - because a form's labels have to keep one rhythm whatever state each field is
+	// in. It is the value that steps back a shade: measured, label and value came out the
+	// same colour, and inside a box that is fine because the box separates them. With no box
+	// the value carries the signal on its own, and a touch lighter says "this is not being
+	// edited" without breaking the column.
+	--hub-input-plaintext-color: var(--hub-ref-color-gray-700, #495057);
+
+	// The block padding a plain-text control keeps: none above, the field's whole vertical
+	// padding below. Two things at once, and neither is negotiable on its own. Nothing above
+	// puts the value right under its label, because a label and its value are one thing and
+	// should read as a pair. Twice the padding below keeps the total height exactly an
+	// editable field's, so a grid mixing the two still lines up - by construction rather than
+	// by a number that would drift the moment `--hub-input-padding-y` moved.
+	--hub-input-plaintext-padding-block: 0 calc(var(--hub-input-padding-y) * 2);
+
+	// A shade lighter than an editable value, and a step lighter in weight. A value nobody is
+	// typing is being read, not filled, and it should not shout over its own label.
+	--hub-input-plaintext-font-weight: 300;
 	--hub-input-transition: var(--hub-form-transition);
 	--hub-input-wrapper-gap: var(--hub-ref-space-2, 0.5rem);
 

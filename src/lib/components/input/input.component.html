@@ -3,7 +3,8 @@
 	[class.hub-field--horizontal]="!isCheckable() && (labelType() === _labelTypes.Horizontal || (!label() && required()))"
 	[class.hub-input--checkable]="isCheckable()"
 	[class.hub-field--disabled]="disabled()"
-	[class.hub-field--readonly]="readonly()"
+	[class.hub-field--readonly]="readonly() && !plaintext()"
+	[class.hub-field--plaintext]="plaintext()"
 	[class.hub-field--invalid]="isInvalid"
 	[class.hub-field--valid]="showsValid"
 >
@@ -19,7 +20,7 @@
 				[checked]="$any(_value())"
 				[indeterminate]="isIndeterminate()"
 				(change)="setValue($event)"
-				[disabled]="disabled() || readonly()"
+				[disabled]="disabled() || _isReadonly()"
 				[required]="!!required()"
 				[attr.aria-invalid]="isInvalid"
 			/>
@@ -49,7 +50,7 @@
 						<button
 							type="button"
 							class="hub-input__counter-btn"
-							[disabled]="disabled() || readonly() || (min() != null && $any(_value()) <= $any(min()))"
+							[disabled]="disabled() || _isReadonly() || (min() != null && $any(_value()) <= $any(min()))"
 							aria-label="Decrease"
 							(click)="subtract()"
 						>
@@ -67,14 +68,14 @@
 							[attr.max]="max() ?? null"
 							[step]="step()"
 							[disabled]="disabled()"
-							[readonly]="readonly()"
+							[readonly]="_isReadonly()"
 							[required]="!!required()"
 							[attr.aria-invalid]="isInvalid"
 						/>
 						<button
 							type="button"
 							class="hub-input__counter-btn"
-							[disabled]="disabled() || readonly() || (max() != null && $any(_value()) >= $any(max()))"
+							[disabled]="disabled() || _isReadonly() || (max() != null && $any(_value()) >= $any(max()))"
 							aria-label="Increase"
 							(click)="add()"
 						>
@@ -115,13 +116,13 @@
 						<button
 							type="button"
 							class="hub-input__file-button"
-							[disabled]="disabled() || readonly()"
+							[disabled]="disabled() || _isReadonly()"
 							(click)="triggerFile()"
 						>
 							{{ buttonLabel() }}
 						</button>
 						<span class="hub-input__file-name">{{ fileLabel() || placeholder() }}</span>
-						@if (fileLabel() && !disabled() && !readonly()) {
+						@if (fileLabel() && !disabled() && !_isReadonly()) {
 							<button type="button" class="hub-input__file-clear" aria-label="Clear" (click)="clearFile()">
 								&times;
 							</button>
@@ -168,7 +169,7 @@
 							[attr.max]="max() ?? null"
 							[step]="step()"
 							[disabled]="disabled()"
-							[readonly]="readonly()"
+							[readonly]="_isReadonly()"
 							[required]="!!required()"
 							[attr.aria-invalid]="isInvalid"
 							[attr.autocomplete]="autocomplete() || null"

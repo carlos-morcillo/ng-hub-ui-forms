@@ -5,34 +5,65 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [22.29.0] - 2026-09-01
+## [22.30.0] - 2026-09-02
 
-### Changed
+### Added
 
-- **`hub-datepicker`: the panel is as wide as the day grid, and stays that width all
-  year.** It used `width: max-content`, so it sized itself to whichever child was widest
-  — and with the month spelled out that child was the header, not the calendar. Paging
-  from «Mayo de 2026» to «Septiembre de 2026» grew the whole panel around a grid whose
-  seven columns never moved: measured across twelve months in Spanish, 270px to 318px.
-  The width is now arithmetic on the grid's own tokens — seven cells, the six gaps
-  between them, and the panel's padding — and the header title is a flexible item that
-  takes what the nav groups leave. Measured after: 268px flat, every month.
+- **`plaintext` on `hub-input` and `hub-textarea`: the value with no field around it.**
+  The other half of `readonly`, and the difference is who the field is for. `readonly`
+  still belongs to somebody filling a form in — it is a *state* of an editable field, and
+  a design system can give it a box: `--hub-input-readonly-bg`,
+  `--hub-input-readonly-border-color`, `-color` and `-cursor` are there to be set.
+  `plaintext` is for the value that is simply being *shown*: a record open for
+  consultation, a figure the server settled, a field a plan has locked. It is not a state
+  a theme can put a box back on — having none is what it is.
 
-    The period grid already declared `min-width: cell-size * 7` with the note that «three
-    wide cells read as the same block as seven narrow ones»; the panel simply never
-    honoured it.
+  Worth knowing before you reach for it: **at the shipped defaults `readonly` already
+  draws no box** — both those token defaults are `transparent`, deliberately, since a
+  read-only value is there to be read and loses only the chrome that promises you can type
+  in it. Untouched, the two differ in the horizontal padding (12px against 0), the inline
+  border width, the cursor, and the affordances below; set
+  `--hub-input-readonly-bg` and `--hub-input-readonly-border-color` and read-only takes the
+  boxed look Bootstrap's own `readonly` ships with, while `plaintext` stays flat. Verified
+  end to end in a browser rather than assumed.
 
-- **The header writes the month abbreviated by default** (`ago 2026`, not `agosto de
-2026`). This is what makes the width above possible rather than merely stable: once the
-  two nav groups have taken theirs, 104px are left for the title, and the longest Spanish
-  month needs 152px spelled out. New input `[monthFormat]` takes it back to `'long'` for
-  a consumer whose panel has room — the header's casing rules still apply to the phrase,
-  particle and all.
+  Modelled on Bootstrap's `.form-control-plaintext`, deliberately — it is the shape
+  every reader already knows, and it solves the hard part: the control stays a real
+  `<input>`/`<textarea>`, so the `<label for>` still points at something labelable and
+  the text stays selectable. A `<span>` would have broken both, silently: the field goes
+  on looking right while the screen reader stops announcing what it is reading.
 
-- `--hub-datepicker-grid-gap` (default `0.125rem`) replaces the literal the day grid used,
-  because the panel now measures itself with the same value and two literals drift.
+  The horizontal padding goes and the border turns transparent **without losing its
+  width**, and the vertical padding moves rather than shrinks: none above, the field's
+  whole vertical padding below. That buys both things at once. Nothing above puts the value
+  directly under its label — the gap closes from 10px to 4px, because a label and its value
+  are one thing and should read as a pair. Twice the padding below holds the total at
+  exactly an editable field's height, measured at 38px against 38px, so a grid mixing the
+  two still lines up. It is written as `calc(var(--hub-input-padding-y) * 2)` rather than a
+  literal, so it cannot drift if that padding ever moves. `plaintext` implies `readonly`, so
+  the two cannot be passed in disagreement, and the two presentations are exclusive —
+  `hub-field--plaintext` never carries `hub-field--readonly`, which would put the box
+  back.
 
-- **The header now abbreviates the month by default**, which is a visible change on every datepicker and one the compiler cannot warn about. Announced in `BREAKING_CHANGES.md`, with the two-part migration: `[monthFormat]="'long'"` asks for the old form back, and the panel has to be widened at `:root` for it to fit.
+  Every affordance goes with the box, because each one offers a choice the field is no
+  longer making: the input's clear button, a projected select's caret and clear, a
+  datepicker's icon, a textarea's drag handle — and its character counter, which tells
+  you how much room is left to type and so promises typing. A `hub-textarea` with
+  `[counter]` shown as plain text was still printing `12 / 200` under a field with no
+  box; it no longer renders it.
+
+  The value steps back a shade, through `--hub-input-plaintext-color`. Measured on the
+  documentation site, label and value came out at exactly the same colour, separated by 2px
+  of size and one weight step: enough inside a box, which does the separating, and not
+  enough once the box is gone — a column of them read as undifferentiated lines. **The
+  label is left exactly as it is on every other field**, on the same tokens and the same
+  weight, because a form's labels have to keep one rhythm whatever state each field is in.
+  It is the value that moves: `gray-700` against the editable `gray-900`, and one weight
+  step lighter through `--hub-input-plaintext-font-weight`, so it stops competing with its
+  own label. Enough to say it is not being edited, not enough to read as disabled — 8.18:1
+  against the page, so it clears AAA. Verify the weight against your own font: `system-ui`
+  has a light face and renders it 2.5px narrower over a 29-character string, but a family
+  without one will synthesise or ignore it.
 
 ## [22.29.0] - 2026-09-01
 

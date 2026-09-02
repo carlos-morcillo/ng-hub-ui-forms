@@ -2,7 +2,8 @@
 	class="hub-field hub-textarea"
 	[class.hub-field--horizontal]="labelType() === _labelTypes.Horizontal || (!label() && required())"
 	[class.hub-field--disabled]="disabled()"
-	[class.hub-field--readonly]="readonly()"
+	[class.hub-field--readonly]="readonly() && !plaintext()"
+	[class.hub-field--plaintext]="plaintext()"
 	[class.hub-field--invalid]="isInvalid"
 	[class.hub-field--valid]="showsValid"
 >
@@ -42,7 +43,7 @@
 				[attr.maxlength]="maxlength()"
 				[placeholder]="placeholder()"
 				[disabled]="disabled()"
-				[readonly]="readonly()"
+				[readonly]="readonly() || plaintext()"
 				[required]="!!required()"
 				[attr.aria-invalid]="isInvalid"
 				[style.width]="cols() ? 'auto' : '100%'"
@@ -58,7 +59,8 @@
 		</div>
 	</div>
 
-	@if (counter()) {
+	<!-- A counter tells you how much room is left to type, which promises typing. -->
+	@if (counter() && !plaintext()) {
 		<div class="hub-textarea__counter" [class.hub-field__form-text--disabled]="disabled()">{{ counterText() }}</div>
 	}
 

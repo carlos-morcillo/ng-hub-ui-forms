@@ -236,3 +236,72 @@ hub-timepicker {
 		border-color: var(--hub-form-invalid-border-color);
 	}
 }
+
+/**
+ * Plain-text fields: the value with no field around it.
+ *
+ * The other half of read-only, and the difference is who the field is for.
+ * `--readonly` still belongs to somebody filling a form in — it keeps the box so the
+ * field holds its place in the row and looks like the editable ones beside it, only
+ * shut. `--plaintext` is for the value that is simply being *shown*: a record open for
+ * consultation, a figure the server settled, a field a plan has locked. There the box
+ * is noise, and a screen full of them reads as a form that refuses to work.
+ *
+ * Modelled on Bootstrap's `.form-control-plaintext`, deliberately: it is the shape
+ * every reader already knows, and it solves the hard part — the control stays a real
+ * `<input>`/`<textarea>`, so the `<label for>` still points at something labelable and
+ * the text stays selectable. A `<span>` would have broken both.
+ *
+ * The horizontal padding goes and the border turns transparent **without losing its
+ * width**. That is the whole trick: the text lands on the same baseline as an editable
+ * neighbour in the same grid, so a form mixing the two does not stagger.
+ */
+.hub-field--plaintext {
+	.hub-field__control,
+	.hub-input__control,
+	.hub-textarea__control,
+	.hub-select__control {
+		padding-inline: 0;
+		padding-block: var(--hub-input-plaintext-padding-block);
+		font-weight: var(--hub-input-plaintext-font-weight);
+		color: var(--hub-input-plaintext-color);
+		background-color: transparent;
+		border-color: transparent;
+		border-width: var(--hub-input-border-width) 0;
+		box-shadow: none;
+		cursor: text;
+	}
+
+	// Nothing here answers to being focused, but the control still takes focus — it is
+	// still an input, and taking it away would strand keyboard users mid-form.
+	.hub-field__control:focus,
+	.hub-field__control:focus-visible,
+	.hub-input__control:focus,
+	.hub-textarea__control:focus,
+	.hub-select__control.ng-select-focused {
+		border-color: transparent;
+		box-shadow: none;
+		outline: none;
+	}
+
+	// A textarea shown as plain text is a paragraph, not a box you can drag open.
+	.hub-textarea__control {
+		resize: none;
+	}
+
+	// Every affordance promises a choice that is not on offer here.
+	.hub-select__control {
+		.ng-arrow-wrapper,
+		.ng-clear-wrapper {
+			display: none;
+		}
+	}
+
+	.hub-datepicker__icon {
+		display: none;
+	}
+
+	// Unlike read-only, no exception for the invalid border: a field with no box is not
+	// being filled in, so there is no input to reject. If the value is wrong, that is
+	// the record's problem and not this screen's.
+}

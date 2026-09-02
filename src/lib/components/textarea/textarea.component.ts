@@ -100,6 +100,16 @@ export class HubTextareaComponent extends HubFieldControl {
 	/** Whether the textarea is read-only. */
 	readonly readonly = input(false, { transform: booleanAttribute });
 
+	/**
+	 * Render the value as plain text, with no field styling around it.
+	 *
+	 * The multi-line half of the same idea `HubInputComponent.plaintext` carries: a value
+	 * that belongs in the form but is not the reader's to change. It stays a real
+	 * `<textarea>`, so the label keeps pointing at a control and the text stays
+	 * selectable, and it only loses the box. Implies `readonly`.
+	 */
+	readonly plaintext = input(false, { transform: booleanAttribute });
+
 	/** Helper text shown below the control. */
 	readonly formText = input<string>('');
 

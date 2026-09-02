@@ -210,6 +210,64 @@ provideHubForms({
 });
 ```
 
+#### Plain-text fields
+
+`readonly` and `plaintext` are the two halves of a shut field, and the difference is who the
+field is for. `readonly` is a *state* of a field somebody is still filling in, and a theme can
+give it a box — `--hub-input-readonly-bg`, `--hub-input-readonly-border-color`, `-color` and
+`-cursor` exist to be set. `plaintext` is for a value that is merely being *shown*: a record
+open for consultation, a figure the server settled, a field a plan has locked. There the box is
+noise, and having none is what `plaintext` is rather than a colour it happens to wear.
+
+> **At the shipped defaults `readonly` already draws no box** — both those token defaults are
+> `transparent`, deliberately: a read-only value is there to be read and loses only the chrome
+> that promises you can type in it. Untouched, the two differ in the horizontal padding (12px
+> against 0), the inline border width, the cursor, and the affordances. Set the two tokens and
+> read-only takes the boxed look Bootstrap's own `readonly` ships with, while `plaintext` stays
+> flat:
+>
+> ```css
+> .hub-field--readonly {
+>   --hub-input-readonly-bg: var(--hub-sys-surface-sunken);
+>   --hub-input-readonly-border-color: var(--hub-sys-border-subtle);
+> }
+> ```
+
+The value steps back a shade. Inside a box the box does the separating; with it gone, label and
+value were the same colour and two pixels apart in size, so a column of them read as
+undifferentiated lines. The label is left exactly as every other field's — same tokens, same
+weight, because a form's labels keep one rhythm whatever state each field is in — and
+`--hub-input-plaintext-color` moves the value instead, to `gray-700` against the editable
+`gray-900`, with `--hub-input-plaintext-font-weight` one step lighter so it does not compete
+with its own label.
+
+The vertical padding moves rather than shrinks, through `--hub-input-plaintext-padding-block`:
+none above, the field's whole vertical padding below. Nothing above puts the value directly under
+its label — a label and its value are one thing and should read as a pair — while twice the
+padding below holds the control at exactly an editable field's height, so a grid mixing the two
+still lines up. Replace it with a single value and you give up one of the two.
+
+
+```html
+<!-- being filled in, so it keeps the box -->
+<hub-input formControlName="reference" label="Reference" [readonly]="true" />
+
+<!-- merely being read, so the box goes -->
+<hub-input formControlName="customer" label="Customer" [plaintext]="true" />
+<hub-textarea formControlName="notes" label="Notes" [rows]="3" [plaintext]="true" />
+```
+
+Modelled on Bootstrap's `.form-control-plaintext`, deliberately: the control stays a real
+`<input>` / `<textarea>`, so the `<label for>` still points at something labelable and the text
+stays selectable. A `<span>` would have broken both while going on looking right.
+
+The horizontal padding goes and the border turns transparent **without losing its width**, so a
+plain-text value lands on the same baseline as an editable neighbour and a form mixing the two
+does not stagger. `plaintext` implies `readonly` and the two presentations are exclusive, so
+they can never be passed in disagreement. Every affordance goes with the box — the clear button,
+a projected caret, a datepicker icon, and a textarea's character counter, which tells you how
+much room is left to type and so promises typing.
+
 ### Select
 
 ```html
