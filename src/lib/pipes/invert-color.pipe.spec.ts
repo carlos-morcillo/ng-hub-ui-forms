@@ -27,9 +27,7 @@ describe('HubInvertColorPipe', () => {
 	});
 
 	it('expands and inverts a 3-digit shorthand hex', () => {
-		// #000 -> #000000 -> #ffffff
 		expect(pipe.transform('#000')).toBe('#ffffff');
-		// #fff -> #ffffff -> #000000
 		expect(pipe.transform('#fff')).toBe('#000000');
 	});
 
@@ -39,29 +37,43 @@ describe('HubInvertColorPipe', () => {
 	});
 
 	it('zero-pads single-digit inverted components', () => {
-		// #fefefe -> 255-254=1 -> '1' padded to '01'
 		expect(pipe.transform('#fefefe')).toBe('#010101');
 	});
 
+	it('now inverts any CSS colour, not just hex', () => {
+		expect(pipe.transform('rgb(51 102 153)')).toBe('#cc9966');
+		expect(pipe.transform('white')).toBe('#000000');
+		expect(pipe.transform('hsl(0 100% 50%)')).toBe('#00ffff');
+	});
+
+	it('preserves alpha when inverting a translucent colour', () => {
+		expect(pipe.transform('rgba(0, 0, 0, 0.5)')).toBe('#ffffff80');
+	});
+
 	it('returns #000000 for bright colors when bw is true', () => {
-		// white luminance is well above 186
 		expect(pipe.transform('#ffffff', true)).toBe('#000000');
 	});
 
-	it('returns #FFFFFF for dark colors when bw is true', () => {
-		// black luminance is 0, below 186
-		expect(pipe.transform('#000000', true)).toBe('#FFFFFF');
+	it('returns #ffffff for dark colors when bw is true', () => {
+		expect(pipe.transform('#000000', true)).toBe('#ffffff');
 	});
 
-	it('uses the luminance boundary correctly when bw is true', () => {
-		// #c0c0c0 (192) luminance = 192 > 186 -> black
-		expect(pipe.transform('#c0c0c0', true)).toBe('#000000');
-		// #808080 (128) luminance = 128 <= 186 -> white
-		expect(pipe.transform('#808080', true)).toBe('#FFFFFF');
+	it('sides with the design-system token on saturated accents', () => {
+		// The old YIQ `> 186` rule and the WCAG ratio both mispredict these; the default
+		// metric matches what `--hub-sys-color-*-on` paints.
+		expect(pipe.transform('#0d6efd', true)).toBe('#ffffff');
+		expect(pipe.transform('#198754', true)).toBe('#ffffff');
+		expect(pipe.transform('#ffc107', true)).toBe('#000000');
 	});
 
-	it('throws for an invalid hex length', () => {
-		expect(() => pipe.transform('#12345')).toThrowError('Invalid HEX color.');
-		expect(() => pipe.transform('abcd')).toThrowError('Invalid HEX color.');
+	it('exposes the alternative contrast metrics', () => {
+		expect(pipe.transform('#0d6efd', true, 'wcag')).toBe('#000000');
+		expect(pipe.transform('#0d6efd', true, 'apca')).toBe('#ffffff');
+	});
+
+	it('returns #000000 instead of throwing on input it cannot resolve', () => {
+		expect(pipe.transform('#12345')).toBe('#000000');
+		expect(pipe.transform('not-a-colour')).toBe('#000000');
+		expect(pipe.transform('var(--x)')).toBe('#000000');
 	});
 });

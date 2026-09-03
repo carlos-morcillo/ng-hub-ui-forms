@@ -5,6 +5,21 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.32.0] - 2026-09-03
+
+### Changed
+
+- **`HubInvertColorPipe` accepts any CSS colour and no longer throws.** It parsed hex only, and
+  raised `Error('Invalid HEX color.')` on anything else — an exception thrown from a template,
+  where nothing can catch it. It now resolves `rgb()`, `hsl()`, `oklch()`, `oklab()`, named
+  colours and 4- and 8-digit hex through `parseColor()` from `ng-hub-ui-utils`, preserves alpha
+  when inverting, and returns `#000000` for input it cannot resolve. Bare hex without the leading
+  `#` keeps working.
+
+- **`bw: true` now decides by perceptual lightness** rather than by the YIQ `> 186` threshold, and
+  a third `metric` argument selects `'lightness'` (default), `'apca'` or `'wcag'`. See
+  `BREAKING_CHANGES.md`: the returned colour changes for a large share of mid-light inputs.
+
 ## [22.31.0] - 2026-09-02
 
 ### Added

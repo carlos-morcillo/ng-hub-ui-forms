@@ -2,6 +2,34 @@
 
 This document tracks all breaking changes in the `ng-hub-ui-forms` library.
 
+## v22.32.0
+
+### `HubInvertColorPipe` with `bw: true` returns a different colour for mid-light inputs
+
+- **Change**: the black-or-white decision used the YIQ luma threshold
+  `r * 0.299 + g * 0.587 + b * 0.114 > 186`. It now thresholds OKLCh perceptual lightness at
+  0.62, which is the same decision the `--hub-sys-color-*-on` token computes in CSS.
+- **Why**: the pipe and the stylesheet were answering the same question with two different rules,
+  so the same accent could get white ink from one and black from the other. The token is the one
+  that paints the components, so the pipe follows it.
+- **Impact**: measured over the sRGB cube, **41.6%** of colours change result, all in the same
+  direction — where YIQ returned white, the new rule returns black. The affected band is mid-light
+  colours; the ends are unchanged. Anything asserting the pipe's output on such a colour will fail,
+  and any UI relying on it will repaint. Note also that the white it returns is now lowercase
+  `#ffffff` rather than `#FFFFFF`.
+- **Migration**: pass `'wcag'` as the third argument to score the two candidates by the WCAG 2
+  ratio, or `'apca'` for APCA. Neither reproduces YIQ exactly — nothing does, because YIQ is not a
+  contrast measure — so if the old output mattered somewhere specific, pin that colour explicitly.
+
+### `HubInvertColorPipe` no longer throws on invalid input
+
+- **Change**: `Error('Invalid HEX color.')` is gone; unresolvable input returns `#000000`.
+- **Impact**: only code that *relied* on the throw — a `try`/`catch` around a manual
+  `transform()` call, or a test asserting `toThrowError`. In a template the exception was
+  unrecoverable anyway, which is why it went.
+- **Migration**: check the input yourself with `isValidColor()` from `ng-hub-ui-utils` if you need
+  to distinguish "not a colour" from "black".
+
 ## v22.31.0
 
 ### `HubFieldControl` now declares `formText` and `formTextType`
