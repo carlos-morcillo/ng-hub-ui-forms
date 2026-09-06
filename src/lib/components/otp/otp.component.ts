@@ -71,7 +71,10 @@ export type HubOtpMode = 'numeric' | 'alphanumeric' | 'alpha';
 			}
 
 			<ng-template #hubFieldLabelTpl>
-				<label class="hub-field__label">
+				<label
+					class="hub-field__label"
+					[class.hub-field__label--visually-hidden]="labelType() === _labelTypes.VisuallyHidden"
+				>
 					{{ label() }}
 					@if (required()) {
 						<span class="hub-field__required" aria-hidden="true">*</span>

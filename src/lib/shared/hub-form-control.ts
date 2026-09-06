@@ -8,7 +8,6 @@ import {
 	Validators
 } from '@angular/forms';
 import { Subject, takeUntil, tap } from 'rxjs';
-import { isDefined } from '../utils/utils';
 
 /**
  * Base class for every form field in `ng-hub-ui-forms`.
@@ -82,17 +81,14 @@ export abstract class HubFormControl implements OnInit, AfterContentInit, OnDest
 
 		// Derive `required` from the reactive control's validators for BOTH reactive
 		// bindings (`formControlName` and `[formControl]`); template-driven bindings
-		// (ngModel) keep honoring the inline `required` input instead.
+		// (ngModel) keep honoring the inline `required` input instead. An inline
+		// `required` alongside a reactive control is silently overridden by the
+		// validators — documented behaviour, said in the README rather than written
+		// into the console of an application this library does not own.
 		const isReactiveBinding = this._control instanceof FormControlName || this._control instanceof FormControlDirective;
 
 		if (this._control?.control && isReactiveBinding) {
 			const control = this._control.control;
-
-			if (isDefined(this.required())) {
-				console.warn(
-					`You're using the inline property "required" with a reactive control. The property will be overwritten with the validators of the control.`
-				);
-			}
 
 			this.required.set(control.hasValidator(Validators.required));
 			control.statusChanges

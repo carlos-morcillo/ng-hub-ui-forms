@@ -51,10 +51,11 @@ Esta biblioteca forma parte del ecosistema **ng-hub-ui**:
 npm install ng-hub-ui-forms
 ```
 
-`@angular/cdk` es una peer dependency (la usan el overlay del datepicker y el select):
+`ng-hub-ui-utils` es una peer dependency (el datepicker abre su panel con su servicio de
+overlay y todos los campos pintan el texto de ayuda en tooltip con `hubTooltip`):
 
 ```bash
-npm install @angular/cdk
+npm install ng-hub-ui-utils
 ```
 
 ### 2. Importar
@@ -87,38 +88,62 @@ los vinculas con **Reactive Forms** y los errores de validación aparecen
 **automáticamente** a nivel de control, grupo y formulario. Los campos son
 standalone, `OnPush` y signal-native; el select es un fork mantenido de
 [ng-select](https://github.com/ng-select/ng-select) (ver [Créditos](#-créditos));
-el datepicker está construido desde cero sobre `Date` nativo y el overlay del CDK
-de Angular. Todo se tematiza con variables CSS canónicas `--hub-*` con modo oscuro
+el datepicker está construido desde cero sobre `Date` nativo y el overlay de
+`ng-hub-ui-utils`. Todo se tematiza con variables CSS canónicas `--hub-*` con modo oscuro
 en tiempo de ejecución — sin dependencia de Bootstrap.
 
 ## 🎯 Características
 
-- **Campos** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, con addons de input-group y máscaras, afijos de icono dentro del campo, el estado mixto `indeterminate` en checkboxes y `search` typeahead con debounce; el formato `file` está **deprecado** → usa `hub-file-input`), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider` (uno / dos thumbs, relleno con degradado), `hub-segmented` (campo de control segmentado — selección simple y múltiple, horizontal y vertical, con label + validación), `hub-select` (formato dropdown, agrupación, búsqueda en cliente vía `searchable` **y** typeahead asíncrono en servidor vía un Subject `typeahead`, creación de tags con `addTag`, templates personalizados, addons de grupo `prepend` / `append` e iconos/botones acoplados vía `hubPrepend` / `hubAppend`; los formatos `buttons` / `checkbox` / `radio` están **deprecados** → usa `hub-segmented`), `hub-datepicker` (simple y rango en cualquier granularidad, del año al segundo, selección de hora, min/max al minuto, navegación por teclado, i18n), `hub-file-input` (arrastrar y soltar, pegado desde el portapapeles, límites de tipo y tamaño, previsualización, progreso de subida opcional).
-- **Visualización automática de errores** — vinculas un campo y sus errores de control se renderizan debajo; `hub-fieldset`, `form[hubForm]` y `hub-legend` muestran los errores de grupo y de formulario (cross-field) igual, sin cableado.
-- **Contenedores** — `hub-fieldset` / `form[hubForm]` agrupan campos y muestran sus errores de grupo; `hub-legend` renderiza una leyenda accesible.
+- **Campos** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, con addons de input-group y máscaras, afijos de icono dentro del campo, el estado mixto `indeterminate` en checkboxes y `search` typeahead con debounce; el formato `file` está **deprecado** → usa `hub-file-input`), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider` (uno / dos thumbs, relleno con degradado), `hub-segmented` (campo de control segmentado — selección simple y múltiple, horizontal y vertical, con label + validación), `hub-select` (formato dropdown, agrupación, búsqueda en cliente vía `searchable` **y** typeahead asíncrono en servidor vía un Subject `typeahead`, creación de tags con `addTag`, templates personalizados, addons de grupo `prepend` / `append` e iconos/botones acoplados vía `hubPrepend` / `hubAppend`; los formatos `buttons` / `checkbox` / `radio` están **deprecados** → usa `hub-segmented`), `hub-datepicker` (simple y rango en cualquier granularidad, del año al segundo, selección de hora, min/max al minuto, navegación por teclado, i18n), `hub-timepicker` (una hora del día como `HH:MM`, sobre el control de hora de la plataforma, con `min` / `max` / `step`), `hub-file-input` (arrastrar y soltar, pegado desde el portapapeles, límites de tipo y tamaño, previsualización, progreso de subida opcional).
+- **Visualización automática de errores** — vinculas un campo y sus errores de control se renderizan debajo; `fieldset[hubFieldset]`, `form[hubForm]` y `hub-legend` muestran los errores de grupo y de formulario (cross-field) igual, sin cableado.
+- **Contenedores** — `fieldset[hubFieldset]` (o el elemento `<hub-fieldset>`) / `form[hubForm]` agrupan campos y muestran sus errores de grupo; `hub-legend` renderiza una leyenda accesible.
 - **Configurable** — `provideHubForms({ … })` define las plantillas de invalid-feedback, locale/labels del datepicker, los textos del file input y más, a nivel de app o por instancia.
 - **Validadores y helpers** — validador cross-field `hubAreEqual`, los validadores de ficheros (`hubAcceptedFiles`, `hubMaxFileSize`, `hubMinFileSize`, `hubMaxTotalSize`, `hubMaxFiles`, `hubMinFiles`), directivas de proyección `hubValidationError` / `hubFormText`, y un conjunto de pipes de utilidad.
 - **Listo para Signal Forms** — un entry point secundario opt-in [`ng-hub-ui-forms/signals`](#-signal-forms-opt-in) integra Angular Signal Forms; el núcleo sigue basado en Reactive Forms y compatible con Angular 21.
 - **Theming** — cada color, borde, radio y espaciado es una variable CSS `--hub-*`; incluye tokens SCSS compartidos para los consumidores.
+- **Adaptador entre librerías** — `hubFormControlAdapter` permite que otras librerías rendericen `hub-input` / `hub-select` sin depender de este paquete (más abajo).
 - **De derecha a izquierda** — todos los campos se voltean con `dir="rtl"`: las primitivas usan propiedades lógicas de CSS, y las tres cuya geometría solo es CSS a medias se tratan aparte — el slider (un `range` nativo se voltea, pero la imagen de fondo que rellena su pista no), el switch (su pomo y la transición que lo nombra van juntos) y el control segmentado, que vuelve a medir su indicador cuando cambia la dirección, porque un volteo recoloca las opciones sin cambiar el tamaño de nada.
+
+---
+
+## 🔌 Adaptador entre librerías (`hubFormControlAdapter`)
+
+Otras librerías de ng-hub-ui pueden alojar los controles de forms **sin depender en
+firme** de `ng-hub-ui-forms`. Exponen un token opcional; conectas una vez el
+`hubFormControlAdapter` ya construido y sus controles primitivos pasan a ser
+`hub-input` / `hub-select`. Por ejemplo, la tabla de `ng-hub-ui-paginable`:
+
+```ts
+import { provideHubPaginableFormControls } from 'ng-hub-ui-paginable';
+import { hubFormControlAdapter } from 'ng-hub-ui-forms';
+
+export const appConfig: ApplicationConfig = {
+	providers: [provideHubPaginableFormControls(hubFormControlAdapter)]
+};
+```
+
+El adaptador crea los componentes dinámicamente y hace de puente entre el valor que
+entra y el cambio que sale; necesita `provideHubForms()` o la configuración por
+defecto en el entorno. Ver la sección [Sinergias y agnosticidad](../../README.es.md#sinergias-y-agnosticidad)
+de toda la familia.
 
 ---
 
 ## 📦 Instalación
 
 ```bash
-npm install ng-hub-ui-forms @angular/cdk
+npm install ng-hub-ui-forms ng-hub-ui-utils
 ```
 
 ### Peer dependencies
 
 ```json
 {
-	"@angular/cdk": ">=21.0.0",
 	"@angular/common": ">=21.0.0",
 	"@angular/core": ">=21.0.0",
 	"@angular/forms": ">=21.0.0",
-	"@angular/platform-browser": ">=21.0.0"
+	"@angular/platform-browser": ">=21.0.0",
+	"ng-hub-ui-utils": ">=22.12.0"
 }
 ```
 
@@ -166,7 +191,7 @@ tooltip recibe una cadena, así que pedirle que lleve marcado lo descartaría en
 ```html
 <hub-input formControlName="email" type="email" label="Email" required />
 <hub-input formControlName="amount" type="number" label="Amount" />
-<hub-input formControlName="darkMode" format="switch" label="Dark mode" />
+<hub-input formControlName="darkMode" type="switch" label="Dark mode" />
 ```
 
 #### Afijo de icono y typeahead (buscadores)
@@ -457,6 +482,29 @@ Tres ejes independientes gobiernan los formatos:
 Los strings ISO de cualquier anchura, las instancias de `Date` y los milisegundos de época se
 detectan automáticamente, así que `parse` sólo hace falta para dialectos fuera de ese conjunto.
 
+### Timepicker
+
+Una hora del día, como `HH:MM`. Construido sobre el `<input type="time">` de la plataforma,
+así que trae el teclado numérico en el móvil, el stepper y la presentación en 12 o 24 horas
+del propio lector — mientras que lo que guarda el control se normaliza a `HH:MM` y no cambia
+con el idioma.
+
+```html
+<hub-timepicker formControlName="opensAt" label="Abre a las" />
+<hub-timepicker formControlName="closesAt" [step]="900" min="08:00" max="22:00" />
+```
+
+| Input  | Tipo                   | Por defecto | Qué hace                                                                                                                                      |
+| ------ | ---------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `min`  | `string` (`HH:MM`)     | `''`        | Hora más temprana que acepta el campo.                                                                                                        |
+| `max`  | `string` (`HH:MM`)     | `''`        | Hora más tardía que acepta el campo.                                                                                                          |
+| `step` | `number` (en segundos) | `0`         | Granularidad. `900` ofrece cuartos de hora; por debajo de `60` el control muestra segundos, precisión que un horario de apertura nunca tiene. |
+
+Un campo vacío publica `null`, no `''`: «sin hora» es una ausencia, y una cadena de longitud
+cero se cuela por un `required` escrito como comprobación de nulo. `label`, `labelType`,
+`readonly`, `prepend` / `append` y los proyectados `hubPrepend` / `hubAppend` se comportan como
+en cualquier otro campo.
+
 ### File input
 
 Arrastrar y soltar, pegado desde el portapapeles, restricciones y previsualización. El valor del control es nativo — un `File`, un `File[]` o `null` — así que va directo a un `FormData`.
@@ -523,8 +571,6 @@ const uploadedIds = fileInput.files().map((item) => (item.response as { id: stri
 
 Se personaliza sin tocar la plantilla: los tokens `--hub-file-input-*` (cada icono es una máscara CSS intercambiable), el mixin `hub-file-input-theme(...)` y tres slots de proyección.
 
-El dropzone se compone de un glifo, una invitación y una acción de examinar, cada uno tematizable por separado — así un design system reproduce el suyo sin bifurcar la plantilla: el **medallón del icono** (`--hub-file-input-icon-bg`, `-icon-chip-size`, `-icon-chip-radius`), el **botón de examinar** (`--hub-file-input-browse-bg`, `-hover-bg`, `-padding-x/-y`, `-radius` y un glifo delantero opcional), la **segunda línea de invitación** (`[dropText]` / `[dropSubtext]`, apiladas con `--hub-file-input-prompt-direction: column`) y un **aviso** proyectado entre el glifo y la invitación con `hubFileDropzoneNotice`. Todos los valores por defecto dejan el dropzone exactamente como estaba.
-
 ```html
 <hub-file-input formControlName="attachments" [multiple]="true">
 	<ng-template hubFileIcon let-item>
@@ -533,14 +579,31 @@ El dropzone se compone de un glifo, una invitación y una acción de examinar, c
 </hub-file-input>
 ```
 
+#### Reproducir tu propio dropzone
+
+El dropzone se compone de un glifo, una invitación y una acción de examinar, cada uno tematizable por separado — así un design system reproduce el suyo sin bifurcar la plantilla.
+
+- **Medallón del icono** — `--hub-file-input-icon-bg`, `-icon-chip-size` y `-icon-chip-radius` colocan el glifo sobre una superficie teñida y redondeada. Transparente y cuadrada por defecto.
+- **Examinar como botón** — `--hub-file-input-browse-bg`, `-hover-bg`, `-padding-x`, `-padding-y`, `-radius` y un glifo delantero opcional (`-browse-icon`, `-browse-icon-display`, `-browse-icon-size`). Por defecto, un enlace subrayado y transparente.
+- **Dos líneas de invitación** — `[dropText]` y `[dropSubtext]` (o los textos `dropHere` / `dropSubtext`), apiladas con `--hub-file-input-prompt-direction: column`. La segunda línea está vacía por defecto.
+- **Un aviso delante** — `hubFileDropzoneNotice` proyecta marcado dentro del dropzone, entre el glifo y la invitación, para lo que la invitación no puede decir.
+
+```html
+<hub-file-input dropText="Suelta aquí tus documentos" dropSubtext="o haz clic para examinar" buttonLabel="Seleccionar ficheros">
+	<ng-template hubFileDropzoneNotice>
+		<strong class="missing">Faltan {{ missingCount }} documentos</strong>
+	</ng-template>
+</hub-file-input>
+```
+
 ### Errores automáticos en todos los niveles
 
 ```html
 <form [formGroup]="form" hubForm (submit)="save()">
-	<hub-fieldset legend="Credentials">
+	<fieldset hubFieldset legend="Credentials">
 		<hub-input formControlName="email" type="email" label="Email" required />
 		<hub-input formControlName="confirm" type="email" label="Confirm email" required />
-	</hub-fieldset>
+	</fieldset>
 	<button type="submit">Create account</button>
 </form>
 ```
@@ -554,6 +617,26 @@ form = new FormGroup(
 
 Al enviar, cada campo inválido muestra su error y el error cross-field de
 `hubAreEqual` lo muestra el fieldset/form — sin marcado de errores manual.
+
+#### Dos maneras de escribir el fieldset
+
+`hubFieldset` es un atributo sobre el elemento nativo, así que el grupo cuesta un elemento en
+vez de dos: el `<fieldset hubFieldset>` que escribes **es** el fieldset que ve el navegador. La
+forma de elemento `<hub-fieldset>` se mantiene y acepta los mismos inputs, pero tiene que
+renderizar un `<fieldset>` propio dentro del anfitrión. Usa preferentemente el atributo — es el
+marcado que habría escrito un formulario HTML sin librería.
+
+```html
+<!-- recomendado: el anfitrión es el fieldset -->
+<fieldset hubFieldset legend="Credentials" [group]="form.controls.credentials">…</fieldset>
+
+<!-- equivalente, un elemento más adentro -->
+<hub-fieldset legend="Credentials" [group]="form.controls.credentials">…</hub-fieldset>
+```
+
+El atributo está restringido a `<fieldset>` a propósito: sobre un `<div>` dibujaría una leyenda
+sobre un grupo sin ninguna de las semánticas que las tecnologías de apoyo leen de un fieldset
+de verdad.
 
 ### Estados de validación (el inválido es automático, el válido es opt-in)
 
@@ -604,7 +687,7 @@ Todo se tematiza con variables CSS `--hub-*`. El paquete incluye tokens SCSS
 compartidos; impórtalos una vez en la raíz de la app:
 
 ```scss
-@use 'ng-hub-ui-forms/src/lib/styles/index' as hub-forms;
+@use 'ng-hub-ui-forms/styles' as hub-forms;
 ```
 
 ```css
@@ -673,7 +756,7 @@ import { HubSignalFieldControl, hubSignalErrorMessages } from 'ng-hub-ui-forms/s
 ## ♿ Accesibilidad
 
 - Las etiquetas se asocian con su control (`for`/`id`); los campos requeridos se marcan.
-- `required` — declarado inline o derivado de `Validators.required`, con `formControlName` **o** con binding directo `[formControl]` — se refleja como `aria-required` en todos los campos, incluidos el input de búsqueda del combobox del select, el `radiogroup` del segmented y cada celda del OTP.
+- `required` — declarado inline o derivado de `Validators.required`, con `formControlName` **o** con binding directo `[formControl]` — se refleja como `aria-required` en todos los campos, incluidos el input de búsqueda del combobox del select, el `radiogroup` del segmented y cada celda del OTP. Con un binding reactivo mandan los validadores del control: un `required` inline queda sobrescrito por ellos, así que decláralo en los validadores. Los bindings template-driven (`ngModel`) siguen respetando el input inline.
 - Los errores de validación se renderizan en una región `role="alert"` ligada al campo.
 - El select expone la semántica combobox/listbox correcta; el datepicker es totalmente navegable por teclado.
 

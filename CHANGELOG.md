@@ -5,6 +5,92 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.33.0] - 2026-09-06
+
+### Added
+
+- **`labelType="visually-hidden"`, so a control without a visible label still has a name.**
+  A design with no room for a label left only bad options: draw the label anyway, or ship an
+  `<input>` with no accessible name — which is what a toolbar search box or a compact grid cell
+  got, since the label input defaults to `''` and no field exposed `aria-label` or
+  `aria-labelledby`, and an `aria-label` written on `<hub-input>` stays on the host and never
+  reaches the control. The fourth `HubLabelType` value renders the label and keeps it bound to
+  the control, then clips it out of the page — not `display: none`, which would take the name
+  away with the pixels. Honoured by `hub-input` (checkboxes and switches included),
+  `hub-textarea`, `hub-select`, `hub-datepicker`, `hub-timepicker`, `hub-otp-input`,
+  `hub-slider`, `hub-segmented` and `hub-file-input`, which gains the `labelType` input it
+  never had; on the dropzone `floating` and `horizontal` keep rendering the stacked label they
+  always did, because it has neither arrangement to offer.
+
+  **Two fields name themselves instead.** `hub-otp-input` and `hub-segmented` render a group of
+  controls rather than one control, so there is nothing for `for` to point at: a `<label for>`
+  aimed at a `<div>` is inert and names nothing. Both put the label text on the group through
+  `aria-label`, which is what leaves them with an accessible name once the visible label is
+  clipped away.
+
+- **`FUNCTIONALITIES.md`**, the coverage table the rest of the family ships. The only feature
+  matrix forms had lived in the documentation site, so nobody reading the package could tell
+  what it supports or which parts a running example demonstrates.
+
+- **The READMEs document `hub-timepicker`.** It shipped in 22.23.0 and was named only in
+  passing, in two lists of fields that accept addons: the Fields overview omitted it and its
+  `min` / `max` / `step` inputs were written down nowhere. The Spanish README also gained the
+  cross-library adapter section and the dropzone subsection the English one has had, so the two
+  say the same things again.
+
+- **`fieldset[hubFieldset]`, so grouping a few fields costs one element instead of two.** The
+  container was an element-only selector whose template emitted a `<fieldset>` of its own, so every
+  group a consumer wrote came out as a `<hub-fieldset>` wrapping a `<fieldset>` — a box with no
+  meaning of its own, sitting between a form's grid or flex container and the children it lays out.
+  The component now also matches `fieldset[hubFieldset]`, the two-selector shape
+  `ng-hub-ui-buttons` already uses, and in that form it dresses the host instead of emitting a
+  second fieldset. Both forms take the same inputs and produce the same legend, the same
+  group-level errors and the same classes, so moving from one to the other changes nothing but the
+  tag; the attribute form is the one the READMEs and the documentation page now show. It is
+  restricted to `<fieldset>` on purpose — on a `<div>` it would draw a legend over a group with
+  none of the semantics assistive technology reads from a real fieldset.
+
+### Removed
+
+- **The two `console.warn` calls the library made into its consumer's console.** One announced that
+  an inline `required` loses to the validators of the reactive control it is bound to; the other
+  that `<hub-input type="file">` is deprecated. Both were addressed to whoever wrote the
+  application, and both are already said where that person reads them — the `@deprecated` tags an
+  editor surfaces on hover, the READMEs, `BREAKING_CHANGES.md` and this file — while the console
+  copy could not be turned off by the only party it reached, who did not write it. Neither
+  behaviour changes: the reactive validators still decide `required`, and the `file` format still
+  works until the next major removes it.
+
+### Fixed
+
+- **The stylesheets the README tells you to import are now declared in `exports`.** 22.5.0 moved
+  the SCSS to `ng-hub-ui-forms/styles` and announced that the documented `@use` resolved, but the
+  manifest carried no `exports` field, so ng-packagr generated one from the entry points alone and
+  the copied sheets were named nowhere. Angular's own CLI never noticed — it resolves SCSS through
+  `node_modules` load paths and ignores `exports` — while any resolver that honours the manifest
+  (`require.resolve`, a webpack `pkg:`/sass-loader setup, tooling that reads the map) got
+  `ERR_PACKAGE_PATH_NOT_EXPORTED` for a path the docs teach everywhere. `./styles`,
+  `./styles/index.scss` and the three theming mixins (`forms-theme`, `segmented-theme`,
+  `file-input-theme`) are now declared explicitly, matching the shape `ng-hub-ui-ds` and
+  `ng-hub-ui-avatar` already use.
+
+- **The inline-`required` warning no longer reaches production consoles.** The notice that a
+  reactive control's validators override the inline `required` input is advice for whoever is
+  writing the form, so it belongs in development, where it can still be acted on. Unguarded, it
+  became noise a consumer could not switch off in their own users' browsers. It is now behind
+  `isDevMode()` and carries the `[ng-hub-ui-forms]` prefix, like the deprecated-`file`-format
+  warning it sat inconsistently beside.
+
+- **The READMEs no longer send a consumer to install `@angular/cdk`.** 22.25.0 dropped the CDK
+  and the install instructions never followed: the Quick Start, the install command and the peer
+  block all still asked for a package the library has not imported since, while `ng-hub-ui-utils`
+  — the peer that actually is required, and the overlay the datepicker opens its panel with —
+  was named nowhere. Two more claims a consumer could act on and fail were corrected in the same
+  pass: the switch snippet, which showed `format="switch"` on a `<hub-input>` that picks its
+  format with `type`, and the theming import, which pointed at `ng-hub-ui-forms/src/lib/styles`
+  — a path 22.5.0 moved to `ng-hub-ui-forms/styles` and that resolves nowhere in the published
+  package.
+
 ## [22.32.0] - 2026-09-03
 
 ### Changed
@@ -229,16 +315,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
     The `group-flattening` spec projected **buttons** only, which carry border and radius on the very element the slot selects, so the case that broke had no coverage. It now projects a whole field in both directions and asserts the cascade winner on each corner, which is what fails without the fix.
 
-## [22.23.2] - 2026-08-24
-
-### Fixed
-
-- **A form that sets `--hub-field-stack-gap` is obeyed again.** 22.23.1 declared the token's default in `:root`. Two `:root` declarations tie on specificity, so the winner is whichever stylesheet the application happens to import last — and an application whose own token file came first had its `1rem` silently overruled, leaving every stacked field touching.
-
-    The default now lives where it is read, as the fallback of `var(--hub-field-stack-gap, 0)`. A fallback competes with nobody: declare the token and it wins, declare nothing and the field leaves no gap, whatever the import order.
-
-    Verified against the reported shape rather than a convenient one — a consumer sheet inserted **before** the library's, where the old code failed: `0px` with nothing declared, `16px` with the consumer asking for `1rem`.
-
 ## [22.25.0] - 2026-08-26
 
 ### Changed
@@ -305,6 +381,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`--hub-select-min-height` is derived rather than declared.** It was `2.5rem`, a number that had drifted from the arithmetic every other field arrives at — one line of text between two paddings and two borders, which is 38px at the default scale. The select therefore stood **2px taller than an input or a datepicker**, with or without a floating label, and an input attached to a select in the same group was stretched to 40px to match it. The token now spells out that arithmetic, so input, select and datepicker all measure 38px plainly and 56px with a floating label. A consumer who sets the token themselves is unaffected; one who relied on the 2.5rem default gets a 2px shorter select — see `BREAKING_CHANGES.md`.
 
 - **A floating field is taller.** `--hub-field-floating-inset` is `1.125rem`, where the previous hard-coded value was `0.625rem`, so a floating `hub-input` goes from 46px to 56px — and a floating `hub-select`, which used to sit 2px taller than everything around it, lands on the same 56px (see below). The old spacing left the lifted label about 6px from the top border and all but touching the value underneath: legible in a screenshot, cramped on a screen. The new one leaves ~10px above the label and ~5px between label and value, which is where Material's own 56px field lands. Every screen with floating labels grows by that amount — in practice the login, register and password screens.
+
+## [22.23.2] - 2026-08-24
+
+### Fixed
+
+- **A form that sets `--hub-field-stack-gap` is obeyed again.** 22.23.1 declared the token's default in `:root`. Two `:root` declarations tie on specificity, so the winner is whichever stylesheet the application happens to import last — and an application whose own token file came first had its `1rem` silently overruled, leaving every stacked field touching.
+
+    The default now lives where it is read, as the fallback of `var(--hub-field-stack-gap, 0)`. A fallback competes with nobody: declare the token and it wins, declare nothing and the field leaves no gap, whatever the import order.
+
+    Verified against the reported shape rather than a convenient one — a consumer sheet inserted **before** the library's, where the old code failed: `0px` with nothing declared, `16px` with the consumer asking for `1rem`.
 
 ## [22.23.1] - 2026-08-24
 
@@ -677,7 +763,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **NEW peer dependency: `ng-hub-ui-utils` `>=22.7.0`.** Consumers must have `ng-hub-ui-utils` installed alongside this library (it is where `resolveHubAccent` lives). Users installing via `ng add ng-hub-ui-installer` get it automatically; manual installs need `npm i ng-hub-ui-utils`.
+- **NEW peer dependency: `ng-hub-ui-utils` `>=22.7.0`.** Consumers must have `ng-hub-ui-utils` installed alongside this library (it is where `resolveHubAccent` lives). Users installing via `ng add ng-hub-ui` get it automatically; manual installs need `npm i ng-hub-ui-utils`.
 
 ## [22.9.0] - 2026-07-27
 

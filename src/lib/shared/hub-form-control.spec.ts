@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { By } from '@angular/platform-browser';
+import { vi } from 'vitest';
 import { HubFieldControl } from './hub-field-control';
 
 /**
@@ -161,6 +162,48 @@ describe('HubFormControl', () => {
 			const fixture = TestBed.createComponent(Host);
 
 			expect(() => fixture.detectChanges()).toThrowError(/Cannot find control with name: 'missing'/);
+		});
+	});
+
+	describe('inline `required` alongside a reactive control', () => {
+		@Component({
+			standalone: true,
+			imports: [TestFormControlComponent, ReactiveFormsModule],
+			template: `
+				<form [formGroup]="form">
+					<hub-test-form-control formControlName="name" [required]="true"></hub-test-form-control>
+				</form>
+			`
+		})
+		class Host {
+			readonly form = new FormGroup({ name: new FormControl('') });
+		}
+
+		let warn: ReturnType<typeof vi.spyOn>;
+
+		beforeEach(() => {
+			warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+			TestBed.configureTestingModule({ imports: [Host] });
+		});
+
+		afterEach(() => {
+			warn.mockRestore();
+		});
+
+		it('lets the reactive validators win over the inline input', () => {
+			const fixture = TestBed.createComponent(Host);
+			fixture.detectChanges();
+
+			const cmp = fixture.debugElement.query(By.directive(TestFormControlComponent)).componentInstance;
+
+			expect(cmp.required()).toBe(false);
+		});
+
+		/** The override is documented, not announced: a library must not write into its host's console. */
+		it('writes nothing into the consuming application console', () => {
+			TestBed.createComponent(Host).detectChanges();
+
+			expect(warn).not.toHaveBeenCalled();
 		});
 	});
 });

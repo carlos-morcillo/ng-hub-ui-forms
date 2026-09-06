@@ -9,7 +9,6 @@ import {
 	ElementRef,
 	inject,
 	input,
-	isDevMode,
 	model,
 	numberAttribute,
 	output,
@@ -382,7 +381,6 @@ export class HubInputComponent extends HubFieldControl {
 	override ngAfterContentInit(): void {
 		super.ngAfterContentInit();
 		this.#attachNumericValidators();
-		this.#warnDeprecatedFileFormat();
 	}
 
 	writeValue(value: HubInputValue): void {
@@ -576,20 +574,6 @@ export class HubInputComponent extends HubFieldControl {
 		this._value.set(null);
 		this.onChange?.(null);
 		this.valueChange.emit(null);
-	}
-
-	/**
-	 * Warns once, in development only, that the `file` format is deprecated.
-	 *
-	 * It still works, but it cannot enforce `accept` on a drop, has no size limits, no preview and
-	 * no per-file removal. `<hub-file-input>` supersedes it.
-	 */
-	#warnDeprecatedFileFormat(): void {
-		if (isDevMode() && this.type() === this._inputFormats.File) {
-			console.warn(
-				'[ng-hub-ui-forms] <hub-input type="file"> is deprecated since 22.6.0 and will be removed in the next major. Use <hub-file-input> instead.'
-			);
-		}
 	}
 
 	/**

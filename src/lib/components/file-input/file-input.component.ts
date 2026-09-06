@@ -20,6 +20,7 @@ import { Subscription } from 'rxjs';
 import { HubFileIconDirective } from '../../directives/file-icon.directive';
 import { HubFileDropzoneNoticeDirective } from '../../directives/file-dropzone-notice.directive';
 import { HubFilePreviewContext, HubFilePreviewDirective } from '../../directives/file-preview.directive';
+import { HubLabelType, HubLabelTypes } from '../../interfaces/common.interface';
 import {
 	HubFileItem,
 	HubFilePreview,
@@ -93,6 +94,8 @@ export class HubFileInputComponent extends HubFieldControl {
 	readonly #isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 	readonly #subscriptions = new Map<string, Subscription>();
 
+	protected readonly _labelTypes = HubLabelTypes;
+
 	protected readonly _items = signal<HubFileItem[]>([]);
 
 	/** Depth counter for `dragenter`/`dragleave`: children of the dropzone fire their own events. */
@@ -107,6 +110,16 @@ export class HubFileInputComponent extends HubFieldControl {
 
 	/** Label text. */
 	readonly label = input<string>('');
+
+	/**
+	 * How the label is presented.
+	 *
+	 * A dropzone has no floating or horizontal arrangement to offer — `floating` reuses the room
+	 * an empty text control's value occupies, and this field has none — so those two render the
+	 * stacked label they have always rendered. `visually-hidden` is the value that does something
+	 * here: the label stays bound to the native input and keeps naming it, out of sight.
+	 */
+	readonly labelType = input<HubLabelType>(HubLabelTypes.Stacked);
 
 	/** Whether more than one file can be held. Switches the control value to `File[]`. */
 	readonly multiple = input(false, { transform: booleanAttribute });

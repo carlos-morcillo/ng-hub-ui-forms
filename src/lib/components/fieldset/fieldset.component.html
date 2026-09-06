@@ -1,4 +1,4 @@
-<fieldset class="hub-fieldset" [class.hub-fieldset--invalid]="isInvalid">
+<ng-template #body>
 	@if (legend() || legendTmp()) {
 		<legend class="hub-fieldset__legend">
 			@if (legendTmp()) {
@@ -33,4 +33,12 @@
 			</ul>
 		</div>
 	}
-</fieldset>
+</ng-template>
+
+@if (_isElementForm) {
+	<fieldset class="hub-fieldset" [class.hub-fieldset--invalid]="isInvalid">
+		<ng-container [ngTemplateOutlet]="body"></ng-container>
+	</fieldset>
+} @else {
+	<ng-container [ngTemplateOutlet]="body"></ng-container>
+}

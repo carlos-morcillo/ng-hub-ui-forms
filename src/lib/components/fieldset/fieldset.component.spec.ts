@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Type } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { By } from '@angular/platform-browser';
@@ -186,6 +186,118 @@ describe('HubFieldsetComponent', () => {
 			fixture.detectChanges();
 
 			expect(fixture.debugElement.query(By.css('.hub-field__feedback'))).not.toBeNull();
+		});
+	});
+
+	describe('element form vs attribute form', () => {
+		@Component({
+			standalone: true,
+			imports: [HubFieldsetComponent],
+			template: `
+				<hub-fieldset [legend]="legend" [group]="group" errorTrigger="always">
+					<span class="child">x</span>
+				</hub-fieldset>
+			`
+		})
+		class ElementFormHost {
+			legend = 'Credentials';
+			group = buildGroup();
+		}
+
+		@Component({
+			standalone: true,
+			imports: [HubFieldsetComponent],
+			template: `
+				<fieldset hubFieldset [legend]="legend" [group]="group" errorTrigger="always">
+					<span class="child">x</span>
+				</fieldset>
+			`
+		})
+		class AttributeFormHost {
+			legend = 'Credentials';
+			group = buildGroup();
+		}
+
+		/** Renders a host with a mismatching group so the cross-field error is on screen. */
+		function render<T extends ElementFormHost | AttributeFormHost>(type: Type<T>): ComponentFixture<T> {
+			const fixture = TestBed.createComponent(type);
+			const group = fixture.componentInstance.group;
+			group.get('password')!.setValue('a');
+			group.get('confirm')!.setValue('b');
+			fixture.detectChanges();
+			return fixture;
+		}
+
+		beforeEach(() => {
+			TestBed.configureTestingModule({ imports: [ElementFormHost, AttributeFormHost] });
+		});
+
+		it('produces one fieldset with the same legend, content, errors and classes in both forms', () => {
+			const forms = [render(ElementFormHost), render(AttributeFormHost)].map((fixture) => {
+				const fieldsets = fixture.debugElement.queryAll(By.css('fieldset'));
+				expect(fieldsets.length).toBe(1);
+
+				const fieldset = fieldsets[0];
+
+				return {
+					classes: ['hub-fieldset', 'hub-fieldset--invalid'].filter((name) =>
+						fieldset.nativeElement.classList.contains(name)
+					),
+					legend: fieldset.query(By.css('.hub-fieldset__legend'))!.nativeElement.textContent.trim(),
+					child: !!fieldset.query(By.css('.hub-fieldset__content .child')),
+					feedback: fieldset.query(By.css('.hub-field__feedback'))!.nativeElement.textContent.trim()
+				};
+			});
+
+			expect(forms[0]).toEqual({
+				classes: ['hub-fieldset', 'hub-fieldset--invalid'],
+				legend: 'Credentials',
+				child: true,
+				feedback: 'The values do not match.'
+			});
+			expect(forms[1]).toEqual(forms[0]);
+		});
+
+		it('adds no wrapper in the attribute form — the host itself is the fieldset', () => {
+			const fixture = render(AttributeFormHost);
+			const host = fixture.debugElement.query(By.css('fieldset'));
+
+			expect(host.nativeElement.hasAttribute('hubFieldset')).toBe(true);
+			expect(host.nativeElement.querySelector('fieldset')).toBeNull();
+		});
+
+		it('keeps the element form wrapping a single fieldset, without duplicating its chrome on the host', () => {
+			const fixture = render(ElementFormHost);
+			const host = fixture.debugElement.query(By.css('hub-fieldset'));
+
+			expect(host.nativeElement.children.length).toBe(1);
+			expect(host.nativeElement.children[0].tagName).toBe('FIELDSET');
+
+			// The appearance classes belong to the fieldset; on the element form the host is only a
+			// styling shell, and repeating them there would paint a second border around the group.
+			expect(host.nativeElement.classList.contains('hub-fieldset')).toBe(false);
+			expect(host.nativeElement.classList.contains('hub-fieldset--invalid')).toBe(false);
+		});
+
+		it('resolves a projected hubLegend template in the attribute form too', () => {
+			@Component({
+				standalone: true,
+				imports: [HubFieldsetComponent, HubLegendDirective],
+				template: `
+					<fieldset hubFieldset [group]="group">
+						<ng-template hubLegend><b class="tpl-legend">Templated legend</b></ng-template>
+					</fieldset>
+				`
+			})
+			class AttributeTemplateLegendHost {
+				group = buildGroup();
+			}
+
+			const fixture = TestBed.createComponent(AttributeTemplateLegendHost);
+			fixture.detectChanges();
+
+			expect(fixture.debugElement.query(By.css('.hub-fieldset__legend'))).not.toBeNull();
+			expect(fixture.debugElement.query(By.css('.tpl-legend'))).not.toBeNull();
 		});
 	});
 });

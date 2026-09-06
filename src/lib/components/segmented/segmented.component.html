@@ -28,7 +28,11 @@
 	}
 
 	<ng-template #hubFieldLabelTpl>
-		<label [for]="id" class="hub-field__label">
+		<label
+			[for]="id"
+			class="hub-field__label"
+			[class.hub-field__label--visually-hidden]="labelType() === _labelTypes.VisuallyHidden"
+		>
 			{{ label() }}
 			@if (required()) {
 				<span class="hub-field__required" aria-hidden="true">*</span>
@@ -49,6 +53,7 @@
 			[attr.data-variant]="color() || null"
 			[style.--hub-segmented-accent]="accentVar()"
 			[attr.role]="multiple() ? 'group' : 'radiogroup'"
+			[attr.aria-label]="label() || null"
 			[attr.aria-required]="multiple() ? null : required() ? 'true' : null"
 			[attr.aria-disabled]="disabled() ? 'true' : null"
 			(keydown)="onKeydown($event)"

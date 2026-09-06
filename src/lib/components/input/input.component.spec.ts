@@ -76,6 +76,27 @@ describe('HubInputComponent', () => {
 		expect(root()).toBeTruthy();
 	});
 
+	/**
+	 * `type="file"` is deprecated in favour of `<hub-file-input>`. The deprecation is said
+	 * where a deprecation belongs — the `@deprecated` tags the editor surfaces, the README
+	 * and the changelog — and not in the console of the application consuming the library,
+	 * which cannot silence what it did not write.
+	 */
+	it('renders the deprecated file format without writing into the consuming application console', () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+		try {
+			const fileFixture = TestBed.createComponent(InputHostComponent);
+			fileFixture.componentInstance.type = 'file';
+			fileFixture.detectChanges();
+
+			expect(fileFixture.nativeElement.querySelector('input.hub-input__file-native')).toBeTruthy();
+			expect(warn).not.toHaveBeenCalled();
+		} finally {
+			warn.mockRestore();
+		}
+	});
+
 	it('renders the label text', () => {
 		host.label = 'Username';
 		fixture.detectChanges();

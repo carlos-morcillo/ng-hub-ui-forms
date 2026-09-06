@@ -50,10 +50,11 @@ This library is part of the **ng-hub-ui** ecosystem:
 npm install ng-hub-ui-forms
 ```
 
-`@angular/cdk` is a peer dependency (used by the datepicker overlay and the select):
+`ng-hub-ui-utils` is a peer dependency (the datepicker opens its panel through its overlay
+service, and every field renders its tooltip helper text with `hubTooltip`):
 
 ```bash
-npm install @angular/cdk
+npm install ng-hub-ui-utils
 ```
 
 ### 2. Import
@@ -86,15 +87,15 @@ bind them with **Reactive Forms** and the matching validation errors appear
 **automatically** at the control, group and form level. Fields are standalone,
 `OnPush` and signal-native; the select is a maintained fork of
 [ng-select](https://github.com/ng-select/ng-select) (see [Credits](#-credits)); the
-datepicker is built from scratch on native `Date` and the Angular CDK overlay.
+datepicker is built from scratch on native `Date` and the `ng-hub-ui-utils` overlay.
 Everything is themed through canonical `--hub-*` CSS variables with runtime dark
 mode — no Bootstrap dependency.
 
 ## 🎯 Features
 
-- **Fields** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, with input-group addons & masks, projected in-field affixes, a built-in `clearable` button, the mixed `indeterminate` state on checkboxes and debounced typeahead `search`; the `file` format is **deprecated** → use `hub-file-input`), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider` (single / dual thumb, gradient fill), `hub-segmented` (segmented control field — single & multiple selection, horizontal & vertical, with label + validation), `hub-select` (dropdown format, grouping, client-side search via `searchable` **and** server-side async typeahead via a `typeahead` Subject, tag creation with `addTag`, custom templates, `prepend` / `append` group addons and attached icons/buttons via `hubPrepend` / `hubAppend`; the `buttons` / `checkbox` / `radio` formats are **deprecated** → use `hub-segmented`), `hub-datepicker` (single & range at any granularity from a year to a second, time picking, min/max down to the minute, keyboard nav, i18n), `hub-file-input` (drag & drop, clipboard paste, type/size limits, previews, optional upload progress).
-- **Automatic error display** — bind a field and its control errors render below it; `hub-fieldset`, `form[hubForm]` and `hub-legend` surface group- and form-level (cross-field) errors the same way, with zero wiring.
-- **Containers** — `hub-fieldset` / `form[hubForm]` group fields and show their group errors; `hub-legend` renders an accessible legend.
+- **Fields** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, with input-group addons & masks, projected in-field affixes, a built-in `clearable` button, the mixed `indeterminate` state on checkboxes and debounced typeahead `search`; the `file` format is **deprecated** → use `hub-file-input`), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider` (single / dual thumb, gradient fill), `hub-segmented` (segmented control field — single & multiple selection, horizontal & vertical, with label + validation), `hub-select` (dropdown format, grouping, client-side search via `searchable` **and** server-side async typeahead via a `typeahead` Subject, tag creation with `addTag`, custom templates, `prepend` / `append` group addons and attached icons/buttons via `hubPrepend` / `hubAppend`; the `buttons` / `checkbox` / `radio` formats are **deprecated** → use `hub-segmented`), `hub-datepicker` (single & range at any granularity from a year to a second, time picking, min/max down to the minute, keyboard nav, i18n), `hub-timepicker` (a time of day as `HH:MM`, on the platform's own time control, with `min` / `max` / `step`), `hub-file-input` (drag & drop, clipboard paste, type/size limits, previews, optional upload progress).
+- **Automatic error display** — bind a field and its control errors render below it; `fieldset[hubFieldset]`, `form[hubForm]` and `hub-legend` surface group- and form-level (cross-field) errors the same way, with zero wiring.
+- **Containers** — `fieldset[hubFieldset]` (or the `<hub-fieldset>` element) / `form[hubForm]` group fields and show their group errors; `hub-legend` renders an accessible legend.
 - **Configurable** — `provideHubForms({ … })` sets the invalid-feedback templates, datepicker locale/labels, file-input labels and more, app-wide or per instance.
 - **Validators & helpers** — `hubAreEqual` cross-field validator, the file validators (`hubAcceptedFiles`, `hubMaxFileSize`, `hubMinFileSize`, `hubMaxTotalSize`, `hubMaxFiles`, `hubMinFiles`), `hubValidationError` / `hubFormText` projection directives, and a set of utility pipes.
 - **Signal Forms ready** — an opt-in [`ng-hub-ui-forms/signals`](#-signal-forms-opt-in) secondary entry point integrates Angular Signal Forms; the core stays Reactive-Forms-based and Angular-21-safe.
@@ -130,18 +131,18 @@ section.
 ## 📦 Installation
 
 ```bash
-npm install ng-hub-ui-forms @angular/cdk
+npm install ng-hub-ui-forms ng-hub-ui-utils
 ```
 
 ### Peer Dependencies
 
 ```json
 {
-	"@angular/cdk": ">=21.0.0",
 	"@angular/common": ">=21.0.0",
 	"@angular/core": ">=21.0.0",
 	"@angular/forms": ">=21.0.0",
-	"@angular/platform-browser": ">=21.0.0"
+	"@angular/platform-browser": ">=21.0.0",
+	"ng-hub-ui-utils": ">=22.12.0"
 }
 ```
 
@@ -188,7 +189,7 @@ string, so asking it to carry markup would drop the markup silently.
 ```html
 <hub-input formControlName="email" type="email" label="Email" required />
 <hub-input formControlName="amount" type="number" label="Amount" />
-<hub-input formControlName="darkMode" format="switch" label="Dark mode" />
+<hub-input formControlName="darkMode" type="switch" label="Dark mode" />
 ```
 
 #### Icon affix & typeahead (search boxes)
@@ -476,6 +477,27 @@ Three independent axes control the formats:
 ISO strings of any width, `Date` instances and epoch milliseconds are detected automatically, so
 `parse` is only needed for dialects outside that set.
 
+### Timepicker
+
+A time of day, as `HH:MM`. Built on the platform's `<input type="time">`, so it brings the
+numeric keyboard on a phone, the stepper, and the reader's own 12- or 24-hour presentation —
+while what the control holds is normalised to `HH:MM`, and so does not change with the locale.
+
+```html
+<hub-timepicker formControlName="opensAt" label="Opens at" />
+<hub-timepicker formControlName="closesAt" [step]="900" min="08:00" max="22:00" />
+```
+
+| Input  | Type               | Default | What it does                                                                                                    |
+| ------ | ------------------ | ------- | --------------------------------------------------------------------------------------------------------------- |
+| `min`  | `string` (`HH:MM`) | `''`    | Earliest time the field accepts.                                                                                |
+| `max`  | `string` (`HH:MM`) | `''`    | Latest time the field accepts.                                                                                  |
+| `step` | `number` (seconds) | `0`     | Granularity. `900` offers quarter hours; under `60` the control shows seconds, which an opening time never has. |
+
+An empty field publishes `null`, not `''` — "no time" is an absence, and a zero-length string
+sails past a `required` written as a null check. `label`, `labelType`, `readonly`, `prepend` /
+`append` and the projected `hubPrepend` / `hubAppend` behave as on every other field.
+
 ### File input
 
 Drag & drop, clipboard paste, constraints and previews. The control value stays native — a `File`, a `File[]`, or `null` — so it goes straight into a `FormData`.
@@ -571,10 +593,10 @@ The dropzone is built from a glyph, an invitation and a browse action, each them
 
 ```html
 <form [formGroup]="form" hubForm (submit)="save()">
-	<hub-fieldset legend="Credentials">
+	<fieldset hubFieldset legend="Credentials">
 		<hub-input formControlName="email" type="email" label="Email" required />
 		<hub-input formControlName="confirm" type="email" label="Confirm email" required />
-	</hub-fieldset>
+	</fieldset>
 	<button type="submit">Create account</button>
 </form>
 ```
@@ -588,6 +610,25 @@ form = new FormGroup(
 
 On submit, each invalid field shows its error and the cross-field `hubAreEqual`
 error is surfaced by the fieldset/form — no manual error markup anywhere.
+
+#### Two ways to write the fieldset
+
+`hubFieldset` is an attribute on the native element, so the group costs one element instead of
+two: the `<fieldset hubFieldset>` you write **is** the fieldset the browser sees. The
+`<hub-fieldset>` element form is still supported and takes the same inputs, but it has to render
+a `<fieldset>` of its own inside the host. Prefer the attribute — it is the markup a plain HTML
+form would have written anyway.
+
+```html
+<!-- preferred: the host is the fieldset -->
+<fieldset hubFieldset legend="Credentials" [group]="form.controls.credentials">…</fieldset>
+
+<!-- equivalent, one element deeper -->
+<hub-fieldset legend="Credentials" [group]="form.controls.credentials">…</hub-fieldset>
+```
+
+The attribute is restricted to `<fieldset>` on purpose: on a `<div>` it would draw a legend over
+a group with none of the semantics assistive technology reads from a real fieldset.
 
 ### Validation states (invalid is automatic, valid is opt-in)
 
@@ -637,7 +678,7 @@ Everything is themed through `--hub-*` CSS custom properties. The package ships
 shared SCSS tokens; import them once at the app root:
 
 ```scss
-@use 'ng-hub-ui-forms/src/lib/styles/index' as hub-forms;
+@use 'ng-hub-ui-forms/styles' as hub-forms;
 ```
 
 ```css
@@ -707,7 +748,7 @@ import { HubSignalFieldControl, hubSignalErrorMessages } from 'ng-hub-ui-forms/s
 ## ♿ Accessibility
 
 - Labels are associated with their control (`for`/`id`); required fields are marked.
-- `required` — set inline or derived from `Validators.required`, with `formControlName` **or** a direct `[formControl]` binding — is reflected as `aria-required` on every field, including the select's combobox search input, the segmented `radiogroup` and each OTP cell.
+- `required` — set inline or derived from `Validators.required`, with `formControlName` **or** a direct `[formControl]` binding — is reflected as `aria-required` on every field, including the select's combobox search input, the segmented `radiogroup` and each OTP cell. On a reactive binding the control's validators decide: an inline `required` is overwritten by them, so declare it on the validators. Template-driven bindings (`ngModel`) keep honouring the inline input.
 - Validation errors render in an `role="alert"` region tied to the field.
 - The select exposes correct combobox/listbox semantics; the datepicker is fully keyboard-navigable.
 
