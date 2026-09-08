@@ -756,6 +756,24 @@ import { HubSignalFieldControl, hubSignalErrorMessages } from 'ng-hub-ui-forms/s
 ## ♿ Accesibilidad
 
 - Las etiquetas se asocian con su control (`for`/`id`); los campos requeridos se marcan.
+- **`labelType="visually-hidden"` da nombre a un control que no tiene sitio para una etiqueta
+  visible.** Un buscador de barra de herramientas o una celda de tabla no pueden repetir la misma
+  palabra en cada fila, y la alternativa era un control sin nombre accesible: un `placeholder` no
+  es un nombre. La etiqueta se sigue renderizando y se sigue asociando al control; lo único que
+  desaparece son los píxeles, recortados fuera de la página en lugar de eliminados con
+  `display: none`, que se llevaría el nombre por delante. Lo respetan todos los campos, checkboxes
+  y switches incluidos.
+
+    ```html
+    <hub-input formControlName="q" label="Buscar pedidos" labelType="visually-hidden" placeholder="Buscar" />
+    ```
+
+    Etiqueta oculta y no `aria-label`, a propósito: la etiqueta sigue *asociada* a su control, así
+  que es una sola cadena en la plantilla que se le puede dar o negar al ojo y al lector de
+  pantalla, y nunca sustituye en silencio a un nombre que la aplicación haya puesto por su cuenta.
+  Las dos excepciones son `hub-otp-input` y `hub-segmented`, que renderizan un grupo y no un
+  control único: un `<label for>` apuntando a un `<div>` no nombra nada, así que esos dos llevan el
+  texto en el grupo como `aria-label`.
 - `required` — declarado inline o derivado de `Validators.required`, con `formControlName` **o** con binding directo `[formControl]` — se refleja como `aria-required` en todos los campos, incluidos el input de búsqueda del combobox del select, el `radiogroup` del segmented y cada celda del OTP. Con un binding reactivo mandan los validadores del control: un `required` inline queda sobrescrito por ellos, así que decláralo en los validadores. Los bindings template-driven (`ngModel`) siguen respetando el input inline.
 - Los errores de validación se renderizan en una región `role="alert"` ligada al campo.
 - El select expone la semántica combobox/listbox correcta; el datepicker es totalmente navegable por teclado.

@@ -748,6 +748,23 @@ import { HubSignalFieldControl, hubSignalErrorMessages } from 'ng-hub-ui-forms/s
 ## ♿ Accessibility
 
 - Labels are associated with their control (`for`/`id`); required fields are marked.
+- **`labelType="visually-hidden"` names a control that has no room for a visible label.** A
+  toolbar search box or a compact grid cell cannot repeat the same word down every row, and the
+  alternative was a control with no accessible name at all — a placeholder is not a name. The
+  label is still rendered and still bound to the control; only the pixels go, clipped out of the
+  page rather than removed with `display: none`, which would take the name with them. Honoured by
+  every field, checkboxes and switches included.
+
+    ```html
+    <hub-input formControlName="q" label="Search orders" labelType="visually-hidden" placeholder="Search" />
+    ```
+
+    A hidden label rather than an `aria-label` on purpose: a label stays *associated* with its
+  control, so it is one string in the template that both the eye and the screen reader can be
+  given or denied, and it never silently replaces a name the application set for itself. The two
+  exceptions are `hub-otp-input` and `hub-segmented`, which render a group rather than a single
+  control: a `<label for>` aimed at a `<div>` names nothing, so those two carry the text on the
+  group as `aria-label`.
 - `required` — set inline or derived from `Validators.required`, with `formControlName` **or** a direct `[formControl]` binding — is reflected as `aria-required` on every field, including the select's combobox search input, the segmented `radiogroup` and each OTP cell. On a reactive binding the control's validators decide: an inline `required` is overwritten by them, so declare it on the validators. Template-driven bindings (`ngModel`) keep honouring the inline input.
 - Validation errors render in an `role="alert"` region tied to the field.
 - The select exposes correct combobox/listbox semantics; the datepicker is fully keyboard-navigable.

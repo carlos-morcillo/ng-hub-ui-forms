@@ -5,6 +5,18 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.33.1] - 2026-09-07
+
+### Fixed
+
+- **The READMEs document `labelType="visually-hidden"`.** The value shipped in 22.33.0 and was
+  written down in `FUNCTIONALITIES.md` and on the documentation site, but not in either README —
+  so the one file a reader opens from the package itself still described three label types, all
+  of which draw the label, and said nothing about the option that exists precisely for the case
+  where drawing it is not possible. Both READMEs now cover it in the accessibility section, with
+  the reason it is a hidden label rather than an `aria-label` and the two group fields that name
+  themselves instead.
+
 ## [22.33.0] - 2026-09-06
 
 ### Added
