@@ -5,6 +5,22 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.33.2] - 2026-09-08
+
+### Fixed
+
+- **The select's two write-value diagnostics no longer reach a production console.** The vendored
+  engine refuses a model it cannot map — an object bound with `bindValue` and no `[compareWith]`,
+  or a scalar handed to a `[multiple]` select — and drops it. Both refusals were announced with an
+  unguarded `console.warn`, so the message landed in the browser of whoever was using the
+  application rather than of whoever wrote the form, with no way to switch it off. They are worth
+  keeping — a value discarded in silence is the harder bug — so they were not deleted like the two
+  warnings 22.33.0 removed, which had somewhere better to be said: these describe a value the
+  library is dropping right now, and there is no `@deprecated` tag or README line that can say it
+  at that moment. `ConsoleService` now emits only under `isDevMode()` and prefixes the message with
+  `[ng-hub-ui-forms]`, the shape 22.31.0 settled on. Nothing else changes: the same values are
+  refused, in the same way, and the messages read the same in a development build.
+
 ## [22.33.1] - 2026-09-07
 
 ### Fixed
