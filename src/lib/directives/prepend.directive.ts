@@ -19,8 +19,8 @@ import { Directive } from '@angular/core';
  * content is always the outermost element on that side.
  *
  * Declared as a template rather than plain projected content because a field's `<ng-content>`
- * is already spoken for — the select's carries `<ng-option>` through to its engine, and the
- * input projects its in-field affixes — so anything projected plainly would land in the wrong
+ * is already spoken for — the select's opens straight into the dropdown engine, and the input
+ * projects its in-field affixes — so anything projected plainly would land in the wrong
  * place. Rendering from a template also fixes the DOM order, which is what keeps tabbing sane
  * around an attached button.
  *

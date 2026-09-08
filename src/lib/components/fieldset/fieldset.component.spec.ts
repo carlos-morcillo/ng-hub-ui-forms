@@ -4,6 +4,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { By } from '@angular/platform-browser';
 import { HubLegendDirective } from '../../directives/legend.directive';
 import { hubAreEqual } from '../../validators/are-equal.validator';
+import { HubLegendComponent } from '../legend/legend.component';
 import { HubFieldsetComponent } from './fieldset.component';
 
 function buildGroup(): FormGroup {
@@ -90,6 +91,90 @@ describe('HubFieldsetComponent', () => {
 			const legend = fixture.debugElement.query(By.css('.hub-fieldset__legend'));
 			expect(legend).not.toBeNull();
 			expect(fixture.debugElement.query(By.css('.tpl-legend'))).not.toBeNull();
+		});
+	});
+
+	/**
+	 * The legend has one shape — a `<hub-legend>` inside the native `<legend>` — whether the
+	 * consumer writes the text on the input or projects the element. The `hubLegend` template slot
+	 * is the retired third way and must keep working until 23.0.0.
+	 */
+	describe('projected hub-legend', () => {
+		@Component({
+			standalone: true,
+			imports: [HubFieldsetComponent, HubLegendComponent],
+			template: `
+				<hub-fieldset [legend]="'Ignored'" [group]="group">
+					<hub-legend [required]="true">Shipping address</hub-legend>
+					<span class="child">x</span>
+				</hub-fieldset>
+			`
+		})
+		class ProjectedLegendHost {
+			group = buildGroup();
+		}
+
+		let fixture: ComponentFixture<ProjectedLegendHost>;
+
+		beforeEach(() => {
+			TestBed.configureTestingModule({ imports: [ProjectedLegendHost] });
+			fixture = TestBed.createComponent(ProjectedLegendHost);
+			fixture.detectChanges();
+		});
+
+		it('lifts a projected hub-legend into the native legend element', () => {
+			const legend = fixture.debugElement.query(By.css('.hub-fieldset__legend'));
+
+			expect(legend.nativeElement.querySelector('.hub-legend')).not.toBeNull();
+			expect(legend.nativeElement.textContent).toContain('Shipping address');
+		});
+
+		it('keeps the projected legend out of the content slot', () => {
+			expect(fixture.debugElement.query(By.css('.hub-fieldset__content .hub-legend'))).toBeNull();
+			expect(fixture.debugElement.query(By.css('.hub-fieldset__content .child'))).not.toBeNull();
+		});
+
+		it('lets the projected legend win over the legend text', () => {
+			expect(fixture.debugElement.query(By.css('.hub-fieldset__legend')).nativeElement.textContent).not.toContain(
+				'Ignored'
+			);
+		});
+
+		it('renders the text legend through the same hub-legend element', () => {
+			@Component({
+				standalone: true,
+				imports: [HubFieldsetComponent],
+				template: `<hub-fieldset legend="Credentials" [group]="group"></hub-fieldset>`
+			})
+			class TextHost {
+				group = buildGroup();
+			}
+
+			const text = TestBed.createComponent(TextHost);
+			text.detectChanges();
+
+			const legend = text.debugElement.query(By.css('.hub-fieldset__legend'));
+
+			expect(legend.nativeElement.querySelector('.hub-legend')).not.toBeNull();
+			expect(legend.nativeElement.textContent.trim()).toBe('Credentials');
+		});
+
+		it('lifts a projected legend in the attribute form too', () => {
+			@Component({
+				standalone: true,
+				imports: [HubFieldsetComponent, HubLegendComponent],
+				template: `<fieldset hubFieldset [group]="group"><hub-legend>Attribute form</hub-legend></fieldset>`
+			})
+			class AttributeHost {
+				group = buildGroup();
+			}
+
+			const attribute = TestBed.createComponent(AttributeHost);
+			attribute.detectChanges();
+
+			const legend = attribute.debugElement.query(By.css('fieldset > .hub-fieldset__legend'));
+
+			expect(legend.nativeElement.querySelector('.hub-legend')).not.toBeNull();
 		});
 	});
 

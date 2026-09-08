@@ -174,6 +174,31 @@
 								<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ searchTerm }" />
 							</ng-template>
 						}
+						@if (_typeToSearchTpl(); as tpl) {
+							<ng-template ng-typetosearch-tmp>
+								<ng-container [ngTemplateOutlet]="tpl" />
+							</ng-template>
+						}
+						@if (_loadingTextTpl(); as tpl) {
+							<ng-template ng-loadingtext-tmp let-searchTerm="searchTerm">
+								<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ searchTerm }" />
+							</ng-template>
+						}
+						@if (_loadingSpinnerTpl(); as tpl) {
+							<ng-template ng-loadingspinner-tmp>
+								<ng-container [ngTemplateOutlet]="tpl" />
+							</ng-template>
+						}
+						@if (_tagTpl(); as tpl) {
+							<ng-template ng-tag-tmp let-searchTerm="searchTerm">
+								<ng-container [ngTemplateOutlet]="tpl" [ngTemplateOutletContext]="{ searchTerm }" />
+							</ng-template>
+						}
+						@if (_clearButtonTpl(); as tpl) {
+							<ng-template ng-clearbutton-tmp>
+								<ng-container [ngTemplateOutlet]="tpl" />
+							</ng-template>
+						}
 						<ng-content></ng-content>
 					</ng-select>
 					@for (addon of _append(); track $index) {

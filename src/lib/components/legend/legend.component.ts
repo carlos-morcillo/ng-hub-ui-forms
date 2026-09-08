@@ -1,17 +1,17 @@
 import { booleanAttribute, ChangeDetectionStrategy, Component, input, ViewEncapsulation } from '@angular/core';
 
 /**
- * Presentational legend for a `<hub-fieldset>` (or any grouped section), with optional
- * required/invalid state styling.
+ * The legend of a `<hub-fieldset>` (or any grouped section), with optional required/invalid state
+ * styling.
  *
- * Use it inside a `hubLegend` template, or standalone as a section title.
+ * Project it as a direct child of the fieldset: it is lifted into the native `<legend>` element,
+ * which is also what `<hub-fieldset legend="…">` builds for you — so a text legend and a rich one
+ * are the same element with the same classes. It also stands alone as a section title.
  *
  * @example
  * ```html
  * <hub-fieldset [group]="form.controls.address">
- *   <ng-template hubLegend>
- *     <hub-legend [required]="true" [invalid]="form.controls.address.invalid">Shipping address</hub-legend>
- *   </ng-template>
+ *   <hub-legend [required]="true" [invalid]="form.controls.address.invalid">Shipping address</hub-legend>
  * </hub-fieldset>
  * ```
  */

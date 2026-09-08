@@ -103,7 +103,9 @@ The library ships nine fields — `hub-input`, `hub-otp-input`, `hub-textarea`, 
 | **Tags**       | `addTag` (boolean or factory) and `addTagText`                                                                         |       ✅        |
 | **Panel**      | `appendTo`, `closeOnSelect`, `fixedPlaceholder`                                                                        |       ❌        |
 |                | Renders above a `HubModal` through `--hub-select-dropdown-zindex`                                                      |       ✅        |
-| **Templates**  | The vendored `ng-option-tmp` and friends                                                                               |       ✅        |
+| **Templates**  | `hubSelectOption` / `hubSelectOptgroup` / `hubSelectLabel` / `hubSelectMultiLabel` / `hubSelectHeader` / `hubSelectFooter` / `hubSelectNotFound` |       ✅        |
+|                | `hubSelectTypeToSearch` / `hubSelectLoadingText` / `hubSelectLoadingSpinner` / `hubSelectTag` / `hubSelectClearButton` |       ❌        |
+|                | The vendored `ng-option-tmp` and friends — **deprecated**, removed in 23.0.0                                          |       ❌        |
 |                | `hubSelectSuffix` — **deprecated**, use `hubAppend`                                                                    |       ❌        |
 | **Addons**     | `prepend` / `append` and the `hubPrepend` / `hubAppend` slots                                                          |       ✅        |
 | **Events**     | `onOpen` / `onClose` / `onClear` / `onSearch` / `onAdd` / `onRemove` / `onFocus` / `onBlur` / `scroll` / `scrollToEnd` |       ❌        |
@@ -157,7 +159,8 @@ The library ships nine fields — `hub-input`, `hub-otp-input`, `hub-textarea`, 
 | :------------- | :------------------------------------------------------------------------------------------------------ | :-------------: |
 | **Grouping**   | `fieldset[hubFieldset]` (or the `hub-fieldset` element) with `legend`, `group` / `groupName`            |       ✅        |
 |                | `form[hubForm]` surfacing form-level errors                                                             |       ✅        |
-|                | `hub-legend`, with `required` / `invalid`                                                               |       ✅        |
+|                | `hub-legend`, with `required` / `invalid`, projected into the fieldset's `<legend>`                     |       ✅        |
+|                | `hubLegend` template slot — **deprecated**, project a `hub-legend` instead; removed in 23.0.0           |       ❌        |
 | **Trigger**    | `errorTrigger="touched" \| "submit" \| "always"`                                                        |       ❌        |
 | **Validators** | `hubAreEqual` cross-field validator                                                                     |       ✅        |
 |                | `hubAcceptedFiles`, `hubMaxFileSize`, `hubMinFileSize`, `hubMaxTotalSize`, `hubMaxFiles`, `hubMinFiles` |       ❌        |

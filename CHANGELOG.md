@@ -5,6 +5,68 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.34.0] - 2026-09-08
+
+### Added
+
+- **`hubSelect*` slots, so customising a `<hub-select>` no longer means writing the name of a
+  vendored dependency.** The dropdown is built on a copy of ng-select kept under
+  `select/vendor/` and re-synced from upstream, and the only way to re-draw a part of it was to
+  import one of its `Ng*TemplateDirective` classes and write `ng-option-tmp`, `ng-label-tmp` and
+  the rest. Those selectors are the engine's, not this library's: nothing here promises they will
+  keep their names, and a consumer who wrote them was pinned to an internal detail.
+
+  Twelve directives replace them, one for one, with the same template contexts:
+  `hubSelectOption`, `hubSelectOptgroup`, `hubSelectLabel`, `hubSelectMultiLabel`,
+  `hubSelectHeader`, `hubSelectFooter`, `hubSelectNotFound`, `hubSelectTypeToSearch`,
+  `hubSelectLoadingText`, `hubSelectLoadingSpinner`, `hubSelectTag` and `hubSelectClearButton`.
+  Nothing under `vendor/` was touched, so the automated upstream sync stays as low-conflict as it
+  was.
+
+- **Five of those slots now do something at all.** `ng-typetosearch-tmp`, `ng-loadingtext-tmp`,
+  `ng-loadingspinner-tmp`, `ng-tag-tmp` and `ng-clearbutton-tmp` were exported from the entry
+  point but never forwarded: written inside a `<hub-select>` they belong to the wrapper's content,
+  and the engine's own `contentChild` cannot see through an `<ng-content>`, so they were silently
+  inert. Their `hubSelect*` equivalents are forwarded like the other seven.
+
+- **The legend of a `<hub-fieldset>` can be projected as an element.** `<hub-legend>` written as a
+  direct child is lifted into the native `<legend>`, which is where the required marker and the
+  invalid state live. It is the same element `legend="…"` now builds, so a text legend and a rich
+  one produce the same DOM and the same classes.
+
+### Changed
+
+- **`<hub-fieldset legend="…">` renders its text inside a `<hub-legend>`.** The legend had two
+  shapes that coexisted: the `legend` input drew bare text into `.hub-fieldset__legend`, and the
+  `hubLegend` template slot drew whatever it was given — usually a `<hub-legend>`, which re-declared
+  the same colour, size and weight from the same tokens one level down. Two DOM contracts for one
+  element, with a silent precedence rule between them. There is one now. See
+  [`BREAKING_CHANGES.md`](./BREAKING_CHANGES.md).
+
+### Deprecated
+
+- **The `hubLegend` template slot** (`HubLegendDirective`). Project a `<hub-legend>` instead. The
+  slot existed only so a legend could carry markup, and `<hub-legend>` carries markup without an
+  `ng-template` and without a second directive to import. Removed in **23.0.0**.
+
+- **The vendored `ng-*-tmp` attributes and `NgOptionComponent`**, still exported and still working.
+  Each template attribute has a one-for-one `hubSelect*` replacement. `<ng-option>` has `[items]`:
+  it never worked through `<hub-select>` in the first place — the engine's `contentChildren`
+  cannot see through the wrapper's `<ng-content>` either — so a consumer who wrote it got an empty
+  list. Removed in **23.0.0**.
+
+### Fixed
+
+- **`getActiveElement()` no longer defaults its root to a `document` that may not exist.** Same
+  crash on a server render as its twin in `ng-hub-ui-utils`, fixed the same way: the default is the
+  global document when there is one, and the parameter accepts `null`.
+
+- **Three doc comments claimed the select's catch-all `<ng-content>` carries `<ng-option>` through
+  to the engine.** It does not, and the reason `[hubPrepend]`, `[hubAppend]` and the deprecated
+  `[hubSelectSuffix]` are templates rather than projected content is the true half of the same
+  sentence: the catch-all is declared first and opens straight into the dropdown, so anything
+  projected plainly lands inside the panel.
+
 ## [22.33.2] - 2026-09-08
 
 ### Fixed

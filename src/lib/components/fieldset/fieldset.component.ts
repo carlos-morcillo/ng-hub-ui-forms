@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import { HubLegendDirective } from '../../directives/legend.directive';
 import { HubGroupControl } from '../../shared/hub-group-control';
+import { HubLegendComponent } from '../legend/legend.component';
 
 /**
  * Groups related fields under a `<fieldset>`/`<legend>` and **automatically displays the
@@ -28,6 +29,21 @@ import { HubGroupControl } from '../../shared/hub-group-control';
  * parent container. Errors set on the group itself — e.g. by `hubAreEqual` — are rendered without
  * any extra wiring, mirroring how the field components show control-level errors.
  *
+ * ## The legend is always a `<hub-legend>`
+ *
+ * `legend="…"` is shorthand: it builds one for you. When the legend needs more than a string — a
+ * required marker, an icon, a badge — project the element yourself and it lands in the same place:
+ *
+ * ```html
+ * <fieldset hubFieldset [group]="form.controls.address">
+ *   <hub-legend [required]="true">Shipping address</hub-legend>
+ *   …
+ * </fieldset>
+ * ```
+ *
+ * The older `<ng-template hubLegend>` slot still works and is deprecated; see
+ * {@link HubLegendDirective}.
+ *
  * @example
  * ```html
  * <fieldset hubFieldset legend="Credentials" [group]="form.controls.credentials">
@@ -38,7 +54,7 @@ import { HubGroupControl } from '../../shared/hub-group-control';
  */
 @Component({
 	selector: 'hub-fieldset, fieldset[hubFieldset]',
-	imports: [NgTemplateOutlet, KeyValuePipe],
+	imports: [NgTemplateOutlet, KeyValuePipe, HubLegendComponent],
 	templateUrl: './fieldset.component.html',
 	styleUrl: './fieldset.component.scss',
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -59,12 +75,28 @@ export class HubFieldsetComponent extends HubGroupControl {
 	 */
 	protected readonly _isElementForm = inject(ElementRef).nativeElement.nodeName === 'HUB-FIELDSET';
 
-	/** Legend text. Ignored when a `hubLegend` template is projected. */
+	/**
+	 * Legend text. Rendered inside a `<hub-legend>`, so a text legend and a projected one are the
+	 * same element. Ignored when a `<hub-legend>` is projected, or a `hubLegend` template is.
+	 */
 	readonly legend = input<string>('');
 
 	/** Extra CSS classes applied to the host element. */
 	readonly classlist = input<string>('');
 
-	/** Query for a projected `hubLegend` template. */
+	/**
+	 * Query for a projected `hubLegend` template.
+	 *
+	 * @deprecated Project a `<hub-legend>` element instead — the slot exists only so the legend can
+	 * carry markup, and `<hub-legend>` carries markup without an `ng-template` and without an extra
+	 * import. Removed in 23.0.0.
+	 */
 	readonly legendTmp = contentChild(HubLegendDirective, { read: TemplateRef });
+
+	/**
+	 * A `<hub-legend>` projected as a direct child, which is the way a legend that needs more than
+	 * text is written. Queried rather than merely projected because the `<legend>` element must not
+	 * be emitted at all when the group has no legend of any kind.
+	 */
+	protected readonly _projectedLegend = contentChild(HubLegendComponent);
 }

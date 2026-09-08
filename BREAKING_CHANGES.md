@@ -2,6 +2,83 @@
 
 This document tracks all breaking changes in the `ng-hub-ui-forms` library.
 
+## v22.34.0
+
+### `<hub-fieldset legend="…">` renders its text inside a `<hub-legend>`
+
+- **Change**: the legend text used to be a bare text node inside `<legend class="hub-fieldset__legend">`.
+  It is now wrapped in `<hub-legend><span class="hub-legend">…</span></hub-legend>`, which is the
+  element a projected legend produces too.
+- **Why**: the legend had two shapes that coexisted — the `legend` input and the `hubLegend`
+  template slot — and they rendered differently, with `.hub-fieldset__legend` and `.hub-legend`
+  each declaring the same colour, size and weight from the same tokens. Two contracts for one
+  element, plus a silent rule about which wins. There is one now, and it is `<hub-legend>`.
+- **Impact**: nothing changes visually — both classes read the same `--hub-form-legend-*` tokens.
+  A stylesheet that targets `.hub-fieldset__legend` with a child or direct-descendant combinator,
+  or a test asserting the `<legend>`'s child nodes, sees an element where it used to see text.
+  `textContent` is unchanged.
+- **Migration**: target `.hub-legend` for the text itself, and keep `.hub-fieldset__legend` for the
+  box the browser draws over the fieldset border.
+
+### Announced: the `hubLegend` template slot is removed in 23.0.0
+
+- **Change**: `HubLegendDirective` is now marked `@deprecated`. Nothing is removed here and nothing
+  changes at runtime — this release is the notice, and the removal lands in 23.0.0, the next version
+  that tracks a new Angular major.
+- **Impact**: from 23.0.0 the symbol is gone from the entry point, so `import { HubLegendDirective }`
+  and `imports: [HubLegendDirective]` stop compiling, and an `<ng-template hubLegend>` left in a
+  template renders nothing at all — a legend that quietly disappears, which is why the notice
+  matters more than the compiler error.
+- **Migration**: drop the `ng-template` and project the content directly.
+
+  ```html
+  <!-- Before -->
+  <hub-fieldset formGroupName="address">
+  	<ng-template hubLegend>Shipping address <span class="badge">required</span></ng-template>
+  </hub-fieldset>
+
+  <!-- After -->
+  <hub-fieldset formGroupName="address">
+  	<hub-legend>Shipping address <span class="badge">required</span></hub-legend>
+  </hub-fieldset>
+  ```
+
+### Announced: the vendored `ng-*-tmp` slots and `NgOptionComponent` are removed in 23.0.0
+
+- **Change**: the twelve `Ng*TemplateDirective` re-exports and `NgOptionComponent` are now marked
+  `@deprecated`. They keep working until 23.0.0.
+- **Why**: they are the selectors of the ng-select copy under `select/vendor/`, which is re-synced
+  from upstream. A consumer writing `ng-option-tmp` is pinned to a name this package does not own
+  and does not promise.
+- **Impact**: from 23.0.0 those imports stop compiling. A template left writing
+  `<ng-template ng-option-tmp>` compiles either way — an attribute nobody claims is just an
+  attribute — and silently renders the default option instead of yours. That silence is the reason
+  to migrate before then rather than after.
+- **Migration**: rename the class and the attribute, one for one. The template context is
+  identical, so the body of each template is unchanged.
+
+  | Before | After |
+  | --- | --- |
+  | `NgOptionTemplateDirective` / `ng-option-tmp` | `HubSelectOptionDirective` / `hubSelectOption` |
+  | `NgOptgroupTemplateDirective` / `ng-optgroup-tmp` | `HubSelectOptgroupDirective` / `hubSelectOptgroup` |
+  | `NgLabelTemplateDirective` / `ng-label-tmp` | `HubSelectLabelDirective` / `hubSelectLabel` |
+  | `NgMultiLabelTemplateDirective` / `ng-multi-label-tmp` | `HubSelectMultiLabelDirective` / `hubSelectMultiLabel` |
+  | `NgHeaderTemplateDirective` / `ng-header-tmp` | `HubSelectHeaderDirective` / `hubSelectHeader` |
+  | `NgFooterTemplateDirective` / `ng-footer-tmp` | `HubSelectFooterDirective` / `hubSelectFooter` |
+  | `NgNotFoundTemplateDirective` / `ng-notfound-tmp` | `HubSelectNotFoundDirective` / `hubSelectNotFound` |
+  | `NgTypeToSearchTemplateDirective` / `ng-typetosearch-tmp` | `HubSelectTypeToSearchDirective` / `hubSelectTypeToSearch` |
+  | `NgLoadingTextTemplateDirective` / `ng-loadingtext-tmp` | `HubSelectLoadingTextDirective` / `hubSelectLoadingText` |
+  | `NgLoadingSpinnerTemplateDirective` / `ng-loadingspinner-tmp` | `HubSelectLoadingSpinnerDirective` / `hubSelectLoadingSpinner` |
+  | `NgTagTemplateDirective` / `ng-tag-tmp` | `HubSelectTagDirective` / `hubSelectTag` |
+  | `NgClearButtonTemplateDirective` / `ng-clearbutton-tmp` | `HubSelectClearButtonDirective` / `hubSelectClearButton` |
+
+  `NgOptionComponent` has no slot equivalent: use `[items]`. `<ng-option>` never reached the engine
+  through `<hub-select>` — the engine's `contentChildren` cannot see through the wrapper's
+  `<ng-content>` — so a select declared that way was always empty.
+
+  The last five of those attributes did nothing at all before this release, for the same reason.
+  Their `hubSelect*` replacements are forwarded, so migrating them is not a rename but a fix.
+
 ## v22.32.0
 
 ### `HubInvertColorPipe` with `bw: true` returns a different colour for mid-light inputs

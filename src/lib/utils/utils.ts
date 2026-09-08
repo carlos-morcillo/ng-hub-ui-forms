@@ -167,10 +167,11 @@ export function uuid(): string {
 /**
  * Returns the active element within the given root, descending into shadow roots when needed.
  *
- * @param root - The document or shadow root to search. Defaults to `document`.
+ * @param root - The document or shadow root to search. Defaults to the global document when there
+ * is one; on a server render there is not, and nothing has focus there anyway.
  * @returns The deepest active element, or `null`.
  */
-export function getActiveElement(root: Document | ShadowRoot = document): Element | null {
+export function getActiveElement(root: Document | ShadowRoot | null = globalThis.document ?? null): Element | null {
 	const activeEl = root?.activeElement;
 
 	if (!activeEl) {

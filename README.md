@@ -51,10 +51,12 @@ npm install ng-hub-ui-forms
 ```
 
 `ng-hub-ui-utils` is a peer dependency (the datepicker opens its panel through its overlay
-service, and every field renders its tooltip helper text with `hubTooltip`):
+service, and every field renders its tooltip helper text with `hubTooltip`). `ng-hub-ui-ds`
+carries the design tokens the fields read; it is optional, because every token is read with a
+fallback, but without it the fields fall back to their own defaults instead of your palette:
 
 ```bash
-npm install ng-hub-ui-utils
+npm install ng-hub-ui-utils ng-hub-ui-ds
 ```
 
 ### 2. Import
@@ -131,7 +133,7 @@ section.
 ## 📦 Installation
 
 ```bash
-npm install ng-hub-ui-forms ng-hub-ui-utils
+npm install ng-hub-ui-forms ng-hub-ui-utils ng-hub-ui-ds
 ```
 
 ### Peer Dependencies
@@ -142,6 +144,7 @@ npm install ng-hub-ui-forms ng-hub-ui-utils
 	"@angular/core": ">=21.0.0",
 	"@angular/forms": ">=21.0.0",
 	"@angular/platform-browser": ">=21.0.0",
+	"ng-hub-ui-ds": ">=22.0.0",
 	"ng-hub-ui-utils": ">=22.12.0"
 }
 ```
@@ -314,6 +317,38 @@ much room is left to type and so promises typing.
 <!-- grouped -->
 <hub-select formControlName="city" label="City" [items]="cities" bindLabel="name" bindValue="id" groupBy="country" />
 ```
+
+#### Customization slots
+
+Every part of the panel can be re-drawn from a template. The slots carry this library's own name;
+the `ng-*-tmp` attributes of the vendored engine underneath are deprecated and disappear in 23.0.0.
+
+```html
+<hub-select formControlName="assignee" label="Assignee" [items]="people" bindLabel="name">
+	<ng-template hubSelectLabel let-item="item">{{ item.emoji }} {{ item.name }}</ng-template>
+	<ng-template hubSelectOption let-item="item">
+		<strong>{{ item.name }}</strong>
+		<small>{{ item.role }}</small>
+	</ng-template>
+</hub-select>
+```
+
+| Slot | Draws | Context |
+| --- | --- | --- |
+| `hubSelectOption` | one option in the list | `item`, `item$`, `index`, `searchTerm` |
+| `hubSelectOptgroup` | a group header, with `groupBy` | `item`, `item$`, `index`, `searchTerm` |
+| `hubSelectLabel` | the selected value, single mode | `item`, `label`, `clear` |
+| `hubSelectMultiLabel` | all selected values at once, multiple mode | `items`, `clear` |
+| `hubSelectHeader` | a fixed block above the list | `searchTerm` |
+| `hubSelectFooter` | a fixed block below the list | `searchTerm` |
+| `hubSelectNotFound` | the "no items found" message | `searchTerm` |
+| `hubSelectTypeToSearch` | the "type to search" hint | — |
+| `hubSelectLoadingText` | the "loading…" message | `searchTerm` |
+| `hubSelectLoadingSpinner` | the spinner in the control | — |
+| `hubSelectTag` | the "add \<term\>" row, with `addTag` | `searchTerm` |
+| `hubSelectClearButton` | the clear (×) control | — |
+
+Import the directive you use — `HubSelectOptionDirective`, `HubSelectLabelDirective` and so on.
 
 #### Floating label
 
@@ -629,6 +664,23 @@ form would have written anyway.
 
 The attribute is restricted to `<fieldset>` on purpose: on a `<div>` it would draw a legend over
 a group with none of the semantics assistive technology reads from a real fieldset.
+
+#### One way to write the legend
+
+`legend="…"` is shorthand: it builds a `<hub-legend>` for you. When the legend needs more than a
+string — a required marker, an icon, a badge — project the element yourself and it is lifted into
+the same native `<legend>`, with the same classes.
+
+```html
+<fieldset hubFieldset [group]="form.controls.address">
+	<hub-legend [required]="true" [invalid]="form.controls.address.invalid">Shipping address</hub-legend>
+	…
+</fieldset>
+```
+
+The older `<ng-template hubLegend>` slot still works and is deprecated: it existed only so a legend
+could carry markup, and `<hub-legend>` carries markup without an `ng-template` and without a second
+directive to import. It is removed in 23.0.0.
 
 ### Validation states (invalid is automatic, valid is opt-in)
 

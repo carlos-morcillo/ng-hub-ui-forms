@@ -1,10 +1,13 @@
 <ng-template #body>
-	@if (legend() || legendTmp()) {
+	@if (legend() || legendTmp() || _projectedLegend()) {
 		<legend class="hub-fieldset__legend">
-			@if (legendTmp()) {
-				<ng-container [ngTemplateOutlet]="legendTmp()!"></ng-container>
-			} @else {
-				{{ legend() }}
+			<ng-content select="hub-legend"></ng-content>
+			@if (!_projectedLegend()) {
+				@if (legendTmp(); as tpl) {
+					<ng-container [ngTemplateOutlet]="tpl"></ng-container>
+				} @else {
+					<hub-legend>{{ legend() }}</hub-legend>
+				}
 			}
 		</legend>
 	}

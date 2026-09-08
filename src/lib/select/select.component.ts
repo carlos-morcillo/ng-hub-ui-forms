@@ -25,14 +25,33 @@ import { areEqual, get } from '../utils/utils';
 import { NgSelectComponent } from './vendor/lib/ng-select.component';
 import { NgSelectConfig } from './vendor/lib/config.service';
 import {
+	NgClearButtonTemplateDirective,
 	NgFooterTemplateDirective,
 	NgHeaderTemplateDirective,
 	NgLabelTemplateDirective,
+	NgLoadingSpinnerTemplateDirective,
+	NgLoadingTextTemplateDirective,
 	NgMultiLabelTemplateDirective,
 	NgNotFoundTemplateDirective,
 	NgOptgroupTemplateDirective,
-	NgOptionTemplateDirective
+	NgOptionTemplateDirective,
+	NgTagTemplateDirective,
+	NgTypeToSearchTemplateDirective
 } from './vendor/lib/ng-templates.directive';
+import {
+	HubSelectClearButtonDirective,
+	HubSelectFooterDirective,
+	HubSelectHeaderDirective,
+	HubSelectLabelDirective,
+	HubSelectLoadingSpinnerDirective,
+	HubSelectLoadingTextDirective,
+	HubSelectMultiLabelDirective,
+	HubSelectNotFoundDirective,
+	HubSelectOptgroupDirective,
+	HubSelectOptionDirective,
+	HubSelectTagDirective,
+	HubSelectTypeToSearchDirective
+} from './select-templates.directive';
 import { HubTooltipDirective } from 'ng-hub-ui-utils';
 
 /**
@@ -63,6 +82,11 @@ import { HubTooltipDirective } from 'ng-hub-ui-utils';
 		NgHeaderTemplateDirective,
 		NgFooterTemplateDirective,
 		NgNotFoundTemplateDirective,
+		NgTypeToSearchTemplateDirective,
+		NgLoadingTextTemplateDirective,
+		NgLoadingSpinnerTemplateDirective,
+		NgTagTemplateDirective,
+		NgClearButtonTemplateDirective,
 		HubTooltipDirective
 	],
 	templateUrl: './select.component.html',
@@ -91,14 +115,61 @@ export class HubSelectComponent extends HubFieldControl {
 	// which does NOT see through this wrapper's `<ng-content>`. We grab the
 	// consumer-projected templates here and re-declare them as direct content of
 	// the inner ng-select (see the template), forwarding each with its context —
-	// so `<ng-template ng-option-tmp>` etc. work through `<hub-select>`.
-	protected readonly _optionTpl = contentChild(NgOptionTemplateDirective, { read: TemplateRef });
-	protected readonly _optgroupTpl = contentChild(NgOptgroupTemplateDirective, { read: TemplateRef });
-	protected readonly _labelTpl = contentChild(NgLabelTemplateDirective, { read: TemplateRef });
-	protected readonly _multiLabelTpl = contentChild(NgMultiLabelTemplateDirective, { read: TemplateRef });
-	protected readonly _headerTpl = contentChild(NgHeaderTemplateDirective, { read: TemplateRef });
-	protected readonly _footerTpl = contentChild(NgFooterTemplateDirective, { read: TemplateRef });
-	protected readonly _notFoundTpl = contentChild(NgNotFoundTemplateDirective, { read: TemplateRef });
+	// so `<ng-template hubSelectOption>` etc. work through `<hub-select>`.
+	//
+	// Each slot is queried twice: once for the hub-named directive that is the supported way to
+	// write it, and once for the vendored `ng-*-tmp` attribute that used to be the only way. The
+	// hub one wins; the vendored one is deprecated and disappears in 23.0.0 along with its export.
+	private readonly _hubOptionTpl = contentChild(HubSelectOptionDirective, { read: TemplateRef });
+	private readonly _ngOptionTpl = contentChild(NgOptionTemplateDirective, { read: TemplateRef });
+	protected readonly _optionTpl = computed(() => this._hubOptionTpl() ?? this._ngOptionTpl());
+
+	private readonly _hubOptgroupTpl = contentChild(HubSelectOptgroupDirective, { read: TemplateRef });
+	private readonly _ngOptgroupTpl = contentChild(NgOptgroupTemplateDirective, { read: TemplateRef });
+	protected readonly _optgroupTpl = computed(() => this._hubOptgroupTpl() ?? this._ngOptgroupTpl());
+
+	private readonly _hubLabelTpl = contentChild(HubSelectLabelDirective, { read: TemplateRef });
+	private readonly _ngLabelTpl = contentChild(NgLabelTemplateDirective, { read: TemplateRef });
+	protected readonly _labelTpl = computed(() => this._hubLabelTpl() ?? this._ngLabelTpl());
+
+	private readonly _hubMultiLabelTpl = contentChild(HubSelectMultiLabelDirective, { read: TemplateRef });
+	private readonly _ngMultiLabelTpl = contentChild(NgMultiLabelTemplateDirective, { read: TemplateRef });
+	protected readonly _multiLabelTpl = computed(() => this._hubMultiLabelTpl() ?? this._ngMultiLabelTpl());
+
+	private readonly _hubHeaderTpl = contentChild(HubSelectHeaderDirective, { read: TemplateRef });
+	private readonly _ngHeaderTpl = contentChild(NgHeaderTemplateDirective, { read: TemplateRef });
+	protected readonly _headerTpl = computed(() => this._hubHeaderTpl() ?? this._ngHeaderTpl());
+
+	private readonly _hubFooterTpl = contentChild(HubSelectFooterDirective, { read: TemplateRef });
+	private readonly _ngFooterTpl = contentChild(NgFooterTemplateDirective, { read: TemplateRef });
+	protected readonly _footerTpl = computed(() => this._hubFooterTpl() ?? this._ngFooterTpl());
+
+	private readonly _hubNotFoundTpl = contentChild(HubSelectNotFoundDirective, { read: TemplateRef });
+	private readonly _ngNotFoundTpl = contentChild(NgNotFoundTemplateDirective, { read: TemplateRef });
+	protected readonly _notFoundTpl = computed(() => this._hubNotFoundTpl() ?? this._ngNotFoundTpl());
+
+	// The five slots below were exported but never forwarded: written inside a `<hub-select>` they
+	// belonged to this wrapper's content, and the engine's own `contentChild` cannot see through an
+	// `<ng-content>`, so they did nothing at all. They are forwarded now, under hub names.
+	private readonly _hubTypeToSearchTpl = contentChild(HubSelectTypeToSearchDirective, { read: TemplateRef });
+	private readonly _ngTypeToSearchTpl = contentChild(NgTypeToSearchTemplateDirective, { read: TemplateRef });
+	protected readonly _typeToSearchTpl = computed(() => this._hubTypeToSearchTpl() ?? this._ngTypeToSearchTpl());
+
+	private readonly _hubLoadingTextTpl = contentChild(HubSelectLoadingTextDirective, { read: TemplateRef });
+	private readonly _ngLoadingTextTpl = contentChild(NgLoadingTextTemplateDirective, { read: TemplateRef });
+	protected readonly _loadingTextTpl = computed(() => this._hubLoadingTextTpl() ?? this._ngLoadingTextTpl());
+
+	private readonly _hubLoadingSpinnerTpl = contentChild(HubSelectLoadingSpinnerDirective, { read: TemplateRef });
+	private readonly _ngLoadingSpinnerTpl = contentChild(NgLoadingSpinnerTemplateDirective, { read: TemplateRef });
+	protected readonly _loadingSpinnerTpl = computed(() => this._hubLoadingSpinnerTpl() ?? this._ngLoadingSpinnerTpl());
+
+	private readonly _hubTagTpl = contentChild(HubSelectTagDirective, { read: TemplateRef });
+	private readonly _ngTagTpl = contentChild(NgTagTemplateDirective, { read: TemplateRef });
+	protected readonly _tagTpl = computed(() => this._hubTagTpl() ?? this._ngTagTpl());
+
+	private readonly _hubClearButtonTpl = contentChild(HubSelectClearButtonDirective, { read: TemplateRef });
+	private readonly _ngClearButtonTpl = contentChild(NgClearButtonTemplateDirective, { read: TemplateRef });
+	protected readonly _clearButtonTpl = computed(() => this._hubClearButtonTpl() ?? this._ngClearButtonTpl());
 
 	/** Deprecated select-only slot, superseded by `[hubAppend]`. */
 	protected readonly _legacySuffixTpl = contentChild(HubSelectSuffixDirective, { read: TemplateRef });

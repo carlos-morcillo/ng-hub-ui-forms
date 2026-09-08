@@ -55,7 +55,7 @@ npm install ng-hub-ui-forms
 overlay y todos los campos pintan el texto de ayuda en tooltip con `hubTooltip`):
 
 ```bash
-npm install ng-hub-ui-utils
+npm install ng-hub-ui-utils ng-hub-ui-ds
 ```
 
 ### 2. Importar
@@ -132,7 +132,7 @@ de toda la familia.
 ## 📦 Instalación
 
 ```bash
-npm install ng-hub-ui-forms ng-hub-ui-utils
+npm install ng-hub-ui-forms ng-hub-ui-utils ng-hub-ui-ds
 ```
 
 ### Peer dependencies
@@ -143,6 +143,7 @@ npm install ng-hub-ui-forms ng-hub-ui-utils
 	"@angular/core": ">=21.0.0",
 	"@angular/forms": ">=21.0.0",
 	"@angular/platform-browser": ">=21.0.0",
+	"ng-hub-ui-ds": ">=22.0.0",
 	"ng-hub-ui-utils": ">=22.12.0"
 }
 ```
@@ -319,6 +320,39 @@ escribir y por tanto promete que se puede escribir.
 <!-- agrupado -->
 <hub-select formControlName="city" label="City" [items]="cities" bindLabel="name" bindValue="id" groupBy="country" />
 ```
+
+#### Ranuras de personalización
+
+Cualquier parte del panel se puede redibujar desde una plantilla. Las ranuras llevan el nombre de
+esta biblioteca; los atributos `ng-*-tmp` del motor vendorizado que hay debajo están obsoletos y
+desaparecen en la 23.0.0.
+
+```html
+<hub-select formControlName="assignee" label="Assignee" [items]="people" bindLabel="name">
+	<ng-template hubSelectLabel let-item="item">{{ item.emoji }} {{ item.name }}</ng-template>
+	<ng-template hubSelectOption let-item="item">
+		<strong>{{ item.name }}</strong>
+		<small>{{ item.role }}</small>
+	</ng-template>
+</hub-select>
+```
+
+| Ranura | Dibuja | Contexto |
+| --- | --- | --- |
+| `hubSelectOption` | una opción de la lista | `item`, `item$`, `index`, `searchTerm` |
+| `hubSelectOptgroup` | la cabecera de un grupo, con `groupBy` | `item`, `item$`, `index`, `searchTerm` |
+| `hubSelectLabel` | el valor seleccionado, en modo simple | `item`, `label`, `clear` |
+| `hubSelectMultiLabel` | todos los valores a la vez, en modo múltiple | `items`, `clear` |
+| `hubSelectHeader` | un bloque fijo sobre la lista | `searchTerm` |
+| `hubSelectFooter` | un bloque fijo bajo la lista | `searchTerm` |
+| `hubSelectNotFound` | el mensaje de «sin resultados» | `searchTerm` |
+| `hubSelectTypeToSearch` | la pista de «escribe para buscar» | — |
+| `hubSelectLoadingText` | el mensaje de «cargando…» | `searchTerm` |
+| `hubSelectLoadingSpinner` | el spinner del control | — |
+| `hubSelectTag` | la fila «añadir \<término\>», con `addTag` | `searchTerm` |
+| `hubSelectClearButton` | el control de limpiar (×) | — |
+
+Importa la directiva que uses: `HubSelectOptionDirective`, `HubSelectLabelDirective`, etc.
 
 #### Etiqueta flotante
 
@@ -637,6 +671,23 @@ marcado que habría escrito un formulario HTML sin librería.
 El atributo está restringido a `<fieldset>` a propósito: sobre un `<div>` dibujaría una leyenda
 sobre un grupo sin ninguna de las semánticas que las tecnologías de apoyo leen de un fieldset
 de verdad.
+
+#### Una sola manera de escribir la leyenda
+
+`legend="…"` es un atajo: construye un `<hub-legend>` por ti. Cuando la leyenda necesita más que
+una cadena —una marca de obligatorio, un icono, una etiqueta— proyecta tú el elemento y se eleva
+hasta el mismo `<legend>` nativo, con las mismas clases.
+
+```html
+<fieldset hubFieldset [group]="form.controls.address">
+	<hub-legend [required]="true" [invalid]="form.controls.address.invalid">Shipping address</hub-legend>
+	…
+</fieldset>
+```
+
+La ranura antigua `<ng-template hubLegend>` sigue funcionando y queda obsoleta: existía solo para
+que una leyenda pudiera llevar marcado, y `<hub-legend>` lo lleva sin `ng-template` y sin una
+segunda directiva que importar. Desaparece en la 23.0.0.
 
 ### Estados de validación (el inválido es automático, el válido es opt-in)
 

@@ -31,21 +31,61 @@ export { HubDatepickerComponent } from './lib/components/datepicker/datepicker.c
 export { HubTimepickerComponent } from './lib/components/timepicker/timepicker.component';
 export { HubFileInputComponent } from './lib/components/file-input/file-input.component';
 
-// Select — dropdown customization passthrough (vendored ng-select template directives)
-export { NgOptionComponent } from './lib/select/vendor/lib/ng-option.component';
-export { NgSelectConfig } from './lib/select/vendor/lib/config.service';
+// Select — dropdown customization slots
 export {
+	HubSelectOptionDirective,
+	HubSelectOptgroupDirective,
+	HubSelectLabelDirective,
+	HubSelectMultiLabelDirective,
+	HubSelectHeaderDirective,
+	HubSelectFooterDirective,
+	HubSelectNotFoundDirective,
+	HubSelectTypeToSearchDirective,
+	HubSelectLoadingTextDirective,
+	HubSelectLoadingSpinnerDirective,
+	HubSelectTagDirective,
+	HubSelectClearButtonDirective
+} from './lib/select/select-templates.directive';
+export { NgSelectConfig } from './lib/select/vendor/lib/config.service';
+
+/**
+ * @deprecated Use `<hub-select>` with `[items]` (or the `hubSelect*` slots) instead. `<ng-option>`
+ * belongs to the vendored ng-select engine, an internal detail this package re-syncs from upstream.
+ * Removed in 23.0.0.
+ */
+export { NgOptionComponent } from './lib/select/vendor/lib/ng-option.component';
+
+/**
+ * @deprecated Use the `hubSelect*` slot directives above. These are the vendored ng-select
+ * attributes (`ng-option-tmp` and friends) and name an internal dependency, not this library's API.
+ * Each has a one-to-one replacement — `ng-option-tmp` → `hubSelectOption`, `ng-label-tmp` →
+ * `hubSelectLabel`, and so on, with the same template context. They keep working until they are
+ * removed in 23.0.0.
+ */
+export {
+	/** @deprecated Use `HubSelectOptionDirective` (`[hubSelectOption]`). Removed in 23.0.0. */
 	NgOptionTemplateDirective,
+	/** @deprecated Use `HubSelectOptgroupDirective` (`[hubSelectOptgroup]`). Removed in 23.0.0. */
 	NgOptgroupTemplateDirective,
+	/** @deprecated Use `HubSelectLabelDirective` (`[hubSelectLabel]`). Removed in 23.0.0. */
 	NgLabelTemplateDirective,
+	/** @deprecated Use `HubSelectMultiLabelDirective` (`[hubSelectMultiLabel]`). Removed in 23.0.0. */
 	NgMultiLabelTemplateDirective,
+	/** @deprecated Use `HubSelectHeaderDirective` (`[hubSelectHeader]`). Removed in 23.0.0. */
 	NgHeaderTemplateDirective,
+	/** @deprecated Use `HubSelectFooterDirective` (`[hubSelectFooter]`). Removed in 23.0.0. */
 	NgFooterTemplateDirective,
+	/** @deprecated Use `HubSelectNotFoundDirective` (`[hubSelectNotFound]`). Removed in 23.0.0. */
 	NgNotFoundTemplateDirective,
+	/** @deprecated Use `HubSelectTypeToSearchDirective` (`[hubSelectTypeToSearch]`). Removed in 23.0.0. */
 	NgTypeToSearchTemplateDirective,
+	/** @deprecated Use `HubSelectLoadingTextDirective` (`[hubSelectLoadingText]`). Removed in 23.0.0. */
 	NgLoadingTextTemplateDirective,
+	/** @deprecated Use `HubSelectLoadingSpinnerDirective` (`[hubSelectLoadingSpinner]`). Removed in 23.0.0. */
 	NgLoadingSpinnerTemplateDirective,
+	/** @deprecated Use `HubSelectTagDirective` (`[hubSelectTag]`). Removed in 23.0.0. */
 	NgTagTemplateDirective,
+	/** @deprecated Use `HubSelectClearButtonDirective` (`[hubSelectClearButton]`). Removed in 23.0.0. */
 	NgClearButtonTemplateDirective
 } from './lib/select/vendor/lib/ng-templates.directive';
 

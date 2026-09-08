@@ -13,7 +13,7 @@ import { Directive } from '@angular/core';
  * one field with an action on it.
  *
  * Declared as a template rather than projected content because the select's catch-all
- * `<ng-content>` — which carries `<ng-option>` through to the engine — is declared first
+ * `<ng-content>` — which opens straight into the dropdown engine — is declared first
  * and would swallow it. Rendering from a template also keeps the action after the control
  * in the DOM, so tabbing reaches the field before the button acting on it.
  *
