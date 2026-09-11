@@ -23,7 +23,7 @@ The library ships nine fields — `hub-input`, `hub-otp-input`, `hub-textarea`, 
 |                 | `formTextType="tooltip"` — the hint behind a question mark                                         |       ✅        |
 |                 | `hubFormText` projection template for rich helper text                                             |       ❌        |
 | **State**       | `disabled` (two-way `model`) and `required` (two-way `model`)                                      |       ✅        |
-|                 | `readonly` (every field but `hub-slider`, `hub-segmented` and `hub-file-input`)                    |       ❌        |
+|                 | `readonly` (every field but `hub-slider` and `hub-segmented`)                                      |       ❌        |
 |                 | `classlist` forwarded to the host                                                                  |       ❌        |
 | **Direction**   | Every field mirrors under `dir="rtl"`                                                              |       ✅        |
 
@@ -35,6 +35,11 @@ The library ships nine fields — `hub-input`, `hub-otp-input`, `hub-textarea`, 
 |                | `checkbox` and `switch`                                                   |       ✅        |
 |                | `counter`, with its own steppers                                          |       ✅        |
 |                | `file` — **deprecated**, use `hub-file-input`                             |       ❌        |
+| **Colour**     | `color` as a hex text field with a square that opens the native picker (`forms-input-color-swatches`) |       ✅        |
+|                | Swatch grid through `swatches`: one row the height of a field, wrapping onto more (`forms-input-color-swatches`) |       ✅        |
+|                | `allowCustomColor`: the last cell opens the native picker, or is left out for a closed palette (`forms-input-color-swatches`) |       ✅        |
+|                | `HUB_COLOR_PALETTES`: `tailwind`, `material`, `pastel`, `neutral`, `status` (`forms-input-color-swatches`) |       ✅        |
+|                | Application palette through `provideHubForms({ color })`, `[swatches]="[]"` forcing the hex field, `customColorLabel` / `pickerLabel` |       ❌        |
 | **Numbers**    | `min` / `max` (two-way `model`) and `step`                                |       ❌        |
 | **Checkbox**   | Mixed state through `[(indeterminate)]`, reflected on the native property |       ❌        |
 | **Password**   | Reveal toggle (`passwordToggle`, `[(passwordRevealed)]`, `hideOnBlur`)    |       ✅        |
@@ -145,9 +150,17 @@ The library ships nine fields — `hub-input`, `hub-otp-input`, `hub-textarea`, 
 | **Constraints** | `accept`, enforced on drops and pastes as well as in the dialog            |       ✅        |
 |                 | `maxSize` / `minSize` / `maxTotalSize` / `maxFiles` / `allowDuplicates`    |       ✅        |
 |                 | `rejected` output carrying `HubFileRejection[]`                            |       ❌        |
-| **Preview**     | `preview="none" \| "list" \| "grid"`                                       |       ✅        |
+| **Preview**     | `preview="none" \| "list" \| "grid" \| "inline"`; `grid` and `inline` draw tiles |       ✅        |
+|                 | Inline tile filling the field: the image, or the file-family icon and name, with a Replace pill and a remove button (`forms-file-input-inline`) |       ✅        |
+|                 | Inline grid with `multiple`, ending in an add tile, and a "3 of 5 files" counter with `maxFiles` (`forms-file-input-inline`) |       ✅        |
+|                 | A tile opens its file: a picked image in a `<dialog>` viewer, anything else in a new tab (`forms-file-input-inline`) |       ✅        |
+|                 | `imagePreview="false"`: every file as its family icon, no object URLs (`forms-file-input-inline`) |       ✅        |
+|                 | File-family icons replaceable by token (`--hub-file-input-kind-*-icon`)    |       ❌        |
 |                 | `hubFileIcon` and `hubFilePreview` templates                               |       ✅        |
 |                 | `fileRemoved` output                                                       |       ❌        |
+| **Stored files** | `currentFile`: a URL, a `HubCurrentFile` or a list, shown among the picked files (`forms-file-input-inline`) |       ✅        |
+|                 | `currentFileRemoved` output when a stored file is removed or replaced (`forms-file-input-inline`) |       ✅        |
+| **State**       | `readonly` (files open, nothing changes) and `clearable`                   |       ❌        |
 | **Dropzone**    | `dropText` / `dropSubtext` / `buttonLabel` / `hint`                        |       ✅        |
 |                 | `hubFileDropzoneNotice` projected between the glyph and the invitation     |       ✅        |
 | **Upload**      | `HUB_FILE_UPLOADER` with `autoUpload`, per-file progress, cancel and retry |       ✅        |

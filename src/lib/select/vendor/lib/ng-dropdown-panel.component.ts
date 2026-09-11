@@ -440,10 +440,14 @@ export class NgDropdownPanelComponent implements OnInit, OnChanges {
 		const selectContainer = this._select.querySelector('.ng-select-container') as HTMLElement;
 		const containerRect = selectContainer?.getBoundingClientRect() ?? select;
 
+		// Both branches measure from the parent's top edge. An unpositioned `body` is not the
+		// panel's containing block: `bottom` would resolve against the viewport-sized initial
+		// containing block, so on a page taller than the viewport the panel landed far off-screen.
 		if (this._currentPosition === 'top') {
-			const offsetBottom = parent.bottom - containerRect.top;
-			this._dropdown.style.bottom = offsetBottom + 'px';
-			this._dropdown.style.top = 'auto';
+			const dropdownHeight = this._dropdown.getBoundingClientRect().height;
+			const offsetTop = containerRect.top - parent.top - dropdownHeight;
+			this._dropdown.style.top = offsetTop + 'px';
+			this._dropdown.style.bottom = 'auto';
 		} else if (this._currentPosition === 'bottom') {
 			const offsetTop = containerRect.bottom - parent.top;
 			this._dropdown.style.top = offsetTop + 'px';

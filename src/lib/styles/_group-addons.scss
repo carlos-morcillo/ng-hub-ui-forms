@@ -180,6 +180,17 @@
 			z-index: 1;
 		}
 
+		// The colour once more, heavy enough to win on weight alone. `hubButton` compiles
+		// `:host(.hub-btn-outline)` to a class plus its host attribute, the same two points as
+		// the doubled class above, so the tie went to whichever stylesheet was injected last,
+		// and component styles are injected in the order components first render. On one page
+		// the select's attached button came out in the button's own grey while the input's
+		// beside it wore the field's line. Under the pointer or the focus ring the rule steps
+		// aside and the button's own hover border shows, as it always did on the input.
+		> *:not(:hover):not(:focus-visible) {
+			border-color: #{$attached-border-color};
+		}
+
 		&--prepend > * {
 			border-start-end-radius: #{$attached-radius};
 			border-end-end-radius: #{$attached-radius};

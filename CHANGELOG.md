@@ -5,6 +5,172 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.35.0] - 2026-09-11
+
+### Added
+
+- **`preview="inline"`: the file sits inside the field.** A logo, an avatar or a signed contract is
+  one file that belongs to a record, and the list under a dropzone was the wrong shape for it: the
+  dropzone kept inviting a drop after the file was there, and the file itself sat below, small. An
+  inline field is one tile that fills the field. An image the browser can paint is shown as the
+  image; anything else is drawn as the icon of its family and its name. Hover, keyboard focus and a
+  drag over the tile raise a "Replace" pill on a veil, and a remove button sits in the corner.
+  With `multiple` the tiles form a grid inside the field, ending in a tile that adds more files;
+  empty, the field is the usual dropzone.
+
+  Clicking a tile opens its file: a picked image enlarges in a native modal `<dialog>`, a stored
+  file opens its URL in a new tab (`rel="noopener noreferrer"`), and a picked file that is not an
+  image opens in a new tab through an object URL created at that moment. Delete or Backspace on a
+  focused tile removes it. With `maxFiles`, a counter reads "3 of 5 files", stored files in view
+  included; at the limit the add tile goes away and drops and pastes are refused, while replacing a
+  file is still allowed. In this mode the native `<input type="file">` sits after the tiles, outside
+  the `<label>`.
+
+- **`currentFile`, the file the record already has.** A URL, a `HubCurrentFile` (`{ url, name?,
+  type? }`) for a URL that does not reveal its name or type, or with `multiple` a list of either; a
+  single field shows the first. Without a name, the name is the URL's last segment when it carries
+  an extension, and the type is read from a `data:` URL. A stored file with no name at all is
+  called after the field's label ("Remove Logo"), and "Current file" only when there is no label.
+  In a field whose `accept` admits only images, a stored file of unknown type is treated as an
+  image. Only `preview="inline"` shows stored files.
+
+  **A stored file never enters the form value**, which stays a `File`, a `File[]` or `null`. When
+  one leaves the field, removed or replaced by a picked file, **`currentFileRemoved`** emits it: it
+  is the application's cue to delete it on the server. It stays hidden until `currentFile` changes.
+  In a single inline field a new file, however it arrives, replaces the stored one; removing the
+  new file afterwards does not bring the stored one back. `fileRemoved` now also emits a picked file
+  that was replaced through its tile.
+
+- **`imagePreview`** (default `true`). Off, every file is drawn as its family icon and no object
+  URL is created for a thumbnail, in `list` as well. The lighter choice for long lists of photos.
+
+- **`readonly` and `clearable` on `hub-file-input`.** A read-only field keeps its files in view and
+  lets them be opened, but nothing can be picked, dropped, pasted, replaced or removed; unlike
+  `disabled`, it keeps its focus and is still submitted. `clearable` (default `true`) decides
+  whether the user may remove what the field holds, and it governs the remove buttons and "Remove
+  all" of `list` and `grid` too.
+
+- **File-family icons.** Ten families (`pdf`, `document`, `spreadsheet`, `presentation`, `archive`,
+  `audio`, `video`, `code`, `image`, `generic`), told apart by MIME type first and by extension when
+  the browser gives none. Each icon is a mask token, `--hub-file-input-kind-<family>-icon`, so a
+  drawing is replaced by setting one custom property, and its colour by
+  `--hub-file-input-kind-icon-color`, scoped per family through `[data-file-kind]` if wanted. The
+  drawings are Bootstrap Icons 1.13.1 (MIT). `fileKind(type, name)` and the `HubFileKind` type are
+  exported, with `HubCurrentFile`.
+
+- **Seven `HubFileInputLabels` entries**: `removeFile(name)`, `open(name)`, `replace`,
+  `replaceFile(name)`, `close`, `count(count, max)` and `currentFile`. The buttons over a tile name
+  the file they act on, because "Remove file" alone does not say which one.
+
+- **57 `--hub-file-input-*` tokens.** `-inline-width`, `-inline-min-height` and
+  `-inline-aspect-ratio` size the single inline field; `-tile-*` dress every tile, inline and grid;
+  `-tile-replace-*` and `-tile-veil-bg` the Replace layer; `-tile-action-*` the corner buttons;
+  `-count-*` the counter; `-viewer-*` the enlarged image; `-kind-*` the family icons. An avatar is
+  five of them: `-inline-width: 8rem`, `-inline-aspect-ratio: 1`, `-tile-radius: 50%`,
+  `-tile-fit: cover` and `-tile-padding: 0`, with `accept="image/*"`.
+
+- **A grid of swatches for `<hub-input type="color">`.** Give the field a list of colours through
+  `swatches` and it draws them as a radio group the size of a field: one row is as tall as a text
+  input, the cells share its width down to `--hub-input-swatch-min-width`, and past that they wrap
+  onto more rows, where the field drops its box. The last cell opens the native picker for a colour
+  outside the list; `[allowCustomColor]="false"` removes it for a closed palette, and
+  `customColorLabel` names it. A swatch is a CSS colour string or `{ value, label }`; the label is
+  what a screen reader says. Every entry goes through `parseColor` from `ng-hub-ui-utils` (hex,
+  `rgb()`, `hsl()`, `oklch()`, `oklab()`, named colours); one it cannot read is dropped, with a
+  `[ng-hub-ui-forms]` warning in development builds. The control receives the chosen string as
+  written. The group is labelled by the field label through `aria-labelledby`, has one Tab stop and
+  moves with the arrows, Home and End.
+
+  Which field is drawn: `swatches` left at `null` takes the application palette, and with none the
+  classic field; `[swatches]="[]"` asks for the classic field even under an application palette; a
+  list draws the grid. A list in which no entry is a colour also falls back to the classic field.
+
+- **`color` in `provideHubForms`** (`HubColorConfig`): `swatches`, the application palette, empty by
+  default so colour fields keep the classic field; `customColorLabel` (`'Custom color'`); and
+  `pickerLabel` (`'Choose color'`), the accessible name of the classic field's colour square.
+  Merged like `password` and `fileInput`, which is how both names get translated.
+
+- **`HUB_COLOR_PALETTES`**, five frozen lists of lowercase sRGB hex with an English name on every
+  swatch: `tailwind` (17, Tailwind CSS v3 step 500), `material` (19, Material Design 2014 tone 500),
+  `pastel` (17, Tailwind step 200), `neutral` (11, Tailwind `neutral` 50 to 950) and `status` (5:
+  success, warning, danger, info, neutral). The record, each list and each swatch are frozen, so one
+  application cannot repaint them for another. Also exported: `HubColorPaletteName`,
+  `HubColorSwatch`, `HubColorSwatchInput`, `HubColorConfig` and `defaultHubColorConfig`.
+
+- **14 `--hub-input-swatch-*` tokens** for the grid (size, minimum width, gap, radius, hairline,
+  wrapped border and background, selection and focus rings, check mark, the custom cell's spectrum),
+  plus `--hub-input-swatch-mark-color`, a hook that is not declared: leave it unset and each check
+  mark is black or white, whichever reads on its swatch; set it and every mark takes that colour.
+
+### Changed
+
+- **The classic colour field is a hex text field now.** Up to 22.34.0, `type="color"` rendered the
+  browser's colour button, 2.5rem wide. It is now a full-width field like any other `hub-input`,
+  with the same height, border, radius, focus ring and disabled, read-only and invalid states: the
+  hex code is editable text, and a square at its start shows the colour and opens the native picker.
+  **Every existing colour field changes look without any code change.** The value is what it was: a
+  valid colour reaches the form as it is typed, with or without `#`, three or six digits, stored as
+  lowercase `#rrggbb`, the only notation the native picker accepts. Invalid text leaves the value
+  alone and reverts on blur. A value in another notation written from the form (`rgb(…)`, a named
+  colour) is shown as hex but not rewritten until someone types or picks. The square and the text
+  are two Tab stops, in that order. Read-only, the square does not open the picker; disabled, the
+  square, the text and the picker are all disabled.
+
+  `.hub-input__control--color` is kept, but it is on the text `<input>` now, not on an
+  `<input type="color">`: a stylesheet that sized the native button through that class now styles
+  the text field. New classes: `.hub-input__color` (the wrapper), `.hub-input__color-swatch` (the
+  square) and `.hub-input__color-native` (the hidden picker).
+
+- **`--hub-input-color-size` is the width of that square**, and its default is the field's inner
+  height, `calc(var(--hub-input-line-height) * var(--hub-input-font-size) + 2 * var(--hub-input-padding-y))`,
+  so the square stays square and follows a theme's type and padding. Its height is always the
+  field's. An application that set it keeps control of the square, in width only: `3rem` now gives a
+  3rem-wide strip as tall as the field.
+
+- **A colour field with `labelType="floating"` shows its label**, above the field as with `stacked`.
+  Before, the native colour button with a floating label drew no label at all.
+
+- **Every `hub-input` label carries an `id`**, `<field id>-label`, and binds `for` as an attribute.
+  In every format but the swatch grid, `for` still points at the control as before. The grid's
+  label has no `for`, since a `<label for>` cannot name a radio group; the group points back at it
+  through `aria-labelledby`. An application that already gave another element that id now has a
+  duplicate.
+
+- **`preview="grid"` draws tiles**, the same tiles as `inline`, under the dropzone: the image or the
+  family icon, the name, the Replace pill, the remove cross, and a click that opens the file. The
+  file size is no longer shown, and the tiles take their look from `--hub-file-input-tile-*`: the
+  `--hub-file-input-item-*` tokens now dress only the rows of `preview="list"`, so a grid themed
+  through them loses that theme. **`--hub-file-input-grid-thumb-height` is now the height of the
+  whole tile**, not of the thumbnail inside it; the default stays `6rem`. A projected
+  `hubFileIcon` template no longer reaches the grid: tiles draw the family icon, and `hubFileIcon`
+  now applies to `preview="list"` only. A projected `hubFilePreview` template keeps the previous
+  list, laid out as a grid.
+
+- **The dropzone sits inside a `div.hub-file-input__frame`**, in every preview mode, and the frame
+  receives the drag events. A consumer selector that expects the dropzone as a direct child, such as
+  `.hub-field__body > .hub-file-input__dropzone`, no longer matches.
+
+### Fixed
+
+- **No broken thumbnail for an image the browser cannot paint.** `list` and `grid` created a
+  preview for every `image/*` file, so a HEIC, TIFF or PSD showed an empty frame. A preview is now
+  created only for PNG, JPEG, GIF, WebP, AVIF, SVG, BMP, ICO and APNG; the others get the image
+  icon. **`HubFileItem.previewUrl` is `null` for those types**, and for every file when
+  `imagePreview` is off: a `hubFilePreview` template that renders `previewUrl` has to handle `null`.
+
+- **A `hub-select` dropdown appended to `body` that opened upwards no longer lands off-screen.** The
+  upward branch set the panel's `bottom` from the bottom edge of `body`, but an unpositioned `body`
+  is not the panel's containing block, so `bottom` resolved against the viewport-sized initial
+  containing block and, on any page taller than the viewport, the panel ended up far from its field.
+  Both directions now measure from the parent's top edge.
+
+- **A button in a field's `hubPrepend` / `hubAppend` slot takes the field's border colour.**
+  `hubButton` compiles `:host(.hub-btn-outline)` to the same specificity as the slot's rule, so the
+  winner was whichever stylesheet the page injected last, and on one page an attached button kept
+  its own grey outline next to an input's that wore the field line. The slot's rule now wins at rest
+  on weight alone, and steps aside on hover and keyboard focus so the button's own hover border
+  shows, as it always did.
+
 ## [22.34.0] - 2026-09-08
 
 ### Added

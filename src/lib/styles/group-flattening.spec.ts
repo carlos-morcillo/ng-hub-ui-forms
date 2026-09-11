@@ -778,3 +778,131 @@ describe('hub-timepicker carries a group like every other box-shaped field', () 
 		expect(isSquare(winningCorner(control, 'border-end-start-radius'))).toBe(false);
 	});
 });
+
+/**
+ * An attached button wears the field's border colour at rest, whichever stylesheet loads last.
+ *
+ * `hubButton` compiles `:host(.hub-btn-outline)` to one class plus the host attribute, two
+ * points, and the slot's doubled class scored the same two. The tie went to source order, and
+ * component styles are injected in the order components first render, so the result depended
+ * on the page. On the forms examples page the select's attached gear came out in the button's
+ * secondary grey while the input's search button beside it wore the field's light border.
+ *
+ * The competing rule is injected AFTER the library's styles so the tie, if there is one, goes
+ * against the slot: the case that shipped.
+ */
+@Component({
+	standalone: true,
+	imports: [
+		HubInputComponent,
+		HubTextareaComponent,
+		HubDatepickerComponent,
+		HubSelectComponent,
+		HubTimepickerComponent,
+		HubAppendDirective
+	],
+	template: `
+		<hub-input>
+			<ng-template hubAppend><button type="button" class="hub-btn-outline" data-probe-host>go</button></ng-template>
+		</hub-input>
+		<hub-textarea>
+			<ng-template hubAppend><button type="button" class="hub-btn-outline" data-probe-host>go</button></ng-template>
+		</hub-textarea>
+		<hub-datepicker>
+			<ng-template hubAppend><button type="button" class="hub-btn-outline" data-probe-host>go</button></ng-template>
+		</hub-datepicker>
+		<hub-select [items]="[]">
+			<ng-template hubAppend><button type="button" class="hub-btn-outline" data-probe-host>go</button></ng-template>
+		</hub-select>
+		<hub-timepicker>
+			<ng-template hubAppend><button type="button" class="hub-btn-outline" data-probe-host>go</button></ng-template>
+		</hub-timepicker>
+	`
+})
+class AttachedBorderHostComponent {}
+
+/** The selector of the rule the cascade picks for an element's border colour. */
+function winningBorderColorRule(el: Element): string | null {
+	let best: { spec: [number, number, number]; order: number; selector: string } | null = null;
+	let order = 0;
+	for (const sheet of [...document.styleSheets]) {
+		let rules: CSSRule[];
+		try {
+			rules = [...(sheet.cssRules ?? [])];
+		} catch {
+			continue;
+		}
+		for (const rule of rules) {
+			const style = rule as CSSStyleRule;
+			order++;
+			if (!style.selectorText || !style.style) continue;
+			const sets = style.style.getPropertyValue('border-color') || style.style.getPropertyValue('border');
+			if (!sets) continue;
+			for (const selector of style.selectorText.split(',').map((s) => s.trim())) {
+				try {
+					if (!el.matches(selector)) continue;
+				} catch {
+					continue; // a selector this engine cannot parse tells us nothing
+				}
+				const spec = specificity(selector);
+				if (!best || beats(spec, best.spec) || (!beats(best.spec, spec) && order >= best.order)) {
+					best = { spec, order, selector };
+				}
+			}
+		}
+	}
+	return best?.selector ?? null;
+}
+
+describe('an attached button at rest takes the field border colour', () => {
+	let fixture: ReturnType<typeof TestBed.createComponent<AttachedBorderHostComponent>>;
+	let competing: HTMLStyleElement;
+
+	beforeEach(() => {
+		fixture = TestBed.configureTestingModule({ imports: [AttachedBorderHostComponent] }).createComponent(
+			AttachedBorderHostComponent
+		);
+		fixture.detectChanges();
+		// What `hubButton` ships for an outline button, loaded last.
+		competing = document.createElement('style');
+		competing.textContent = '.hub-btn-outline[data-probe-host] { border-color: rgb(1, 2, 3); }';
+		document.head.append(competing);
+	});
+
+	afterEach(() => competing.remove());
+
+	for (const field of ['input', 'textarea', 'datepicker', 'select', 'timepicker']) {
+		it(`hub-${field}: the slot's rule wins over the button's own, not source order`, () => {
+			const button = fixture.nativeElement.querySelector(`hub-${field} .hub-${field}__attached > button`) as HTMLElement;
+			expect(button).toBeTruthy();
+			expect(winningBorderColorRule(button)).toContain('__attached');
+		});
+	}
+
+	/** Under the pointer or the focus ring the button keeps its own border, as on the input today. */
+	it('steps aside on hover and keyboard focus', () => {
+		const strong: string[] = [];
+		for (const sheet of [...document.styleSheets]) {
+			try {
+				for (const rule of [...(sheet.cssRules ?? [])]) {
+					const style = rule as CSSStyleRule;
+					if (!style.selectorText?.includes('__attached') || !style.style?.getPropertyValue('border-color')) continue;
+					// Only the rule for whatever is projected; a projected FIELD has rules of its own.
+					strong.push(
+						...style.selectorText
+							.split(',')
+							.map((s) => s.trim())
+							.filter((s) => s.includes('> *'))
+					);
+				}
+			} catch {
+				continue;
+			}
+		}
+		expect(strong.length).toBeGreaterThan(0);
+		for (const selector of strong) {
+			expect(selector).toContain(':not(:hover)');
+			expect(selector).toContain(':not(:focus-visible)');
+		}
+	});
+});

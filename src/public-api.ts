@@ -127,8 +127,21 @@ export { hubMinFiles } from './lib/validators/min-files.validator';
 // Interfaces & types
 export type { FormTextType, HubLabelType } from './lib/interfaces/common.interface';
 export { FormTextTypes, HubLabelTypes } from './lib/interfaces/common.interface';
-export type { HubInputFormat, HubPasswordLabels, HubPasswordStrengthScore } from './lib/interfaces/input.interface';
-export { HubInputFormats, defaultHubPasswordLabels } from './lib/interfaces/input.interface';
+export type {
+	HubColorConfig,
+	HubColorPaletteName,
+	HubColorSwatch,
+	HubColorSwatchInput,
+	HubInputFormat,
+	HubPasswordLabels,
+	HubPasswordStrengthScore
+} from './lib/interfaces/input.interface';
+export {
+	HUB_COLOR_PALETTES,
+	HubInputFormats,
+	defaultHubColorConfig,
+	defaultHubPasswordLabels
+} from './lib/interfaces/input.interface';
 export type { HubSelectFormat } from './lib/interfaces/select.interface';
 export { HubSelectFormats } from './lib/interfaces/select.interface';
 export type {
@@ -142,6 +155,7 @@ export type {
 } from './lib/interfaces/datepicker.interface';
 export { defaultHubDatepickerConfig, defaultHubDatepickerLabels } from './lib/interfaces/datepicker.interface';
 export type {
+	HubCurrentFile,
 	HubFileConstraints,
 	HubFileInputLabels,
 	HubFileItem,
@@ -156,6 +170,8 @@ export type { HubFileUploader, HubFileUploadEvent } from './lib/interfaces/file-
 // Utilities
 export { formatFileSize } from './lib/utils/file-size';
 export { matchesAccept } from './lib/utils/file-accept';
+export { fileKind } from './lib/utils/file-kind';
+export type { HubFileKind } from './lib/utils/file-kind';
 export { fileKey } from './lib/utils/file-key';
 export { toFileArray } from './lib/utils/file-value';
 export type { HubFileValue } from './lib/utils/file-value';

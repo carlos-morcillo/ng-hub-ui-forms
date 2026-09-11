@@ -39,63 +39,156 @@
 		</label>
 	</ng-template>
 
-	<div class="hub-field__body">
-		<!--
-			The dropzone is a <label> bound to the hidden native input: clicking or activating it with
-			the keyboard opens the file dialog through the platform, so no role, tabindex or key
-			handler is needed. The "browse" affordance is a <span>, not a <button>, because a button
-			inside a label would open the dialog twice.
-		-->
-		<label
-			class="hub-file-input__dropzone"
-			[for]="id"
-			[class.hub-file-input__dropzone--dragover]="isDragging()"
-			[class.hub-file-input__dropzone--no-drop]="!dragDrop()"
-			[class.hub-file-input__dropzone--invalid]="isInvalid"
+	<div
+		class="hub-field__body"
+		[class.hub-file-input__body--inline]="_inlineSingle()"
+		[class.hub-file-input__body--inline-multiple]="_inlineMultiple()"
+	>
+		<!-- The frame listens for the drag, so a drop lands anywhere on the field, tiles included. -->
+		<div
+			class="hub-file-input__frame"
+			[class.hub-file-input__frame--dragover]="isDragging()"
 			(dragenter)="handleDragEnter($event)"
 			(dragover)="handleDragOver($event)"
 			(dragleave)="handleDragLeave($event)"
 			(drop)="handleDrop($event)"
 		>
-			<input
-				#nativeInput
-				type="file"
-				class="hub-file-input__native"
-				[id]="id"
-				[accept]="accept()"
-				[multiple]="multiple()"
-				[disabled]="disabled()"
-				[attr.capture]="capture()"
-				[attr.aria-required]="required() ? 'true' : null"
-				[attr.aria-invalid]="isInvalid"
-				[attr.aria-describedby]="constraintsHint() ? id + '-hint' : null"
-				(change)="handleNativeChange($event)"
-				(blur)="handleBlur($event)"
-			/>
-
-			<span class="hub-file-input__icon" aria-hidden="true"></span>
-
-			@if (noticeTpt(); as notice) {
-				<ng-container [ngTemplateOutlet]="notice.template"></ng-container>
+			@if (_dropzone() === 'zone') {
+				<ng-container [ngTemplateOutlet]="dropzoneTpl" [ngTemplateOutletContext]="{ $implicit: false }" />
 			}
 
-			<span class="hub-file-input__prompt">
-				@if (dragDrop()) {
-					<span class="hub-file-input__drop-text">{{ dropTextLabel() }}</span>
-				}
-				@if (dropSubtextLabel()) {
-					<span class="hub-file-input__drop-subtext">{{ dropSubtextLabel() }}</span>
-				}
-				<span class="hub-file-input__browse">{{ browseLabel() }}</span>
-			</span>
+			@if (_tiles().length > 0) {
+				<ul class="hub-file-input__tiles" [class.hub-file-input__tiles--single]="_inlineSingle()">
+					@for (tile of _tiles(); track tile.key; let index = $index) {
+						<li
+							class="hub-file-input__tile"
+							[class.hub-file-input__tile--changeable]="_canChange() && tile.item?.status !== 'uploading'"
+							[attr.data-file-kind]="tile.kind"
+							[attr.data-status]="tile.item?.status ?? null"
+							[attr.title]="tile.name"
+						>
+							<!--
+								Activating a tile opens its file: a stored one is a link to its URL, in a new tab;
+								a picked image opens enlarged; any other picked file opens in a new tab. Replacing
+								has its own button, the pill, so one gesture never means two things.
+							-->
+							@if (tile.current) {
+								<a
+									class="hub-file-input__tile-open"
+									[href]="tile.current.url"
+									target="_blank"
+									rel="noopener noreferrer"
+									[attr.aria-label]="labels().open(tile.name)"
+									(keydown)="handleTileKeydown($event, tile, index)"
+								>
+									<ng-container
+										[ngTemplateOutlet]="tileBodyTpl"
+										[ngTemplateOutletContext]="{ $implicit: tile }"
+									/>
+								</a>
+							} @else {
+								<button
+									type="button"
+									class="hub-file-input__tile-open"
+									[attr.aria-label]="labels().open(tile.name)"
+									(click)="openTile(tile, $event)"
+									(keydown)="handleTileKeydown($event, tile, index)"
+								>
+									<ng-container
+										[ngTemplateOutlet]="tileBodyTpl"
+										[ngTemplateOutletContext]="{ $implicit: tile }"
+									/>
+								</button>
+							}
 
-			@if (constraintsHint()) {
-				<span class="hub-file-input__hint" [id]="id + '-hint'">{{ constraintsHint() }}</span>
+							@if (_canChange() && tile.item?.status !== 'uploading') {
+								<span class="hub-file-input__tile-veil" aria-hidden="true"></span>
+								<button
+									type="button"
+									class="hub-file-input__tile-replace"
+									[attr.aria-label]="labels().replaceFile(tile.name)"
+									(click)="replaceTile(tile)"
+								>
+									{{ labels().replace }}
+								</button>
+							}
+
+							@if (tile.item?.status === 'uploading') {
+								<span
+									class="hub-file-input__progress hub-file-input__tile-progress"
+									[class.hub-file-input__progress--indeterminate]="tile.item?.progress === null"
+									role="progressbar"
+									aria-valuemin="0"
+									aria-valuemax="100"
+									[attr.aria-valuenow]="tile.item?.progress"
+								>
+									<span
+										class="hub-file-input__progress-bar"
+										[style.--hub-file-input-progress-value]="tile.item?.progress ?? 0"
+									></span>
+								</span>
+							}
+
+							@if (tile.item?.status === 'error') {
+								<span class="hub-file-input__tile-error">{{ errorText(tile.item!) }}</span>
+							}
+
+							<span class="hub-file-input__tile-actions">
+								@if (tile.item?.status === 'uploading') {
+									@if (hasUploader) {
+										<button
+											type="button"
+											class="hub-file-input__chip hub-file-input__chip--cancel"
+											[attr.aria-label]="labels().cancel"
+											(click)="cancel(tile.item!.id)"
+										></button>
+									}
+								} @else {
+									@if (tile.item?.status === 'error') {
+										<button
+											type="button"
+											class="hub-file-input__chip hub-file-input__chip--retry"
+											[attr.aria-label]="labels().retry"
+											(click)="retry(tile.item!.id)"
+										></button>
+									}
+									@if (_canRemove()) {
+										<button
+											type="button"
+											class="hub-file-input__chip hub-file-input__chip--remove"
+											[attr.aria-label]="labels().removeFile(tile.name)"
+											(click)="removeTile(tile, index)"
+										></button>
+									}
+								}
+							</span>
+						</li>
+					}
+
+					@if (_dropzone() === 'add') {
+						<li class="hub-file-input__tile hub-file-input__tile--add">
+							<ng-container [ngTemplateOutlet]="dropzoneTpl" [ngTemplateOutletContext]="{ $implicit: true }" />
+						</li>
+					}
+				</ul>
 			}
-		</label>
 
-		@if (preview() !== 'none' && _items().length > 0) {
-			<ul class="hub-file-input__list" [class.hub-file-input__list--grid]="preview() === 'grid'">
+			@if (_isInline()) {
+				<!--
+					Inline keeps the native input out of the label, after the tiles: it is never re-created
+					when the field fills or empties, focus can always return to it, and its place in the tab
+					order is the add tile's.
+				-->
+				<ng-container [ngTemplateOutlet]="nativeTpl" />
+			}
+
+			@if (_showCount()) {
+				<p class="hub-file-input__count" [id]="id + '-count'">{{ labels().count(_heldCount(), maxFiles()!) }}</p>
+			}
+		</div>
+
+		@if (_listPreview() && _items().length > 0) {
+			<ul class="hub-file-input__list" [class.hub-file-input__list--grid]="_listPreview() === 'grid'">
 				@for (item of _items(); track item.id) {
 					<li class="hub-file-input__item" [attr.data-status]="item.status">
 						@if (previewTpt(); as tpt) {
@@ -161,7 +254,7 @@
 									></button>
 								}
 
-								@if (!disabled() && item.status !== 'uploading') {
+								@if (_canRemove() && item.status !== 'uploading') {
 									<button
 										type="button"
 										class="hub-file-input__action hub-file-input__action--remove"
@@ -175,7 +268,7 @@
 				}
 			</ul>
 
-			@if (_items().length > 1 && !disabled()) {
+			@if (_items().length > 1 && _canRemove()) {
 				<button type="button" class="hub-file-input__clear" (click)="clear()">{{ labels().clear }}</button>
 			}
 		}
@@ -219,4 +312,116 @@
 	}
 
 	<span class="hub-file-input__live" aria-live="polite">{{ announcement() }}</span>
+
+	<!--
+		The enlarged image. A native modal <dialog> does the hard parts: Escape closes it, the page
+		behind turns inert so focus stays inside, and it sits in the top layer above any stacking
+		context. Focus goes back to the tile on close, whichever way it closes.
+	-->
+	<dialog
+		#viewer
+		class="hub-file-input__viewer"
+		[attr.aria-label]="_viewing()?.name ?? null"
+		(close)="handleViewerClose()"
+		(click)="handleViewerClick($event)"
+	>
+		@if (_viewing(); as viewing) {
+			<figure class="hub-file-input__viewer-figure">
+				<img class="hub-file-input__viewer-image" [src]="viewing.src" [alt]="viewing.name" />
+				<figcaption class="hub-file-input__viewer-caption">{{ viewing.name }}</figcaption>
+			</figure>
+		}
+		<button
+			type="button"
+			class="hub-file-input__chip hub-file-input__chip--close"
+			[attr.aria-label]="labels().close"
+			(click)="closeViewer()"
+			autofocus
+		></button>
+	</dialog>
 </div>
+
+<!--
+	The dropzone is a <label> bound to the hidden native input: clicking or activating it with the
+	keyboard opens the file dialog through the platform, so no role, tabindex or key handler is
+	needed. The "browse" affordance is a <span>, not a <button>, because a button inside a label would
+	open the dialog twice. As the add tile it keeps only the glyph and the browse text.
+-->
+<ng-template #dropzoneTpl let-add>
+	<label
+		class="hub-file-input__dropzone"
+		[for]="id"
+		[class.hub-file-input__dropzone--add]="add"
+		[class.hub-file-input__dropzone--dragover]="isDragging()"
+		[class.hub-file-input__dropzone--no-drop]="!dragDrop()"
+		[class.hub-file-input__dropzone--invalid]="isInvalid"
+		[class.hub-file-input__dropzone--readonly]="readonly()"
+	>
+		@if (!_isInline()) {
+			<ng-container [ngTemplateOutlet]="nativeTpl" />
+		}
+
+		<span class="hub-file-input__icon" aria-hidden="true"></span>
+
+		@if (add) {
+			<span class="hub-file-input__browse">{{ browseLabel() }}</span>
+		} @else {
+			@if (noticeTpt(); as notice) {
+				<ng-container [ngTemplateOutlet]="notice.template"></ng-container>
+			}
+
+			<span class="hub-file-input__prompt">
+				@if (dragDrop()) {
+					<span class="hub-file-input__drop-text">{{ dropTextLabel() }}</span>
+				}
+				@if (dropSubtextLabel()) {
+					<span class="hub-file-input__drop-subtext">{{ dropSubtextLabel() }}</span>
+				}
+				<span class="hub-file-input__browse">{{ browseLabel() }}</span>
+			</span>
+		}
+
+		@if (constraintsHint()) {
+			<span class="hub-file-input__hint" [class.hub-file-input__hint--hidden]="add" [id]="id + '-hint'">{{
+				constraintsHint()
+			}}</span>
+		}
+	</label>
+</ng-template>
+
+<ng-template #nativeTpl>
+	<input
+		#nativeInput
+		type="file"
+		class="hub-file-input__native"
+		[id]="id"
+		[accept]="accept()"
+		[multiple]="multiple()"
+		[disabled]="disabled()"
+		[attr.capture]="capture()"
+		[attr.tabindex]="_dropzone() === 'none' ? -1 : null"
+		[attr.aria-required]="required() ? 'true' : null"
+		[attr.aria-invalid]="isInvalid"
+		[attr.aria-describedby]="_describedBy()"
+		(click)="guardNativeClick($event)"
+		(cancel)="cancelReplace()"
+		(change)="handleNativeChange($event)"
+		(blur)="handleBlur($event)"
+	/>
+</ng-template>
+
+<ng-template #tileBodyTpl let-tile>
+	@if (tile.src) {
+		<img class="hub-file-input__tile-image" [src]="tile.src" alt="" (error)="markBroken(tile.src)" />
+	} @else {
+		<span class="hub-file-input__tile-file">
+			<span class="hub-file-input__kind-icon" aria-hidden="true"></span>
+			<span class="hub-file-input__tile-name">
+				<span class="hub-file-input__tile-stem">{{ tile.stem }}</span>
+				@if (tile.ext) {
+					<span class="hub-file-input__tile-ext">{{ tile.ext }}</span>
+				}
+			</span>
+		</span>
+	}
+</ng-template>

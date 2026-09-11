@@ -67,7 +67,7 @@
 				is the only place left to offer it from once the block below stands down.
 			-->
 			<div class="hub-field__label-row">
-				@if ((label() || required()) && labelType() !== _labelTypes.Floating) {
+				@if ((label() || required()) && (labelType() !== _labelTypes.Floating || type() === _inputFormats.Color)) {
 					<ng-container [ngTemplateOutlet]="hubFieldLabelTpl" />
 				}
 				<button
@@ -78,13 +78,18 @@
 					hubTooltipPlacement="top"
 				></button>
 			</div>
-		} @else if ((label() || required()) && labelType() !== _labelTypes.Floating) {
+		} @else if ((label() || required()) && (labelType() !== _labelTypes.Floating || type() === _inputFormats.Color)) {
 			<ng-container [ngTemplateOutlet]="hubFieldLabelTpl" />
 		}
 
 		<ng-template #hubFieldLabelTpl>
+			<!--
+				A swatch grid is a radio group, which a `<label for>` cannot label: it names the
+				group through `aria-labelledby` instead, hence the id.
+			-->
 			<label
-				[for]="id"
+				[attr.for]="showsSwatches() ? null : id"
+				[id]="id + '-label'"
 				class="hub-field__label"
 				[class.hub-field__label--visually-hidden]="labelType() === _labelTypes.VisuallyHidden"
 			>
@@ -136,19 +141,116 @@
 					</div>
 				}
 				@case (_inputFormats.Color) {
-					<input
-						type="color"
-						class="hub-field__control hub-input__control--color"
-						[class.hub-field__control--invalid]="isInvalid"
-						[class.hub-field__control--valid]="showsValid"
-						[id]="id"
-						[ngModel]="_value()"
-						(ngModelChange)="setValue($event)"
-						[disabled]="disabled()"
-						[required]="!!required()"
-						(blur)="handleBlur($event)"
-						[attr.aria-invalid]="isInvalid"
-					/>
+					@if (showsSwatches()) {
+						<!--
+							One value out of a set: a radio group, with one Tab stop and arrows to move.
+							The box is the field's own control skin, so a row of swatches reads as one
+							more input in the column; it drops the box once the cells wrap.
+						-->
+						<div
+							#swatchList
+							class="hub-field__control hub-input__swatches"
+							[class.hub-input__swatches--wrapped]="swatchesWrapped()"
+							[class.hub-field__control--invalid]="isInvalid"
+							[class.hub-field__control--valid]="showsValid"
+							role="radiogroup"
+							[id]="id"
+							[attr.aria-labelledby]="label() ? id + '-label' : null"
+							[attr.aria-required]="required() ? true : null"
+							[attr.aria-disabled]="disabled() || null"
+							[attr.aria-readonly]="_isReadonly() || null"
+							[attr.aria-invalid]="isInvalid"
+						>
+							@for (swatch of _swatches(); track $index) {
+								<span
+									class="hub-input__swatch"
+									role="radio"
+									[attr.aria-checked]="checkedSwatch() === $index"
+									[attr.aria-label]="swatch.label"
+									[attr.aria-disabled]="disabled() || null"
+									[attr.title]="swatch.label"
+									[attr.tabindex]="disabled() ? null : tabbableSwatch() === $index ? 0 : -1"
+									[style.--hub-input-swatch-color]="swatch.value"
+									[style.--hub-input-swatch-ink]="swatch.ink"
+									(click)="activateSwatch($index)"
+									(keydown)="handleSwatchKeydown($event, $index)"
+								></span>
+							}
+							@if (allowCustomColor()) {
+								<span
+									class="hub-input__swatch hub-input__swatch--custom"
+									role="radio"
+									[attr.aria-checked]="customChecked()"
+									[attr.aria-label]="customSwatchName()"
+									[attr.aria-disabled]="disabled() || null"
+									[attr.title]="customSwatchName()"
+									[attr.tabindex]="disabled() ? null : tabbableSwatch() === _swatches().length ? 0 : -1"
+									[style.--hub-input-swatch-color]="customValue() || null"
+									[style.--hub-input-swatch-ink]="customInk()"
+									(click)="activateSwatch(_swatches().length)"
+									(keydown)="handleSwatchKeydown($event, _swatches().length)"
+								>
+									<!-- Out of the tab order and the accessibility tree: the cell is the control, this only hosts the picker. -->
+									<input
+										#customColorInput
+										type="color"
+										class="hub-input__swatch-native"
+										tabindex="-1"
+										aria-hidden="true"
+										[value]="customHex()"
+										[disabled]="disabled() || _isReadonly()"
+										(input)="pickNativeColor($event)"
+										(click)="$event.stopPropagation()"
+									/>
+								</span>
+							}
+						</div>
+					} @else {
+						<!--
+							No palette: a text field for the hex code, with the colour it holds in a square
+							at its start. The square comes first so Tab meets it where the eye does; it opens
+							the browser's picker, which sits hidden under it so the dialog opens there.
+						-->
+						<div class="hub-input__color">
+							<button
+								type="button"
+								class="hub-input__color-swatch"
+								[style.--hub-input-swatch-color]="classicHex() || null"
+								[attr.aria-label]="pickerLabel"
+								[attr.aria-disabled]="_isReadonly() || null"
+								[disabled]="disabled()"
+								(click)="openClassicPicker()"
+							></button>
+							<input
+								#classicColorInput
+								type="color"
+								class="hub-input__color-native"
+								tabindex="-1"
+								aria-hidden="true"
+								[value]="classicHex() || '#000000'"
+								[disabled]="disabled() || _isReadonly()"
+								(input)="pickNativeColor($event)"
+							/>
+							<input
+								type="text"
+								class="hub-field__control hub-input__control--color"
+								[class.hub-field__control--invalid]="isInvalid"
+								[class.hub-field__control--valid]="showsValid"
+								[id]="id"
+								[value]="colorText()"
+								(input)="typeColorText($event)"
+								(blur)="commitColorText($event)"
+								[placeholder]="placeholder()"
+								maxlength="7"
+								spellcheck="false"
+								autocomplete="off"
+								[disabled]="disabled()"
+								[readonly]="_isReadonly()"
+								[required]="!!required()"
+								[attr.aria-invalid]="isInvalid"
+							/>
+						</div>
+					}
 				}
 				@case (_inputFormats.File) {
 					<div class="hub-input__file" [class.hub-input__file--invalid]="isInvalid">

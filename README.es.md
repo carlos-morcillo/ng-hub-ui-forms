@@ -94,7 +94,7 @@ en tiempo de ejecución — sin dependencia de Bootstrap.
 
 ## 🎯 Características
 
-- **Campos** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, con addons de input-group y máscaras, afijos de icono dentro del campo, el estado mixto `indeterminate` en checkboxes y `search` typeahead con debounce; el formato `file` está **deprecado** → usa `hub-file-input`), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider` (uno / dos thumbs, relleno con degradado), `hub-segmented` (campo de control segmentado — selección simple y múltiple, horizontal y vertical, con label + validación), `hub-select` (formato dropdown, agrupación, búsqueda en cliente vía `searchable` **y** typeahead asíncrono en servidor vía un Subject `typeahead`, creación de tags con `addTag`, templates personalizados, addons de grupo `prepend` / `append` e iconos/botones acoplados vía `hubPrepend` / `hubAppend`; los formatos `buttons` / `checkbox` / `radio` están **deprecados** → usa `hub-segmented`), `hub-datepicker` (simple y rango en cualquier granularidad, del año al segundo, selección de hora, min/max al minuto, navegación por teclado, i18n), `hub-timepicker` (una hora del día como `HH:MM`, sobre el control de hora de la plataforma, con `min` / `max` / `step`), `hub-file-input` (arrastrar y soltar, pegado desde el portapapeles, límites de tipo y tamaño, previsualización, progreso de subida opcional).
+- **Campos** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, con el formato de color como campo hex o, si recibe una paleta, como rejilla de muestras, con addons de input-group y máscaras, afijos de icono dentro del campo, el estado mixto `indeterminate` en checkboxes y `search` typeahead con debounce; el formato `file` está **deprecado** → usa `hub-file-input`), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider` (uno / dos thumbs, relleno con degradado), `hub-segmented` (campo de control segmentado — selección simple y múltiple, horizontal y vertical, con label + validación), `hub-select` (formato dropdown, agrupación, búsqueda en cliente vía `searchable` **y** typeahead asíncrono en servidor vía un Subject `typeahead`, creación de tags con `addTag`, templates personalizados, addons de grupo `prepend` / `append` e iconos/botones acoplados vía `hubPrepend` / `hubAppend`; los formatos `buttons` / `checkbox` / `radio` están **deprecados** → usa `hub-segmented`), `hub-datepicker` (simple y rango en cualquier granularidad, del año al segundo, selección de hora, min/max al minuto, navegación por teclado, i18n), `hub-timepicker` (una hora del día como `HH:MM`, sobre el control de hora de la plataforma, con `min` / `max` / `step`), `hub-file-input` (arrastrar y soltar, pegado desde el portapapeles, límites de tipo y tamaño, previsualización en lista, en fichas o dentro del propio campo junto a los ficheros que el registro ya tiene, progreso de subida opcional).
 - **Visualización automática de errores** — vinculas un campo y sus errores de control se renderizan debajo; `fieldset[hubFieldset]`, `form[hubForm]` y `hub-legend` muestran los errores de grupo y de formulario (cross-field) igual, sin cableado.
 - **Contenedores** — `fieldset[hubFieldset]` (o el elemento `<hub-fieldset>`) / `form[hubForm]` agrupan campos y muestran sus errores de grupo; `hub-legend` renderiza una leyenda accesible.
 - **Configurable** — `provideHubForms({ … })` define las plantillas de invalid-feedback, locale/labels del datepicker, los textos del file input y más, a nivel de app o por instancia.
@@ -194,6 +194,60 @@ tooltip recibe una cadena, así que pedirle que lleve marcado lo descartaría en
 <hub-input formControlName="amount" type="number" label="Amount" />
 <hub-input formControlName="darkMode" type="switch" label="Dark mode" />
 ```
+
+#### Campos de color
+
+`type="color"` es un campo de texto para el código hex, con el color en un cuadrado al principio. El
+cuadrado abre el selector del navegador. El texto admite un color escrito con o sin `#`, de tres o seis
+cifras, y el formulario lo guarda como `#rrggbb` en minúsculas, la única notación que lee el selector
+nativo. Un texto no válido no toca el valor y, al salir del campo, vuelve al último color válido.
+
+Si el campo recibe una lista de colores, se convierte en una rejilla de muestras con una fila del alto
+de un campo:
+
+```html
+<hub-input formControlName="status" type="color" label="Status colour" [swatches]="palettes.status" />
+
+<hub-input
+	formControlName="tag"
+	type="color"
+	label="Tag"
+	[swatches]="['#ef4444', { value: '#22c55e', label: 'Done' }]"
+	[allowCustomColor]="false"
+/>
+```
+
+```ts
+import { HUB_COLOR_PALETTES } from 'ng-hub-ui-forms';
+
+readonly palettes = HUB_COLOR_PALETTES;
+```
+
+- Una muestra es cualquier color CSS que lea `parseColor` de `ng-hub-ui-utils` (hex, `rgb()`, `hsl()`,
+  `oklch()`, `oklab()`, un nombre de color), suelto o como `{ value, label }`. La etiqueta es lo que dice
+  el lector de pantalla, así que conviene nombrar los colores que tienen nombre. El control recibe la
+  cadena tal como se escribió. Una entrada que no es un color se descarta, con un aviso en las
+  compilaciones de desarrollo.
+- La última celda abre el selector nativo para un color que no está en la lista.
+  `[allowCustomColor]="false"` la quita para una paleta cerrada; `customColorLabel` le da nombre.
+- Las celdas se reparten la fila hasta `--hub-input-swatch-min-width` y después pasan a más filas. En
+  cuanto lo hacen, el campo pierde su caja; `--hub-input-swatch-wrapped-border-color` y `-wrapped-bg` la
+  devuelven.
+- La rejilla es un grupo de radios que nombra la etiqueta del campo, con una sola parada de tabulación;
+  las flechas, Inicio y Fin mueven la selección.
+- `HUB_COLOR_PALETTES` trae cinco listas congeladas de hex en minúsculas, con cada muestra nombrada en
+  inglés: `tailwind` (17), `material` (19), `pastel` (17), `neutral` (11) y `status` (5).
+
+Qué campo se pinta:
+
+| `swatches`             | Paleta de la aplicación (`provideHubForms`) | Resultado                            |
+| ---------------------- | ------------------------------------------- | ------------------------------------ |
+| `null` (por defecto)   | ninguna (por defecto)                       | campo hex                            |
+| `null`                 | una lista                                   | rejilla con la paleta de la aplicación |
+| `[]`                   | cualquiera                                  | campo hex                            |
+| una lista              | cualquiera                                  | rejilla con la lista del campo       |
+
+Una lista en la que ninguna entrada es un color también deja el campo hex.
 
 #### Afijo de icono y typeahead (buscadores)
 
@@ -603,7 +657,7 @@ Lo que el uploader devuelva en `done` se conserva en el item, así que los ids q
 const uploadedIds = fileInput.files().map((item) => (item.response as { id: string }).id);
 ```
 
-Se personaliza sin tocar la plantilla: los tokens `--hub-file-input-*` (cada icono es una máscara CSS intercambiable), el mixin `hub-file-input-theme(...)` y tres slots de proyección.
+Se personaliza sin tocar la plantilla: los tokens `--hub-file-input-*` (cada icono es una máscara CSS intercambiable), el mixin `hub-file-input-theme(...)` y tres slots de proyección. `hubFileIcon` se aplica a `preview="list"`; las fichas de `grid` e `inline` pintan los iconos de familia que se describen más abajo.
 
 ```html
 <hub-file-input formControlName="attachments" [multiple]="true">
@@ -612,6 +666,74 @@ Se personaliza sin tocar la plantilla: los tokens `--hub-file-input-*` (cada ico
 	</ng-template>
 </hub-file-input>
 ```
+
+#### Vista previa inline y ficheros guardados
+
+`preview="inline"` mete el fichero dentro del campo. Una ficha lo llena: la imagen cuando el navegador
+sabe pintarla y, si no, el icono de su familia y su nombre. Al pasar el ratón, al enfocar con el teclado
+o al arrastrar encima aparece una pastilla «Replace», y un botón en la esquina quita el fichero. Con
+`multiple` las fichas forman una rejilla dentro del campo que termina en una ficha para añadir más, y
+`maxFiles` añade un contador «3 of 5 files»; al llegar al límite, la ficha de añadir desaparece.
+
+`currentFile` muestra lo que el registro ya tiene:
+
+```html
+<hub-file-input
+	formControlName="logo"
+	label="Logo"
+	accept="image/*"
+	preview="inline"
+	[currentFile]="company.logoUrl"
+	(currentFileRemoved)="markForDeletion($event)"
+/>
+
+<hub-file-input
+	formControlName="contract"
+	label="Signed contract"
+	preview="inline"
+	[currentFile]="{ url: '/api/contracts/42/file', name: 'contract.pdf', type: 'application/pdf' }"
+/>
+```
+
+- Una URL suelta da el nombre por su último segmento, si tiene extensión, y el tipo si es una URL
+  `data:`. Pasa un `HubCurrentFile` cuando la URL no revela ninguno de los dos, y una lista con
+  `multiple`.
+- Un fichero guardado solo se muestra: el valor del formulario sigue siendo un `File`, un `File[]` o
+  `null`. Cuando el usuario lo quita, o lo sustituye por uno elegido, `currentFileRemoved` lo emite. Ese
+  es el momento de borrarlo en el servidor.
+- Un clic en una ficha abre su fichero: una imagen elegida en un `<dialog>` nativo, un fichero guardado o
+  cualquier otro elegido en una pestaña nueva. Suprimir o Retroceso sobre una ficha enfocada la quitan.
+- `readonly` deja los ficheros a la vista y abribles, pero impide cualquier cambio.
+  `[clearable]="false"` impide que el usuario quite ficheros. `[imagePreview]="false"` dibuja cada
+  fichero con su icono y no crea object URLs.
+
+`preview="grid"` pinta las mismas fichas bajo el dropzone. Un avatar son cinco tokens:
+
+```css
+.avatar-field {
+	--hub-file-input-inline-width: 8rem;
+	--hub-file-input-inline-aspect-ratio: 1;
+	--hub-file-input-tile-radius: 50%;
+	--hub-file-input-tile-fit: cover;
+	--hub-file-input-tile-padding: 0;
+}
+```
+
+Cada icono de familia (`pdf`, `document`, `spreadsheet`, `presentation`, `archive`, `audio`, `video`,
+`code`, `image`, `generic`) es un token de máscara, así que sustituir uno es una línea, y el atributo
+`data-file-kind` de la ficha acota un color a una sola familia:
+
+```css
+.my-form {
+	--hub-file-input-kind-pdf-icon: url('/icons/pdf.svg');
+}
+
+.my-form .hub-file-input__tile[data-file-kind='pdf'] {
+	--hub-file-input-kind-icon-color: #dc2626;
+}
+```
+
+Los dibujos incluidos son de [Bootstrap Icons](https://icons.getbootstrap.com) 1.13.1, con licencia MIT.
 
 #### Reproducir tu propio dropzone
 
@@ -730,6 +852,18 @@ los campos cuando están tocados y son válidos. El estado inválido no se ve af
 — siempre es automático; solo el éxito queda detrás de este flag. Un input
 `showValid` por campo tiene prioridad sobre el valor por defecto global.
 
+`color` define una paleta de aplicación para todos los campos de color sin `swatches` propios (por
+defecto no hay ninguna) y los dos nombres accesibles que añade el campo de color: `customColorLabel`
+(`'Custom color'`) para la última celda de la rejilla y `pickerLabel` (`'Choose color'`) para el cuadrado
+del campo hex. `fileInput` lleva los textos del file input, entre ellos `removeFile(name)`,
+`open(name)`, `replace`, `replaceFile(name)`, `close`, `count(count, max)` y `currentFile`.
+
+```ts
+provideHubForms({
+	color: { swatches: HUB_COLOR_PALETTES.tailwind, customColorLabel: 'Otro color' }
+});
+```
+
 ---
 
 ## 🎨 Estilos
@@ -760,6 +894,12 @@ hub-input {
 	--hub-form-valid-feedback-color: #198754;
 }
 ```
+
+**Campo de color** — `--hub-input-color-size` es el ancho del cuadrado del campo hex; su alto es siempre
+el del campo, y el valor por defecto, el alto interior del campo, lo mantiene cuadrado. La rejilla de
+muestras lee los tokens `--hub-input-swatch-*`, y `--hub-input-swatch-mark-color` fuerza un solo color
+para todas las marcas de selección (sin fijarlo, cada marca es negra o blanca, la que se lea sobre su
+muestra).
 
 **`hub-slider`** — `--hub-slider-track-fill` acepta un `<image>` completo (p. ej. un `linear-gradient(to right, …)`) para la parte rellena de la pista, que se renderiza intacto recortado al porcentaje actual; `--hub-slider-value-space` es el hueco de la burbuja de valor y colapsa a `0` en un slider `[showValue]="false"` (flush):
 
@@ -806,7 +946,9 @@ import { HubSignalFieldControl, hubSignalErrorMessages } from 'ng-hub-ui-forms/s
 
 ## ♿ Accesibilidad
 
-- Las etiquetas se asocian con su control (`for`/`id`); los campos requeridos se marcan.
+- Las etiquetas se asocian con su control (`for`/`id`); los campos requeridos se marcan. La rejilla de
+  color es un grupo de radios, al que un `<label for>` no puede nombrar, así que apunta al `id` de la
+  etiqueta mediante `aria-labelledby`.
 - **`labelType="visually-hidden"` da nombre a un control que no tiene sitio para una etiqueta
   visible.** Un buscador de barra de herramientas o una celda de tabla no pueden repetir la misma
   palabra en cada fila, y la alternativa era un control sin nombre accesible: un `placeholder` no

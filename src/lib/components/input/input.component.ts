@@ -1,5 +1,6 @@
 import { KeyValuePipe, NgTemplateOutlet } from '@angular/common';
 import {
+	afterRenderEffect,
 	booleanAttribute,
 	ChangeDetectionStrategy,
 	Component,
@@ -9,6 +10,8 @@ import {
 	ElementRef,
 	inject,
 	input,
+	isDevMode,
+	linkedSignal,
 	model,
 	numberAttribute,
 	output,
@@ -19,7 +22,13 @@ import {
 } from '@angular/core';
 import { FormsModule, Validators } from '@angular/forms';
 import { HubLabelType, HubLabelTypes } from '../../interfaces/common.interface';
-import { HubInputFormat, HubInputFormats, HubPasswordStrengthScore } from '../../interfaces/input.interface';
+import {
+	defaultHubColorConfig,
+	HubColorSwatchInput,
+	HubInputFormat,
+	HubInputFormats,
+	HubPasswordStrengthScore
+} from '../../interfaces/input.interface';
 import { HubInputPrefixDirective } from '../../directives/input-prefix.directive';
 import { HubInputSuffixDirective } from '../../directives/input-suffix.directive';
 import { HubAppendDirective } from '../../directives/append.directive';
@@ -29,10 +38,43 @@ import { controlHasMinOrMaxValidator, isDefined } from '../../utils/utils';
 import { applyMask, isMaskActive } from '../../utils/mask';
 import { scorePasswordStrength } from '../../utils/password-strength';
 import { HUB_FORMS_CONFIG } from '../../services/forms-config';
-import { HubTooltipDirective } from 'ng-hub-ui-utils';
+import { HubTooltipDirective, parseColor, readableOn, toHex } from 'ng-hub-ui-utils';
 
 /** Value held by a `<hub-input>` across its supported formats. */
 type HubInputValue = number | string | boolean | File | FileList | null;
+
+/** A swatch as the template draws it: normalized once, so the view never re-derives it per check. */
+interface HubResolvedSwatch {
+	/** The colour written to the control, verbatim. */
+	value: string;
+	/** Accessible name: the given label, or the value. */
+	label: string;
+	/** Comparison key, so `#7C3AED`, `#7c3aed` and `rgb(124 58 237)` count as the same colour. */
+	key: string;
+	/** Colour of the selection mark on this swatch (`#000000` or `#ffffff`). */
+	ink: string;
+}
+
+/** Hex colour as a person types it: optional `#`, then 3 or 6 digits, any case. */
+const HEX_TEXT = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i;
+
+/**
+ * Normalises typed hex to lowercase `#rrggbb`, the only notation `<input type="color">` accepts,
+ * so what the text field writes to the form is also what the picker can open on.
+ *
+ * @param text - Text from the hex field.
+ * @returns The normalised colour, or `null` when the text is not a hex colour (yet).
+ */
+function normalizeHexText(text: string): string | null {
+	const digits = HEX_TEXT.exec(text.trim())?.[1];
+
+	if (!digits) {
+		return null;
+	}
+
+	const full = digits.length === 3 ? [...digits].map((digit) => digit + digit).join('') : digits;
+	return `#${full.toLowerCase()}`;
+}
 
 /**
  * Accessible form field with automatic validation-error display.
@@ -43,7 +85,10 @@ type HubInputValue = number | string | boolean | File | FileList | null;
  * `invalidFeedbackTemplateFn` input, or projected `hubValidationError` templates.
  *
  * Formats: `text`, `number`, `password`, `email`, `tel`, `url`, `color`, `checkbox`, `switch`,
- * `counter` and `file`. Label types: `stacked`, `floating`, `horizontal`. Text-like formats support
+ * `counter` and `file`. The `color` format is a hex text field with the colour in a square at its
+ * start that opens the browser's native picker; given a palette (per field, or for the whole
+ * application) it becomes a radio group of colour swatches the size of a field, ending in a cell that
+ * opens the native picker. Label types: `stacked`, `floating`, `horizontal`. Text-like formats support
  * prepend / append addons (input groups). Numeric formats auto-attach `min`/`max` validators when
  * bound to a reactive control.
  *
@@ -332,6 +377,180 @@ export class HubInputComponent extends HubFieldControl {
 		);
 	});
 
+	/**
+	 * Colours offered by the `color` format. With any, the field is a grid of swatches the size of a
+	 * field instead of the native picker; `HUB_COLOR_PALETTES` has some ready.
+	 *
+	 * Any CSS colour the parser reads (`#7c3aed`, `rgb(…)`, `hsl(…)`, `oklch(…)`, a keyword), bare or
+	 * as `{ value, label }` to give it a name a screen reader can say. The control receives the string
+	 * exactly as given. An entry that is not a colour is dropped, with a warning in development.
+	 * `null` — the default — takes the application palette from `provideHubForms({ color })`, and
+	 * with none set, the native picker. `[]` asks for the native picker even under an app palette.
+	 */
+	readonly swatches = input<ReadonlyArray<HubColorSwatchInput> | null>(null);
+
+	/**
+	 * Whether the swatch grid ends with a cell that opens the native picker, for a colour that is
+	 * not in the list.
+	 *
+	 * On by default because the `color` format has always accepted any colour: a palette should
+	 * shorten the common case, not quietly narrow what the field can hold — and a value saved
+	 * before the palette changed needs somewhere to show as selected. Turn it off for a closed
+	 * palette (label colours, brand colours), where only the listed values are valid.
+	 */
+	readonly allowCustomColor = input(true, { transform: booleanAttribute });
+
+	/** Accessible name of the custom-colour swatch. Falls back to the global `color.customColorLabel`. */
+	readonly customColorLabel = input<string>('');
+
+	/** Global colour settings; guarded because a hand-provided `HUB_FORMS_CONFIG` may predate them. */
+	readonly #colorConfig = inject(HUB_FORMS_CONFIG).color ?? defaultHubColorConfig;
+
+	/**
+	 * Whether the colour format draws the swatch grid rather than the native picker: only when a
+	 * palette is in force and at least one of its entries is a colour. A grid of nothing but the
+	 * custom cell would be the native picker with extra steps, so an empty or all-invalid list keeps
+	 * the classic control.
+	 */
+	protected readonly showsSwatches = computed<boolean>(
+		() => this.type() === this._inputFormats.Color && this._swatches().length > 0
+	);
+
+	/**
+	 * The palette in force, normalized for the template. Entries the colour parser cannot read are
+	 * dropped here: a swatch has to be a colour the form can store and the mark's ink can be worked
+	 * out for, and a `var(--brand)` is neither once it leaves the page that defined it.
+	 */
+	protected readonly _swatches = computed<HubResolvedSwatch[]>(() => {
+		const resolved: HubResolvedSwatch[] = [];
+
+		for (const swatch of this.swatches() ?? this.#colorConfig.swatches) {
+			const value = typeof swatch === 'string' ? swatch : swatch?.value;
+
+			if (typeof value !== 'string' || !parseColor(value)) {
+				if (isDevMode()) {
+					console.warn(
+						`[ng-hub-ui-forms] hub-input: ignoring swatch ${JSON.stringify(value ?? swatch)}, which is not a CSS colour.`
+					);
+				}
+				continue;
+			}
+
+			const label = (typeof swatch === 'string' ? '' : swatch.label) || value;
+			resolved.push({ value, label, key: this.#colorKey(value), ink: readableOn(value) });
+		}
+
+		return resolved;
+	});
+
+	/**
+	 * Index of the checked cell: a preset, the custom cell (`swatches.length`) when the value is any
+	 * other colour and custom colours are allowed, or `-1` when nothing is checked — which includes a
+	 * value that is not a colour at all, since no cell could honestly show it.
+	 */
+	protected readonly checkedSwatch = computed<number>(() => {
+		const value = this._value();
+
+		if (typeof value !== 'string' || !parseColor(value)) {
+			return -1;
+		}
+
+		const key = this.#colorKey(value);
+		const index = this._swatches().findIndex((swatch) => swatch.key === key);
+
+		if (index >= 0) {
+			return index;
+		}
+
+		return this.allowCustomColor() ? this._swatches().length : -1;
+	});
+
+	/** Whether the custom cell holds the current value. */
+	protected readonly customChecked = computed<boolean>(
+		() => this.allowCustomColor() && this.checkedSwatch() === this._swatches().length
+	);
+
+	/** The current value while it is a custom colour, for the custom cell's fill; empty otherwise. */
+	protected readonly customValue = computed<string>(() => (this.customChecked() ? String(this._value()) : ''));
+
+	/** Ink of the selection mark on the custom cell, which only has a mark while it holds a colour. */
+	protected readonly customInk = computed<string | null>(() => (this.customValue() ? readableOn(this.customValue()) : null));
+
+	/** Accessible name of the custom cell, carrying the colour once it holds one. */
+	protected readonly customSwatchName = computed<string>(() => {
+		const label = this.customColorLabel() || this.#colorConfig.customColorLabel;
+		return this.customValue() ? `${label} ${this.customValue()}` : label;
+	});
+
+	/** The native picker only speaks `#rrggbb`; anything it cannot show opens it on black. */
+	protected readonly customHex = computed<string>(() => (toHex(this.customValue()) ?? '#000000').slice(0, 7));
+
+	/** The cell Tab lands on — the checked one, or the first when none is (roving tabindex). */
+	protected readonly tabbableSwatch = computed<number>(() => Math.max(this.checkedSwatch(), 0));
+
+	/** Whether the swatches wrapped onto more than one row, which drops the field box. */
+	protected readonly swatchesWrapped = signal(false);
+
+	/** The swatch radio group, observed for wrapping. */
+	protected readonly swatchList = viewChild<ElementRef<HTMLElement>>('swatchList');
+
+	/** The native picker behind the custom cell. */
+	protected readonly customColorInput = viewChild<ElementRef<HTMLInputElement>>('customColorInput');
+
+	/** The native picker under the square of the classic colour field. */
+	protected readonly classicColorInput = viewChild<ElementRef<HTMLInputElement>>('classicColorInput');
+
+	/**
+	 * Accessible name of the classic field's colour square. Read with a fallback because a
+	 * hand-provided colour config may predate it.
+	 */
+	protected readonly pickerLabel = this.#colorConfig.pickerLabel ?? defaultHubColorConfig.pickerLabel;
+
+	/**
+	 * The value as lowercase `#rrggbb`, for the classic field's square, text and native picker; empty
+	 * when the value is not a colour. Values in other notations (`rgb(…)`, a keyword) are converted,
+	 * since the native picker only speaks hex.
+	 */
+	protected readonly classicHex = computed<string>(() => {
+		const value = this._value();
+
+		if (typeof value !== 'string' || !value) {
+			return '';
+		}
+
+		return normalizeHexText(value) ?? toHex(value)?.slice(0, 7).toLowerCase() ?? '';
+	});
+
+	/**
+	 * What the classic field's hex text shows. It follows the value, except while the text already
+	 * spells that same colour: typing `#abc` writes `#aabbcc` to the form, and rewriting the text
+	 * then would break the next keystroke. Blur settles it back to the normalised value.
+	 */
+	protected readonly colorText = linkedSignal<string, string>({
+		source: this.classicHex,
+		computation: (hex, previous) => (previous && normalizeHexText(previous.value) === hex ? previous.value : hex)
+	});
+
+	/** Watches the swatch list's size; created lazily, only in a browser that has one. */
+	#swatchObserver: ResizeObserver | null = null;
+
+	/** The list element currently observed, so a re-rendered list is swapped in rather than piled up. */
+	#observedSwatchList: HTMLElement | null = null;
+
+	/**
+	 * Keeps the wrap state honest. Render effects never run on the server, so this is browser-only by
+	 * construction; it re-runs when the palette changes and when the list element comes or goes (the
+	 * format or the palette toggled), and the observer covers every resize in between.
+	 */
+	private readonly _swatchWrapWatch = afterRenderEffect(() => {
+		this._swatches();
+		this.allowCustomColor();
+		this.#watchSwatchWrap(this.swatchList()?.nativeElement ?? null);
+	});
+
+	/** Disconnects the swatch observer with the component. */
+	private readonly _swatchCleanup = inject(DestroyRef).onDestroy(() => this.#swatchObserver?.disconnect());
+
 	/** Display label for the selected file(s). */
 	protected readonly fileLabel = computed<string>(() => {
 		const v = this._value();
@@ -533,6 +752,149 @@ export class HubInputComponent extends HubFieldControl {
 		}
 	}
 
+	/**
+	 * Picks a swatch cell: a preset writes its value, the custom cell opens the native picker.
+	 *
+	 * @param index - Cell index; `swatches.length` is the custom cell.
+	 */
+	protected activateSwatch(index: number): void {
+		if (this.disabled() || this._isReadonly()) {
+			return;
+		}
+
+		const swatch = this._swatches()[index];
+
+		if (swatch) {
+			this.setValue(swatch.value);
+		} else if (this.allowCustomColor()) {
+			this.#openPicker(this.customColorInput()?.nativeElement);
+		}
+	}
+
+	/** Opens the native picker from the classic field's square, unless the field is locked. */
+	protected openClassicPicker(): void {
+		if (this.disabled() || this._isReadonly()) {
+			return;
+		}
+
+		this.#openPicker(this.classicColorInput()?.nativeElement);
+	}
+
+	/**
+	 * Takes a keystroke in the classic field's hex text. A valid colour reaches the form at once,
+	 * normalised; anything else stays in the text only, until blur puts the last valid value back.
+	 *
+	 * @param event - The text field's `input` event.
+	 */
+	protected typeColorText(event: Event): void {
+		const text = (event.target as HTMLInputElement).value;
+		const hex = normalizeHexText(text);
+
+		this.colorText.set(text);
+
+		if (hex && hex !== this._value()) {
+			this.setValue(hex);
+		}
+	}
+
+	/**
+	 * Settles the classic field's hex text on blur: back to the value in normalised form, which drops
+	 * a half-typed or invalid entry and spells a short one out in full.
+	 *
+	 * @param event - The text field's `blur` event.
+	 */
+	protected commitColorText(event: FocusEvent): void {
+		this.colorText.set(this.classicHex());
+		this.handleBlur(event);
+	}
+
+	/**
+	 * Radio-group keyboard model: arrows move and check, Home and End jump to the ends, Space checks.
+	 *
+	 * Landing on the custom cell only moves focus — opening a dialog because somebody arrowed past it
+	 * would trap them in it. Space or Enter opens it; Enter does nothing on a preset, as on any radio.
+	 * Left and Right follow the reading direction, so under RTL Left is the next cell.
+	 *
+	 * @param event - The keydown on a cell.
+	 * @param index - Index of that cell; `swatches.length` is the custom cell.
+	 */
+	protected handleSwatchKeydown(event: KeyboardEvent, index: number): void {
+		const count = this._swatches().length + (this.allowCustomColor() ? 1 : 0);
+		const isCustom = index === this._swatches().length;
+		const rtl = getComputedStyle(event.currentTarget as Element).direction === 'rtl';
+		let target: number;
+
+		switch (event.key) {
+			case 'ArrowDown':
+				target = index + 1;
+				break;
+			case 'ArrowUp':
+				target = index - 1;
+				break;
+			case 'ArrowRight':
+				target = rtl ? index - 1 : index + 1;
+				break;
+			case 'ArrowLeft':
+				target = rtl ? index + 1 : index - 1;
+				break;
+			case 'Home':
+				target = 0;
+				break;
+			case 'End':
+				target = count - 1;
+				break;
+			case ' ':
+			case 'Enter':
+				if (event.key === ' ' || isCustom) {
+					event.preventDefault();
+					this.activateSwatch(index);
+				}
+				return;
+			default:
+				return;
+		}
+
+		event.preventDefault();
+		target = (target + count) % count;
+		this.#swatchCells()[target]?.focus();
+
+		if (target < this._swatches().length) {
+			this.activateSwatch(target);
+		}
+	}
+
+	/**
+	 * Writes the colour chosen in a native picker: the one behind the grid's custom cell, or the one
+	 * under the classic field's square.
+	 *
+	 * @param event - The picker's `input` event, which fires live while the colour is dragged.
+	 */
+	protected pickNativeColor(event: Event): void {
+		if (this.disabled() || this._isReadonly()) {
+			return;
+		}
+
+		this.setValue((event.target as HTMLInputElement).value);
+	}
+
+	/**
+	 * Native validation for the swatch grid, used only without a reactive control. The grid is a
+	 * `div`, which has no `validity` to read, so `required` is the one constraint worth checking.
+	 */
+	protected override updateNativeErrors(target?: EventTarget | null): void {
+		if (!this.showsSwatches()) {
+			super.updateNativeErrors(target);
+			return;
+		}
+
+		if (this._control) {
+			return;
+		}
+
+		const value = this._value();
+		this._nativeErrors.set(this.required() && (value == null || value === '') ? { required: true } : null);
+	}
+
 	/** Opens the native file dialog. */
 	protected triggerFile(): void {
 		if (!this.disabled() && !this.readonly()) {
@@ -604,6 +966,76 @@ export class HubInputComponent extends HubFieldControl {
 		if (changed) {
 			control.updateValueAndValidity({ emitEvent: false });
 		}
+	}
+
+	/**
+	 * Opens a native colour picker from the element standing in for it. `showPicker()` is what lets a
+	 * press on another element open it; `click()` covers browsers without it, or refusing it here.
+	 *
+	 * @param native - The hidden `<input type="color">` to open, if rendered.
+	 */
+	#openPicker(native: HTMLInputElement | undefined): void {
+		if (!native) {
+			return;
+		}
+
+		try {
+			if (typeof native.showPicker === 'function') {
+				native.showPicker();
+				return;
+			}
+		} catch {
+			// Refused (a cross-origin frame, say): the click below still opens it.
+		}
+
+		native.click();
+	}
+
+	/** The swatch cells in DOM order, the custom cell last. */
+	#swatchCells(): HTMLElement[] {
+		return Array.from(this.swatchList()?.nativeElement.querySelectorAll<HTMLElement>('.hub-input__swatch') ?? []);
+	}
+
+	/**
+	 * Points the observer at the current list (none when the grid is not rendered) and measures.
+	 *
+	 * @param list - The rendered swatch list, or `null`.
+	 */
+	#watchSwatchWrap(list: HTMLElement | null): void {
+		if (list !== this.#observedSwatchList) {
+			this.#swatchObserver?.disconnect();
+			this.#observedSwatchList = list;
+
+			if (list && typeof ResizeObserver !== 'undefined') {
+				this.#swatchObserver ??= new ResizeObserver(() => this.#measureSwatchWrap());
+				this.#swatchObserver.observe(list);
+			}
+		}
+
+		this.#measureSwatchWrap();
+	}
+
+	/**
+	 * Wrapped when the last cell starts lower than the first. It answers the same question as comparing
+	 * the content height with one row, without computing a row height that zoom and sub-pixel rounding
+	 * would blur. The box keeps its border width in both states, so dropping the chrome never gives the
+	 * cells more room and cannot flip the answer back on the next observation.
+	 */
+	#measureSwatchWrap(): void {
+		const cells = this.#observedSwatchList ? this.#swatchCells() : [];
+		this.swatchesWrapped.set(cells.length > 1 && cells[cells.length - 1].offsetTop > cells[0].offsetTop);
+	}
+
+	/**
+	 * Comparison key of a colour, so `#7C3AED`, `#7c3aed` and `rgb(124 58 237)` are the same swatch:
+	 * its hex form, or the trimmed lowercase text for the one kind of value the parser cannot read — a
+	 * form value that is not a colour (swatches themselves are validated before they get here).
+	 *
+	 * @param value - A CSS colour string.
+	 * @returns The key to compare swatches with.
+	 */
+	#colorKey(value: string): string {
+		return toHex(value) ?? value.trim().toLowerCase();
 	}
 
 	/**

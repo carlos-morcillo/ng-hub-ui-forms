@@ -9,7 +9,7 @@ import {
 	ElementRef,
 	inject,
 	input,
-	numberAttribute,
+	linkedSignal,
 	output,
 	PLATFORM_ID,
 	signal,
@@ -22,6 +22,7 @@ import { HubFileDropzoneNoticeDirective } from '../../directives/file-dropzone-n
 import { HubFilePreviewContext, HubFilePreviewDirective } from '../../directives/file-preview.directive';
 import { HubLabelType, HubLabelTypes } from '../../interfaces/common.interface';
 import {
+	HubCurrentFile,
 	HubFileItem,
 	HubFilePreview,
 	HubFileRejection,
@@ -31,11 +32,39 @@ import {
 import { HUB_FILE_UPLOADER } from '../../services/file-uploader';
 import { HUB_FORMS_CONFIG } from '../../services/forms-config';
 import { HubFieldControl } from '../../shared/hub-field-control';
+import { resolveCurrentFile, urlFileName } from '../../utils/current-file';
 import { matchesAccept } from '../../utils/file-accept';
 import { fileKey } from '../../utils/file-key';
+import { acceptsOnlyImages, fileExtension, fileKind, HubFileKind, isPreviewableImage } from '../../utils/file-kind';
 import { HubFileValue, toFileArray } from '../../utils/file-value';
 import { uuid } from '../../utils/utils';
 import { HubTooltipDirective } from 'ng-hub-ui-utils';
+
+/**
+ * One tile of `preview="inline"` or `preview="grid"`: a picked file or a stored one, drawn the same
+ * way — its image, or its kind icon and its name.
+ */
+interface HubFileTile {
+	/** Stable identity for `@for`: `item:<id>` or `current:<url>`. */
+	readonly key: string;
+	/** The name shown and read out; the field's label, or the stand-in, when the name is unknown. */
+	readonly name: string;
+	/** The name without its extension, the part that gives way to an ellipsis when space runs out. */
+	readonly stem: string;
+	/** The extension with its dot, kept whole so a truncated name still says what the file is. */
+	readonly ext: string;
+	/** The family, which picks the icon when there is no image to paint. */
+	readonly kind: HubFileKind;
+	/** The image to paint, or `null` to draw the kind icon and the name instead. */
+	readonly src: string | null;
+	/** The held item, or `null` for a stored file. */
+	readonly item: HubFileItem | null;
+	/** The stored file, or `null` for a held item. */
+	readonly current: HubCurrentFile | null;
+}
+
+/** Where the dropzone goes: the full box, the add tile at the end of the grid, or nowhere. */
+type HubDropzonePlacement = 'zone' | 'add' | 'none';
 
 /**
  * Accessible file field with drag-and-drop, clipboard paste, per-file constraints, previews and
@@ -48,7 +77,8 @@ import { HubTooltipDirective } from 'ng-hub-ui-utils';
  * The **form value stays native** — a `File` in single mode, a `File[]` in multiple mode, `null`
  * when empty — so it can be handed straight to a `FormData`. The rich per-file state (preview URL,
  * upload status, progress, error) lives in the {@link files} signal instead of contaminating the
- * control.
+ * control. Files the record already has (`currentFile`) are shown next to the picked ones but never
+ * reach the value either.
  *
  * Constraints declared as inputs (`accept`, `maxSize`, `minSize`, `maxTotalSize`, `maxFiles`) act as
  * a **filter**: an offending file never reaches the value and surfaces through {@link rejected}.
@@ -94,12 +124,27 @@ export class HubFileInputComponent extends HubFieldControl {
 	readonly #isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 	readonly #subscriptions = new Map<string, Subscription>();
 
+	/**
+	 * Object URLs minted on demand to open a picked file that is not painted — a PDF, or an image
+	 * with `imagePreview` off — in a new tab. Minted only when the user asks, released with the file.
+	 */
+	readonly #openUrls = new Map<string, string>();
+
 	protected readonly _labelTypes = HubLabelTypes;
 
 	protected readonly _items = signal<HubFileItem[]>([]);
 
 	/** Depth counter for `dragenter`/`dragleave`: children of the dropzone fire their own events. */
 	#dragDepth = 0;
+
+	/** The tile a pending pick replaces, set by its "Replace" pill and consumed by the next `change`. */
+	#replaceTarget: string | null = null;
+
+	/** Raised by the pill for the one click it forwards to the native input. */
+	#armingReplace = false;
+
+	/** The control that opened the enlarged image, to give focus back when it closes. */
+	#viewerOpener: HTMLElement | null = null;
 
 	/** Releases every object URL and aborts every in-flight upload when the field goes away. */
 	private readonly _cleanup = inject(DestroyRef).onDestroy(() => {
@@ -136,7 +181,11 @@ export class HubFileInputComponent extends HubFieldControl {
 	/** Maximum combined size of every held file, in bytes. */
 	readonly maxTotalSize = input<number | null>(null);
 
-	/** Maximum number of files. Only meaningful with `multiple`. */
+	/**
+	 * Maximum number of files. Only meaningful with `multiple`. With `preview="inline"` the stored
+	 * files in view count too, a counter shows how many are taken, and the add tile goes away at
+	 * the limit.
+	 */
 	readonly maxFiles = input<number | null>(null);
 
 	/** Whether files can be dropped onto the field. */
@@ -145,8 +194,38 @@ export class HubFileInputComponent extends HubFieldControl {
 	/** Whether files can be pasted into the focused field (e.g. a screenshot). */
 	readonly paste = input(true, { transform: booleanAttribute });
 
-	/** How the held files are rendered: not at all, as a list, or as a thumbnail grid. */
+	/**
+	 * How the held files are rendered: not at all, as a list, or as tiles — under the dropzone with
+	 * `grid`, inside the field with `inline`. An `inline` tile alone fills the field; with `multiple`
+	 * the tiles form a grid whose last tile adds more files.
+	 */
 	readonly preview = input<HubFilePreview>('list');
+
+	/**
+	 * The files the record already has, shown by `preview="inline"` among the picked ones: a URL,
+	 * whose name and type are read from the URL itself, a {@link HubCurrentFile} when the URL does not
+	 * reveal them, or a list of either with `multiple` (a single field shows the first). Display only:
+	 * a stored file never reaches the form value, which stays a native `File`, `File[]` or `null`.
+	 * Whenever one leaves the field — removed, or replaced by a picked file — {@link currentFileRemoved}
+	 * emits it, and it stays hidden until this input changes.
+	 */
+	readonly currentFile = input<string | HubCurrentFile | readonly (string | HubCurrentFile)[] | null>(null);
+
+	/**
+	 * Whether images are painted as images. Off, every file is drawn as its kind icon and no object
+	 * URL is minted for a thumbnail — the lighter choice for long lists of photos.
+	 */
+	readonly imagePreview = input(true, { transform: booleanAttribute });
+
+	/**
+	 * Whether the field is read-only: its files stay in view and can be opened, but none can be
+	 * picked, dropped, pasted, replaced or removed. Unlike `disabled`, the field keeps its focus and
+	 * is still submitted.
+	 */
+	readonly readonly = input(false, { transform: booleanAttribute });
+
+	/** Whether the user may remove what the field holds — the picked files or the stored ones. */
+	readonly clearable = input(true, { transform: booleanAttribute });
 
 	/** Whether the same file can be selected twice (keyed on name, size and last-modified date). */
 	readonly allowDuplicates = input(false, { transform: booleanAttribute });
@@ -178,14 +257,23 @@ export class HubFileInputComponent extends HubFieldControl {
 	/** Emits the files refused by the declared constraints, with the reason for each. */
 	readonly rejected = output<HubFileRejection[]>();
 
-	/** Emits the file removed from the selection. */
+	/** Emits a picked file that left the selection — removed, or replaced through its tile. */
 	readonly fileRemoved = output<File>();
+
+	/**
+	 * Emits a stored file that left the field — removed, or replaced by a picked file. The form value
+	 * never held it, so this is the application's cue to delete it on the server.
+	 */
+	readonly currentFileRemoved = output<HubCurrentFile>();
 
 	/** Emits the full item list whenever an upload changes status or progress. */
 	readonly uploadStateChange = output<readonly HubFileItem[]>();
 
 	/** The hidden native file input, kept focusable so the dropzone label activates it. */
 	protected readonly nativeInput = viewChild<ElementRef<HTMLInputElement>>('nativeInput');
+
+	/** The dialog that shows a picked image enlarged. */
+	protected readonly viewer = viewChild<ElementRef<HTMLDialogElement>>('viewer');
 
 	/** Projected per-file icon template. */
 	protected readonly iconTpt = contentChild(HubFileIconDirective);
@@ -201,6 +289,9 @@ export class HubFileInputComponent extends HubFieldControl {
 
 	/** Latest message for the screen-reader live region. */
 	protected readonly announcement = signal('');
+
+	/** The tile whose image the viewer shows, or `null` while it is closed. */
+	protected readonly _viewing = signal<HubFileTile | null>(null);
 
 	/** The rich, per-file state of the current selection. */
 	readonly files = this._items.asReadonly();
@@ -240,8 +331,162 @@ export class HubFileInputComponent extends HubFieldControl {
 		});
 	});
 
+	/** Whether the user may pick, drop, paste or replace a file. */
+	protected readonly _canChange = computed<boolean>(() => !this.disabled() && !this.readonly());
+
+	/** Whether the user may remove what the field holds. */
+	protected readonly _canRemove = computed<boolean>(() => this._canChange() && this.clearable());
+
+	/** Whether the files sit inside the field (`preview="inline"`), single or multiple. */
+	protected readonly _isInline = computed<boolean>(() => this.preview() === 'inline');
+
+	/** One file filling the whole field. */
+	protected readonly _inlineSingle = computed<boolean>(() => this._isInline() && !this.multiple());
+
+	/** A grid of tiles inside the field, ending in the add tile. */
+	protected readonly _inlineMultiple = computed<boolean>(() => this._isInline() && this.multiple());
+
+	/**
+	 * Which files a list renders: `list` always, and `grid` only when a projected `hubFilePreview`
+	 * template asks for its own item rendering — otherwise `grid` draws tiles.
+	 */
+	protected readonly _listPreview = computed<'list' | 'grid' | null>(() => {
+		const preview = this.preview();
+
+		if (preview === 'list') {
+			return 'list';
+		}
+
+		return preview === 'grid' && this.previewTpt() ? 'grid' : null;
+	});
+
+	/**
+	 * Stored files the user removed or replaced, by URL. `linkedSignal` empties it whenever
+	 * `currentFile` changes, so the next record's stored files come back into view on their own.
+	 */
+	readonly #dismissed = linkedSignal<unknown, ReadonlySet<string>>({
+		source: this.currentFile,
+		computation: () => new Set<string>()
+	});
+
+	/**
+	 * Picked files that replaced a stored one, keyed by item id, so the new file takes the stored
+	 * file's place in the grid instead of moving to the end.
+	 */
+	readonly #anchors = signal<ReadonlyMap<string, string>>(new Map());
+
+	/** Images that failed to load; their tiles draw the image icon instead. */
+	readonly #broken = signal<ReadonlySet<string>>(new Set());
+
+	/** Every stored file the input names, resolved, in its order — dismissed ones included. */
+	readonly #allCurrents = computed<HubCurrentFile[]>(() =>
+		this._isInline()
+			? [this.currentFile()]
+					.flat()
+					.map((value) => resolveCurrentFile(value))
+					.filter((current): current is HubCurrentFile => current !== null)
+			: []
+	);
+
+	/** The stored files still in view. A single field shows the first only. */
+	protected readonly _currents = computed<HubCurrentFile[]>(() => {
+		const dismissed = this.#dismissed();
+		const visible = this.#allCurrents().filter((current) => !dismissed.has(current.url));
+
+		return this.multiple() ? visible : visible.slice(0, 1);
+	});
+
+	/**
+	 * The tiles, in the order they are shown. In an inline grid the stored files come first, in the
+	 * input's order, and a picked file that replaced one of them takes its place; the other picked
+	 * files follow in the value's order. A single field shows its held file, or else its stored one.
+	 */
+	protected readonly _tiles = computed<HubFileTile[]>(() => {
+		const preview = this.preview();
+		const items = this._items();
+
+		if (preview === 'grid') {
+			return this.previewTpt() ? [] : items.map((item) => this.#itemTile(item));
+		}
+
+		if (preview !== 'inline') {
+			return [];
+		}
+
+		if (!this.multiple()) {
+			const item = items[0];
+
+			return item ? [this.#itemTile(item)] : this._currents().map((current) => this.#currentTile(current));
+		}
+
+		const dismissed = this.#dismissed();
+		const byAnchor = new Map<string, HubFileItem>();
+
+		for (const item of items) {
+			const url = this.#anchors().get(item.id);
+
+			if (url) {
+				byAnchor.set(url, item);
+			}
+		}
+
+		const tiles: HubFileTile[] = [];
+		const placed = new Set<string>();
+
+		for (const current of this.#allCurrents()) {
+			const replacement = byAnchor.get(current.url);
+
+			if (!dismissed.has(current.url)) {
+				tiles.push(this.#currentTile(current));
+			} else if (replacement) {
+				tiles.push(this.#itemTile(replacement));
+				placed.add(replacement.id);
+			}
+		}
+
+		return [...tiles, ...items.filter((item) => !placed.has(item.id)).map((item) => this.#itemTile(item))];
+	});
+
+	/** How many files the field holds: the picked ones, plus the stored ones an inline grid shows. */
+	protected readonly _heldCount = computed<number>(
+		() => this._items().length + (this._inlineMultiple() ? this._currents().length : 0)
+	);
+
+	/** Whether an inline grid is full, which takes its add tile away. */
+	protected readonly _atLimit = computed<boolean>(() => {
+		const max = this.maxFiles();
+
+		return this._inlineMultiple() && max != null && this._heldCount() >= max;
+	});
+
 	/** Whether the dropzone currently accepts a drop. */
-	protected readonly dropEnabled = computed<boolean>(() => this.dragDrop() && !this.disabled());
+	protected readonly dropEnabled = computed<boolean>(() => this.dragDrop() && this._canChange() && !this._atLimit());
+
+	/**
+	 * Where the dropzone goes. List and grid always keep it. Inline keeps it while the field is
+	 * empty, turns it into the add tile at the end of a grid, and drops it for a filled single field,
+	 * a full grid, or one that cannot take files.
+	 */
+	protected readonly _dropzone = computed<HubDropzonePlacement>(() => {
+		if (!this._isInline() || this._tiles().length === 0) {
+			return 'zone';
+		}
+
+		return this._inlineMultiple() && this._canChange() && !this._atLimit() ? 'add' : 'none';
+	});
+
+	/** Whether the "3 of 5 files" counter is shown. */
+	protected readonly _showCount = computed<boolean>(() => this._inlineMultiple() && this.maxFiles() != null);
+
+	/** The ids the native input is described by: the constraints hint and the counter. */
+	protected readonly _describedBy = computed<string | null>(() => {
+		const ids = [
+			this.constraintsHint() && this._dropzone() !== 'none' ? `${this.id}-hint` : null,
+			this._showCount() ? `${this.id}-count` : null
+		].filter((id): id is string => id !== null);
+
+		return ids.length ? ids.join(' ') : null;
+	});
 
 	/**
 	 * Derives the native validation errors from the held files rather than from the DOM.
@@ -276,12 +521,13 @@ export class HubFileInputComponent extends HubFieldControl {
 		this._items().forEach((item) => this.#revokePreview(item));
 		this.#subscriptions.forEach((subscription) => subscription.unsubscribe());
 		this.#subscriptions.clear();
+		this.#anchors.set(new Map());
 		this._items.set(toFileArray(value).map((file) => this.#createItem(file)));
 	}
 
 	/** Opens the native file dialog. */
 	open(): void {
-		if (!this.disabled()) {
+		if (this._canChange()) {
 			this.nativeInput()?.nativeElement.click();
 		}
 	}
@@ -300,6 +546,7 @@ export class HubFileInputComponent extends HubFieldControl {
 
 		this.#abort(id);
 		this.#revokePreview(item);
+		this.#unanchor(id);
 		this._items.update((items) => items.filter((candidate) => candidate.id !== id));
 		this.#emitValue();
 		this.fileRemoved.emit(item.file);
@@ -315,6 +562,7 @@ export class HubFileInputComponent extends HubFieldControl {
 		this.#subscriptions.forEach((subscription) => subscription.unsubscribe());
 		this.#subscriptions.clear();
 		this._items().forEach((item) => this.#revokePreview(item));
+		this.#anchors.set(new Map());
 		this._items.set([]);
 		this.#emitValue();
 		this.#announce(this.labels().filesSelected(0));
@@ -351,21 +599,30 @@ export class HubFileInputComponent extends HubFieldControl {
 	}
 
 	/**
-	 * Reads the files chosen through the native dialog.
+	 * Reads the files chosen through the native dialog. A pick started from a tile's "Replace" pill
+	 * swaps that tile's file; any other pick adds.
 	 *
 	 * @param event - The `change` event of the hidden native input.
 	 */
 	protected handleNativeChange(event: Event): void {
 		const native = event.target as HTMLInputElement;
+		const files = Array.from(native.files ?? []);
+		const target = this.#replaceTarget ? this._tiles().find((tile) => tile.key === this.#replaceTarget) : null;
 
-		this.#addFiles(Array.from(native.files ?? []));
+		this.#replaceTarget = null;
+
+		if (target && files[0]) {
+			this.#replace(target, files[0]);
+		} else {
+			this.#addFiles(files);
+		}
 
 		// Without this, re-picking the very same file fires no second `change` event.
 		native.value = '';
 	}
 
 	/**
-	 * Accepts files dropped onto the dropzone.
+	 * Accepts files dropped onto the field.
 	 *
 	 * @param event - The drop event.
 	 */
@@ -437,7 +694,7 @@ export class HubFileInputComponent extends HubFieldControl {
 	 * @param event - The paste event.
 	 */
 	protected handlePaste(event: ClipboardEvent): void {
-		if (!this.paste() || this.disabled()) {
+		if (!this.paste() || !this._canChange() || this._atLimit()) {
 			return;
 		}
 
@@ -465,15 +722,169 @@ export class HubFileInputComponent extends HubFieldControl {
 	}
 
 	/**
+	 * Opens a picked file: an image enlarged in the viewer, anything else in a new tab. Stored files
+	 * never come through here — their tile is a plain link to their URL.
+	 *
+	 * @param tile - The tile being opened.
+	 * @param event - The click, whose target gets focus back when the viewer closes.
+	 */
+	protected openTile(tile: HubFileTile, event: Event): void {
+		if (!tile.item) {
+			return;
+		}
+
+		if (tile.src) {
+			this.#viewerOpener = event.currentTarget as HTMLElement;
+			this._viewing.set(tile);
+			this.viewer()?.nativeElement.showModal();
+			return;
+		}
+
+		const url = this.#openUrl(tile.item);
+
+		if (url) {
+			window.open(url, '_blank', 'noopener');
+		}
+	}
+
+	/** Closes the enlarged image. */
+	protected closeViewer(): void {
+		this.viewer()?.nativeElement.close();
+	}
+
+	/**
+	 * Closes the viewer on a click on its backdrop, which lands on the `<dialog>` itself.
+	 *
+	 * @param event - The click inside the dialog.
+	 */
+	protected handleViewerClick(event: MouseEvent): void {
+		if (event.target === this.viewer()?.nativeElement) {
+			this.closeViewer();
+		}
+	}
+
+	/**
+	 * Clears the viewer and hands focus back to the tile that opened it. The `close` event covers
+	 * every way out: the close button, the backdrop, and Escape.
+	 */
+	protected handleViewerClose(): void {
+		this._viewing.set(null);
+		this.#viewerOpener?.focus();
+		this.#viewerOpener = null;
+	}
+
+	/**
+	 * Starts replacing one tile's file: remembers the tile and opens the dialog. The next `change`
+	 * swaps that file in place; a cancelled dialog forgets the tile.
+	 *
+	 * @param tile - The tile whose file is being replaced.
+	 */
+	protected replaceTile(tile: HubFileTile): void {
+		if (!this._canChange()) {
+			return;
+		}
+
+		this.#replaceTarget = tile.key;
+		this.#armingReplace = true;
+		this.nativeInput()?.nativeElement.click();
+		this.#armingReplace = false;
+	}
+
+	/** Forgets the pending replacement when the file dialog is dismissed without a pick. */
+	protected cancelReplace(): void {
+		this.#replaceTarget = null;
+	}
+
+	/**
+	 * Removes a tile's file — a picked one from the value, a stored one from view, announced through
+	 * {@link currentFileRemoved} — and moves focus to the tile that takes its place, or to the field.
+	 *
+	 * @param tile - The tile to remove.
+	 * @param index - Its position, to find the tile focus moves to.
+	 */
+	protected removeTile(tile: HubFileTile, index: number): void {
+		if (!this._canRemove() || tile.item?.status === 'uploading') {
+			return;
+		}
+
+		// The other tiles keep their DOM nodes (`@for` tracks by key), so the one to focus next can be
+		// picked before the removal and is still the same element after it.
+		const host = this._elementRef.nativeElement as HTMLElement;
+		const opens = Array.from(host.querySelectorAll<HTMLElement>('.hub-file-input__tile-open'));
+		const next = opens[index + 1] ?? opens[index - 1] ?? null;
+
+		if (tile.item) {
+			this.remove(tile.item.id);
+		} else if (tile.current) {
+			this.#dismiss(tile.current.url);
+			this.currentFileRemoved.emit(tile.current);
+		}
+
+		(next ?? this.nativeInput()?.nativeElement)?.focus();
+	}
+
+	/**
+	 * Delete and Backspace remove the focused tile, the way a chip or a tag is removed in a field.
+	 *
+	 * @param event - The keydown on the tile's open control.
+	 * @param tile - The tile.
+	 * @param index - Its position.
+	 */
+	protected handleTileKeydown(event: KeyboardEvent, tile: HubFileTile, index: number): void {
+		if (event.key !== 'Delete' && event.key !== 'Backspace') {
+			return;
+		}
+
+		event.preventDefault();
+		this.removeTile(tile, index);
+	}
+
+	/**
+	 * Falls back to the image icon when an image does not load — a stored URL that is gone, or a
+	 * guess from `accept` that turned out wrong.
+	 *
+	 * @param src - The URL that failed.
+	 */
+	protected markBroken(src: string): void {
+		this.#broken.update((broken) => new Set(broken).add(src));
+	}
+
+	/**
+	 * Keeps a read-only field from opening the file dialog, and tells a plain pick from a replacing
+	 * one. The native input stays enabled so it can still take focus, and a click on it — including
+	 * the one a label forwards — is what opens the dialog.
+	 *
+	 * @param event - The click reaching the native input.
+	 */
+	protected guardNativeClick(event: Event): void {
+		if (this.readonly()) {
+			event.preventDefault();
+		}
+
+		if (!this.#armingReplace) {
+			this.#replaceTarget = null;
+		}
+	}
+
+	/**
 	 * Validates and appends the incoming files, emitting the new value and any rejections.
 	 *
-	 * In single mode the incoming file replaces the current one, so the constraint checks run against
-	 * an empty baseline rather than against the file about to be discarded.
+	 * A single inline field holds one tile, so a new file replaces it — the stored one included,
+	 * which is then announced as removed. Elsewhere in single mode the incoming file replaces the
+	 * current one, so the constraint checks run against an empty baseline rather than against the
+	 * file about to be discarded.
 	 *
 	 * @param incoming - The files to add.
 	 */
 	#addFiles(incoming: File[]): void {
-		if (this.disabled() || incoming.length === 0) {
+		if (!this._canChange() || incoming.length === 0) {
+			return;
+		}
+
+		const shown = this._inlineSingle() ? this._tiles()[0] : undefined;
+
+		if (shown) {
+			this.#replace(shown, incoming[0]);
 			return;
 		}
 
@@ -484,7 +895,7 @@ export class HubFileInputComponent extends HubFieldControl {
 		const rejections: HubFileRejection[] = [];
 		const keys = new Set(baseline.map((item) => fileKey(item.file)));
 
-		let count = baseline.length;
+		let count = baseline.length + (this._inlineMultiple() ? this._currents().length : 0);
 		let total = baseline.reduce((sum, item) => sum + item.file.size, 0);
 
 		for (const file of incoming) {
@@ -520,6 +931,63 @@ export class HubFileInputComponent extends HubFieldControl {
 		}
 
 		this.#announce(this.#summarize(accepted.length, rejections));
+	}
+
+	/**
+	 * Swaps one tile's file for a new one, in place. It is a removal and an addition in one step, so
+	 * it emits what a removal emits — {@link fileRemoved} for a picked file, {@link currentFileRemoved}
+	 * for a stored one — and checks the new file against the constraints as if the old one were gone.
+	 *
+	 * @param tile - The tile being replaced.
+	 * @param file - The file taking its place.
+	 */
+	#replace(tile: HubFileTile, file: File): void {
+		const items = this._items();
+		const others = tile.item ? items.filter((item) => item.id !== tile.item!.id) : items;
+		const count = this.multiple() ? this._heldCount() - 1 : 0;
+		const total = others.reduce((sum, item) => sum + item.file.size, 0);
+		const rejection = this.#reject(file, count, total, new Set(others.map((item) => fileKey(item.file))));
+
+		if (rejection) {
+			this.rejected.emit([rejection]);
+			this.#announce(this.labels().rejection(rejection));
+			return;
+		}
+
+		const next = this.#createItem(file);
+
+		if (tile.item) {
+			const old = tile.item;
+			const anchor = this.#anchors().get(old.id);
+
+			this.#abort(old.id);
+			this.#revokePreview(old);
+			this.#unanchor(old.id);
+			this._items.set(items.map((item) => (item.id === old.id ? next : item)));
+
+			if (anchor) {
+				this.#anchor(next.id, anchor);
+			}
+
+			this.#emitValue();
+			this.fileRemoved.emit(old.file);
+		} else if (tile.current) {
+			this.#dismiss(tile.current.url);
+			this._items.set(this.multiple() ? [...items, next] : [next]);
+
+			if (this.multiple()) {
+				this.#anchor(next.id, tile.current.url);
+			}
+
+			this.#emitValue();
+			this.currentFileRemoved.emit(tile.current);
+		}
+
+		if (this.#uploader && this.autoUpload()) {
+			this.#startUpload(next.id);
+		}
+
+		this.#announce(this.labels().filesSelected(this._items().length));
 	}
 
 	/**
@@ -574,13 +1042,147 @@ export class HubFileInputComponent extends HubFieldControl {
 	}
 
 	/**
-	 * Wraps a file in an item, minting its preview URL when it is a previewable image.
+	 * Describes a held item as a tile.
+	 *
+	 * @param item - The held item.
+	 * @returns Its tile.
+	 */
+	#itemTile(item: HubFileItem): HubFileTile {
+		const { name, type } = item.file;
+
+		return this.#tile(`item:${item.id}`, name, fileKind(type, name), item.previewUrl, item, null);
+	}
+
+	/**
+	 * Describes a stored file as a tile, guessing its kind from its type, its name or its URL.
+	 *
+	 * @param current - The stored file.
+	 * @returns Its tile.
+	 */
+	#currentTile(current: HubCurrentFile): HubFileTile {
+		// An explicit name without an extension ("Signed contract") says nothing about the type; the
+		// URL may still end in one.
+		const hint = fileExtension(current.name) ? current.name : urlFileName(current.url);
+		let kind = fileKind(current.type, hint);
+		let previewable = isPreviewableImage(current.type, hint);
+
+		// `/api/companies/1/logo` reveals nothing, but in a field that only accepts images the stored
+		// file is one. If the guess is wrong the `<img>` fails and the image icon takes its place.
+		if (kind === 'generic' && acceptsOnlyImages(this.accept())) {
+			kind = 'image';
+			previewable = true;
+		}
+
+		// A stored file with no name — a bare `data:` URL, an opaque API path — is the field's own value,
+		// so it takes the field's label ("Remove Logo"); the generic stand-in is for a field with none.
+		const name = current.name || this.label() || this.labels().currentFile;
+
+		return this.#tile(`current:${current.url}`, name, kind, previewable ? current.url : null, null, current);
+	}
+
+	/**
+	 * Builds a tile, splitting off the extension so the stem alone gives way to the ellipsis, and
+	 * dropping the image when previews are off or it already failed to load.
+	 *
+	 * @param key - The tile's identity.
+	 * @param name - The name to show.
+	 * @param kind - The file family.
+	 * @param src - The image URL, or `null` when there is no image to paint.
+	 * @param item - The held item, if any.
+	 * @param current - The stored file, if any.
+	 * @returns The tile.
+	 */
+	#tile(
+		key: string,
+		name: string,
+		kind: HubFileKind,
+		src: string | null,
+		item: HubFileItem | null,
+		current: HubCurrentFile | null
+	): HubFileTile {
+		const dot = fileExtension(name) ? name.lastIndexOf('.') : -1;
+		const painted = src && this.imagePreview() && !this.#broken().has(src) ? src : null;
+
+		return {
+			key,
+			name,
+			stem: dot > 0 ? name.slice(0, dot) : name,
+			ext: dot > 0 ? name.slice(dot) : '',
+			kind,
+			src: painted,
+			item,
+			current
+		};
+	}
+
+	/**
+	 * Hides a stored file until `currentFile` changes.
+	 *
+	 * @param url - Its URL.
+	 */
+	#dismiss(url: string): void {
+		this.#dismissed.update((dismissed) => new Set(dismissed).add(url));
+	}
+
+	/**
+	 * Pins a picked file to the place of the stored file it replaced.
+	 *
+	 * @param id - The item id.
+	 * @param url - The stored file's URL.
+	 */
+	#anchor(id: string, url: string): void {
+		this.#anchors.update((anchors) => new Map(anchors).set(id, url));
+	}
+
+	/**
+	 * Forgets where a picked file was pinned.
+	 *
+	 * @param id - The item id.
+	 */
+	#unanchor(id: string): void {
+		if (this.#anchors().has(id)) {
+			this.#anchors.update((anchors) => {
+				const next = new Map(anchors);
+
+				next.delete(id);
+
+				return next;
+			});
+		}
+	}
+
+	/**
+	 * The URL a picked file opens at in a new tab: its thumbnail's, or one minted now, on demand.
+	 *
+	 * @param item - The held item.
+	 * @returns The URL, or `null` outside a browser.
+	 */
+	#openUrl(item: HubFileItem): string | null {
+		if (!this.#isBrowser) {
+			return null;
+		}
+
+		let url = item.previewUrl ?? this.#openUrls.get(item.id) ?? null;
+
+		if (!url) {
+			url = URL.createObjectURL(item.file);
+			this.#openUrls.set(item.id, url);
+		}
+
+		return url;
+	}
+
+	/**
+	 * Wraps a file in an item, minting its preview URL when it is an image a browser can paint and
+	 * previews are on. HEIC, TIFF and the like are left without one: an `<img>` pointed at them
+	 * renders a broken frame.
 	 *
 	 * @param file - The accepted file.
 	 * @returns The new item, in the `ready` state.
 	 */
 	#createItem(file: File): HubFileItem {
-		const previewable = this.#isBrowser && this.preview() !== 'none' && file.type.startsWith('image/');
+		const previewable =
+			this.#isBrowser && this.preview() !== 'none' && this.imagePreview() && isPreviewableImage(file.type, file.name);
 
 		return {
 			id: uuid(),
@@ -594,13 +1196,24 @@ export class HubFileInputComponent extends HubFieldControl {
 	}
 
 	/**
-	 * Releases the object URL of an item. Skipping this leaks the whole file for the page's lifetime.
+	 * Releases the object URLs of an item. Skipping this leaks the whole file for the page's lifetime.
 	 *
-	 * @param item - The item whose preview should be released.
+	 * @param item - The item whose URLs should be released.
 	 */
 	#revokePreview(item: HubFileItem): void {
-		if (item.previewUrl && this.#isBrowser) {
+		if (!this.#isBrowser) {
+			return;
+		}
+
+		if (item.previewUrl) {
 			URL.revokeObjectURL(item.previewUrl);
+		}
+
+		const openUrl = this.#openUrls.get(item.id);
+
+		if (openUrl) {
+			URL.revokeObjectURL(openUrl);
+			this.#openUrls.delete(item.id);
 		}
 	}
 

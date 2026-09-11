@@ -189,12 +189,170 @@ hub-input.hidden-control {
 		}
 	}
 
-	// Color swatch.
-	&__control--color {
-		width: var(--hub-input-color-size);
-		height: var(--hub-input-color-size);
-		padding: 0.15rem;
+	// Classic colour field (no palette): a hex text field with the colour in a square at its start.
+	// The text field is the field's own control, so height, box, radius, focus ring and states are
+	// those of any input; the square is drawn inside that box, over start padding reserved for it.
+	&__color {
+		position: relative;
+		flex: 1 1 auto;
+		min-inline-size: 0;
+	}
+
+	// Three classes deep so the plain-text treatment, which zeroes the inline padding of every
+	// control, cannot slide the hex under the square whichever stylesheet loads last.
+	& &__color > &__control--color {
+		padding-inline-start: calc(var(--hub-input-color-size) + var(--hub-input-padding-x));
+		font-variant-numeric: tabular-nums;
+	}
+
+	// Edge to edge inside the border: no padding, no gap. The start corners take the field's radius
+	// less its border, so the colour is clipped by the same curve as the box (a negative result
+	// clamps to square corners). Logical properties put it on the right under RTL.
+	&__color-swatch {
+		position: absolute;
+		inset-block: var(--hub-input-border-width);
+		inset-inline-start: var(--hub-input-border-width);
+		z-index: 1;
+		inline-size: var(--hub-input-color-size);
+		margin: 0;
+		padding: 0;
+		border: 0;
+		// A hairline on the text side, so a colour the shade of the field still ends somewhere.
+		border-inline-end: var(--hub-input-border-width) solid var(--hub-input-swatch-border-color);
+		border-start-start-radius: calc(var(--hub-input-border-radius) - var(--hub-input-border-width));
+		border-end-start-radius: calc(var(--hub-input-border-radius) - var(--hub-input-border-width));
+		// The colour it holds, or the spectrum while the field is empty.
+		background: var(--hub-input-swatch-color, var(--hub-input-swatch-custom-bg));
 		cursor: pointer;
+
+		&:focus-visible {
+			outline: var(--hub-input-swatch-ring-width) solid var(--hub-input-swatch-focus-ring-color);
+			outline-offset: calc(-1 * var(--hub-input-swatch-ring-width));
+		}
+
+		&:disabled {
+			opacity: var(--hub-form-disabled-opacity);
+			cursor: not-allowed;
+		}
+	}
+
+	.hub-field--readonly &__color-swatch,
+	.hub-field--plaintext &__color-swatch {
+		cursor: default;
+	}
+
+	// Hosts the native picker under the square: sized to it so the browser anchors the dialog
+	// there, invisible, and never the target of a click — the square opens it.
+	&__color-native {
+		position: absolute;
+		inset-block: 0;
+		inset-inline-start: 0;
+		inline-size: var(--hub-input-color-size);
+		block-size: 100%;
+		margin: 0;
+		padding: 0;
+		border: 0;
+		opacity: 0;
+		pointer-events: none;
+	}
+
+	// Colour swatches (`type="color"` with a palette). The box is the field's own
+	// `.hub-field__control` skin; only the layout is set here, compounded with that class so
+	// the order the two stylesheets load in cannot decide who wins `display` and `padding`.
+	&__swatches.hub-field__control {
+		display: grid;
+		// Equal columns that share the whole width, never narrower than the minimum; past that
+		// the grid opens another row. `auto-fit`, not `auto-fill`: auto-fill keeps the empty
+		// tracks a short palette leaves, so four colours would sit in four narrow cells at the
+		// start of an empty box, while auto-fit collapses them and the cells stretch to fill it.
+		// A grid, not a wrapping flex row, because flex stretches the last line's leftovers wider
+		// than the lines above; grid columns stay the same width on every row.
+		grid-template-columns: repeat(auto-fit, minmax(var(--hub-input-swatch-min-width), 1fr));
+		grid-auto-rows: var(--hub-input-swatch-size);
+		gap: var(--hub-input-swatch-gap);
+		// The field's block padding around rows one line of text tall: one row measures what
+		// every other field does. The inline padding matches it, so the cells sit in an even
+		// frame rather than a text field's wider gutter.
+		padding: var(--hub-input-padding-y);
+	}
+
+	// More than one row: the box goes, by token, so a theme can bring it back. The border keeps
+	// its width whatever its colour, so the cells never move and the wrap measurement cannot flip
+	// back on the next observation.
+	&__swatches--wrapped.hub-field__control {
+		border-color: var(--hub-input-swatch-wrapped-border-color);
+		background-color: var(--hub-input-swatch-wrapped-bg);
+	}
+
+	&__swatch {
+		position: relative;
+		// The column sets the width; the row sets the height.
+		min-inline-size: 0;
+		border-radius: var(--hub-input-swatch-radius);
+		background: var(--hub-input-swatch-color);
+		// A hairline inside the cell, so a swatch the colour of the field is still a swatch.
+		box-shadow: inset 0 0 0 var(--hub-input-border-width) var(--hub-input-swatch-border-color);
+		cursor: pointer;
+		transition: var(--hub-input-transition);
+
+		&:focus-visible {
+			outline: var(--hub-input-swatch-ring-width) solid var(--hub-input-swatch-focus-ring-color);
+			outline-offset: var(--hub-input-swatch-ring-offset);
+		}
+
+		// Selected: a ring around the cell and a mark on it. The mark carries the state; the
+		// ring alone would be a colour cue, and one that vanishes on a swatch of its own colour.
+		&[aria-checked='true'] {
+			box-shadow:
+				inset 0 0 0 var(--hub-input-border-width) var(--hub-input-swatch-border-color),
+				0 0 0 var(--hub-input-swatch-ring-offset) var(--hub-input-bg),
+				0 0 0 calc(var(--hub-input-swatch-ring-offset) + var(--hub-input-swatch-ring-width))
+					var(--hub-input-swatch-ring-color);
+
+			&::after {
+				content: '';
+				position: absolute;
+				inset: 0;
+				// Black or white per swatch, whichever `readableOn` says reads on it; a theme that
+				// wants one colour everywhere sets `--hub-input-swatch-mark-color`.
+				background-color: var(--hub-input-swatch-mark-color, var(--hub-input-swatch-ink));
+				-webkit-mask: var(--hub-input-swatch-mark-icon) center / var(--hub-input-swatch-mark-size) no-repeat;
+				mask: var(--hub-input-swatch-mark-icon) center / var(--hub-input-swatch-mark-size) no-repeat;
+				pointer-events: none;
+			}
+		}
+
+		// The custom cell shows the colour it holds, or the spectrum until it holds one.
+		&--custom {
+			background: var(--hub-input-swatch-color, var(--hub-input-swatch-custom-bg));
+		}
+	}
+
+	// Hosts the native picker under the custom cell: sized to it so the browser anchors the
+	// dialog there, invisible, and never the target of a click — the cell opens it.
+	&__swatch-native {
+		position: absolute;
+		inset: 0;
+		inline-size: 100%;
+		block-size: 100%;
+		margin: 0;
+		padding: 0;
+		border: 0;
+		opacity: 0;
+		pointer-events: none;
+	}
+
+	.hub-field--disabled &__swatches {
+		opacity: var(--hub-form-disabled-opacity);
+	}
+
+	.hub-field--disabled &__swatch {
+		cursor: not-allowed;
+	}
+
+	.hub-field--readonly &__swatch,
+	.hub-field--plaintext &__swatch {
+		cursor: default;
 	}
 
 	// File picker.

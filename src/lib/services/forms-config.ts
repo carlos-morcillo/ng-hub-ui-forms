@@ -1,7 +1,12 @@
 import { EnvironmentProviders, InjectionToken, makeEnvironmentProviders } from '@angular/core';
 import { defaultHubDatepickerConfig, HubDatepickerConfig } from '../interfaces/datepicker.interface';
 import { defaultHubFileInputLabels, HubFileInputLabels } from '../interfaces/file-input.interface';
-import { defaultHubPasswordLabels, HubPasswordLabels } from '../interfaces/input.interface';
+import {
+	defaultHubColorConfig,
+	defaultHubPasswordLabels,
+	HubColorConfig,
+	HubPasswordLabels
+} from '../interfaces/input.interface';
 import { defaultInvalidFeedback } from '../shared/hub-error-display';
 
 /**
@@ -32,6 +37,13 @@ export interface HubFormsConfig {
 
 	/** Global password labels (toggle accessible names, Caps Lock hint, strength levels). */
 	password: HubPasswordLabels;
+
+	/**
+	 * Global colour settings: an application palette for colour fields without `swatches` of their
+	 * own (none by default, so they stay the classic hex field), and the accessible names of the
+	 * grid's custom-colour swatch and of the classic field's colour square.
+	 */
+	color: HubColorConfig;
 }
 
 /**
@@ -42,7 +54,8 @@ export const defaultHubFormsConfig: HubFormsConfig = {
 	showValid: false,
 	datepicker: defaultHubDatepickerConfig,
 	fileInput: defaultHubFileInputLabels,
-	password: defaultHubPasswordLabels
+	password: defaultHubPasswordLabels,
+	color: defaultHubColorConfig
 };
 
 /**
@@ -90,10 +103,15 @@ export function provideHubForms(config?: DeepPartial<HubFormsConfig>): Environme
 		...(config?.password as Partial<HubPasswordLabels> | undefined)
 	};
 
+	const color: HubColorConfig = {
+		...defaultHubFormsConfig.color,
+		...(config?.color as Partial<HubColorConfig> | undefined)
+	};
+
 	return makeEnvironmentProviders([
 		{
 			provide: HUB_FORMS_CONFIG,
-			useValue: { ...defaultHubFormsConfig, ...config, datepicker, fileInput, password } as HubFormsConfig
+			useValue: { ...defaultHubFormsConfig, ...config, datepicker, fileInput, password, color } as HubFormsConfig
 		}
 	]);
 }

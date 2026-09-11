@@ -742,8 +742,10 @@ describe('HubInputComponent', () => {
 			fixture.detectChanges();
 		});
 
-		it('renders a color input', () => {
-			expect(query('input[type="color"].hub-input__control--color')).toBeTruthy();
+		it('renders a hex text field beside a colour square backed by the native picker', () => {
+			expect(query('input[type="text"].hub-input__control--color')).toBeTruthy();
+			expect(query('button.hub-input__color-swatch')).toBeTruthy();
+			expect(query('input[type="color"]')).toBeTruthy();
 		});
 
 		it('propagates the chosen color back to the control', () => {

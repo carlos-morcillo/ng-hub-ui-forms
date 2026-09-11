@@ -95,7 +95,7 @@ mode — no Bootstrap dependency.
 
 ## 🎯 Features
 
-- **Fields** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, with input-group addons & masks, projected in-field affixes, a built-in `clearable` button, the mixed `indeterminate` state on checkboxes and debounced typeahead `search`; the `file` format is **deprecated** → use `hub-file-input`), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider` (single / dual thumb, gradient fill), `hub-segmented` (segmented control field — single & multiple selection, horizontal & vertical, with label + validation), `hub-select` (dropdown format, grouping, client-side search via `searchable` **and** server-side async typeahead via a `typeahead` Subject, tag creation with `addTag`, custom templates, `prepend` / `append` group addons and attached icons/buttons via `hubPrepend` / `hubAppend`; the `buttons` / `checkbox` / `radio` formats are **deprecated** → use `hub-segmented`), `hub-datepicker` (single & range at any granularity from a year to a second, time picking, min/max down to the minute, keyboard nav, i18n), `hub-timepicker` (a time of day as `HH:MM`, on the platform's own time control, with `min` / `max` / `step`), `hub-file-input` (drag & drop, clipboard paste, type/size limits, previews, optional upload progress).
+- **Fields** — `hub-input` (text/number/email/password/color/switch/checkbox/counter, the colour format as a hex field or, given a palette, a grid of swatches, with input-group addons & masks, projected in-field affixes, a built-in `clearable` button, the mixed `indeterminate` state on checkboxes and debounced typeahead `search`; the `file` format is **deprecated** → use `hub-file-input`), `hub-otp-input`, `hub-textarea` (+ `hubAutoresize`), `hub-slider` (single / dual thumb, gradient fill), `hub-segmented` (segmented control field — single & multiple selection, horizontal & vertical, with label + validation), `hub-select` (dropdown format, grouping, client-side search via `searchable` **and** server-side async typeahead via a `typeahead` Subject, tag creation with `addTag`, custom templates, `prepend` / `append` group addons and attached icons/buttons via `hubPrepend` / `hubAppend`; the `buttons` / `checkbox` / `radio` formats are **deprecated** → use `hub-segmented`), `hub-datepicker` (single & range at any granularity from a year to a second, time picking, min/max down to the minute, keyboard nav, i18n), `hub-timepicker` (a time of day as `HH:MM`, on the platform's own time control, with `min` / `max` / `step`), `hub-file-input` (drag & drop, clipboard paste, type/size limits, previews as a list, as tiles or inside the field together with the files a record already has, optional upload progress).
 - **Automatic error display** — bind a field and its control errors render below it; `fieldset[hubFieldset]`, `form[hubForm]` and `hub-legend` surface group- and form-level (cross-field) errors the same way, with zero wiring.
 - **Containers** — `fieldset[hubFieldset]` (or the `<hub-fieldset>` element) / `form[hubForm]` group fields and show their group errors; `hub-legend` renders an accessible legend.
 - **Configurable** — `provideHubForms({ … })` sets the invalid-feedback templates, datepicker locale/labels, file-input labels and more, app-wide or per instance.
@@ -194,6 +194,57 @@ string, so asking it to carry markup would drop the markup silently.
 <hub-input formControlName="amount" type="number" label="Amount" />
 <hub-input formControlName="darkMode" type="switch" label="Dark mode" />
 ```
+
+#### Colour fields
+
+`type="color"` is a text field for the hex code, with the colour in a square at its start. The square
+opens the browser's picker. The text takes a colour typed with or without `#`, in three or six digits,
+and the form stores it as lowercase `#rrggbb`, the one notation the native picker reads. Invalid text
+leaves the value alone and goes back to the last valid colour on blur.
+
+Give the field a list of colours and it becomes a grid of swatches, one row the height of a field:
+
+```html
+<hub-input formControlName="status" type="color" label="Status colour" [swatches]="palettes.status" />
+
+<hub-input
+	formControlName="tag"
+	type="color"
+	label="Tag"
+	[swatches]="['#ef4444', { value: '#22c55e', label: 'Done' }]"
+	[allowCustomColor]="false"
+/>
+```
+
+```ts
+import { HUB_COLOR_PALETTES } from 'ng-hub-ui-forms';
+
+readonly palettes = HUB_COLOR_PALETTES;
+```
+
+- A swatch is any CSS colour that `parseColor` from `ng-hub-ui-utils` reads (hex, `rgb()`, `hsl()`,
+  `oklch()`, `oklab()`, a named colour), bare or as `{ value, label }`. The label is what a screen reader
+  says, so name the colours that have a name. The control receives the string exactly as written. An
+  entry that is not a colour is dropped, with a warning in development builds.
+- The last cell opens the native picker for a colour outside the list. `[allowCustomColor]="false"`
+  leaves it out for a closed palette; `customColorLabel` names it.
+- The cells share the row down to `--hub-input-swatch-min-width`, then wrap onto more rows. Once they
+  wrap the field drops its box; `--hub-input-swatch-wrapped-border-color` and `-wrapped-bg` bring it back.
+- The grid is a radio group named by the field label, with one Tab stop; the arrows, Home and End move
+  the selection.
+- `HUB_COLOR_PALETTES` has five frozen lists of lowercase hex, each swatch named in English: `tailwind`
+  (17), `material` (19), `pastel` (17), `neutral` (11) and `status` (5).
+
+Which field is drawn:
+
+| `swatches`       | Application palette (`provideHubForms`) | Result                           |
+| ---------------- | --------------------------------------- | -------------------------------- |
+| `null` (default) | none (default)                          | hex field                        |
+| `null`           | a list                                  | grid with the application palette |
+| `[]`             | any                                     | hex field                        |
+| a list           | any                                     | grid with the field's list       |
+
+A list in which no entry is a colour also leaves the hex field.
 
 #### Icon affix & typeahead (search boxes)
 
@@ -597,7 +648,7 @@ Whatever the uploader reports on `done` is kept on the item, so the ids the serv
 const uploadedIds = fileInput.files().map((item) => (item.response as { id: string }).id);
 ```
 
-Customize it without forking the template: the `--hub-file-input-*` tokens (every icon is a swappable CSS mask), the `hub-file-input-theme(...)` mixin, and three projection slots.
+Customize it without forking the template: the `--hub-file-input-*` tokens (every icon is a swappable CSS mask), the `hub-file-input-theme(...)` mixin, and three projection slots. `hubFileIcon` applies to `preview="list"`; the tiles of `grid` and `inline` draw the family icons described below.
 
 ```html
 <hub-file-input formControlName="attachments" [multiple]="true">
@@ -606,6 +657,73 @@ Customize it without forking the template: the `--hub-file-input-*` tokens (ever
 	</ng-template>
 </hub-file-input>
 ```
+
+#### Inline preview and stored files
+
+`preview="inline"` puts the file inside the field. One tile fills it: the image when the browser can
+paint it, otherwise the icon of its family and its name. Hover, keyboard focus or a drag over the tile
+raise a "Replace" pill, and a button in the corner removes the file. With `multiple` the tiles form a
+grid inside the field that ends in a tile for adding more, and `maxFiles` adds a "3 of 5 files"
+counter; at the limit the add tile goes away.
+
+`currentFile` shows what the record already has:
+
+```html
+<hub-file-input
+	formControlName="logo"
+	label="Logo"
+	accept="image/*"
+	preview="inline"
+	[currentFile]="company.logoUrl"
+	(currentFileRemoved)="markForDeletion($event)"
+/>
+
+<hub-file-input
+	formControlName="contract"
+	label="Signed contract"
+	preview="inline"
+	[currentFile]="{ url: '/api/contracts/42/file', name: 'contract.pdf', type: 'application/pdf' }"
+/>
+```
+
+- A bare URL gives the name from its last segment, when that has an extension, and the type from a
+  `data:` URL. Pass a `HubCurrentFile` when the URL reveals neither, and a list with `multiple`.
+- A stored file is only shown: the form value stays a `File`, a `File[]` or `null`. When the user
+  removes it, or replaces it with a picked file, `currentFileRemoved` emits it. That is the moment to
+  delete it on the server.
+- A click on a tile opens its file: a picked image in a native `<dialog>`, a stored file or any other
+  picked file in a new tab. Delete or Backspace on a focused tile removes it.
+- `readonly` keeps the files in view and openable but blocks every change. `[clearable]="false"` keeps
+  the user from removing files. `[imagePreview]="false"` draws every file as its icon and creates no
+  object URLs.
+
+`preview="grid"` draws the same tiles under the dropzone. An avatar takes five tokens:
+
+```css
+.avatar-field {
+	--hub-file-input-inline-width: 8rem;
+	--hub-file-input-inline-aspect-ratio: 1;
+	--hub-file-input-tile-radius: 50%;
+	--hub-file-input-tile-fit: cover;
+	--hub-file-input-tile-padding: 0;
+}
+```
+
+Each family icon (`pdf`, `document`, `spreadsheet`, `presentation`, `archive`, `audio`, `video`, `code`,
+`image`, `generic`) is a mask token, so replacing one is one line, and the tile's `data-file-kind`
+attribute scopes a colour to one family:
+
+```css
+.my-form {
+	--hub-file-input-kind-pdf-icon: url('/icons/pdf.svg');
+}
+
+.my-form .hub-file-input__tile[data-file-kind='pdf'] {
+	--hub-file-input-kind-icon-color: #dc2626;
+}
+```
+
+The built-in drawings are [Bootstrap Icons](https://icons.getbootstrap.com) 1.13.1, under the MIT License.
 
 #### Reproducing your own dropzone
 
@@ -722,6 +840,18 @@ field once it is touched and valid. The invalid state is unaffected — it is al
 automatic; only success is gated behind this flag. A per-field `showValid` input
 overrides the global default.
 
+`color` sets an application palette for every colour field without `swatches` of its own (there is
+none by default) and the two accessible names the colour field adds: `customColorLabel`
+(`'Custom color'`) for the grid's last cell and `pickerLabel` (`'Choose color'`) for the hex field's
+square. `fileInput` carries the file-input labels, among them `removeFile(name)`, `open(name)`,
+`replace`, `replaceFile(name)`, `close`, `count(count, max)` and `currentFile`.
+
+```ts
+provideHubForms({
+	color: { swatches: HUB_COLOR_PALETTES.tailwind, customColorLabel: 'Other colour' }
+});
+```
+
 ---
 
 ## 🎨 Styling
@@ -752,6 +882,11 @@ hub-input {
 	--hub-form-valid-feedback-color: #198754;
 }
 ```
+
+**Colour field** — `--hub-input-color-size` is the width of the hex field's square; its height is
+always the field's, and the default, the field's inner height, keeps it square. The grid of swatches
+reads the `--hub-input-swatch-*` tokens, and `--hub-input-swatch-mark-color` forces one colour for every
+check mark (unset, each mark is black or white, whichever reads on its swatch).
 
 **`hub-slider`** — `--hub-slider-track-fill` takes a full `<image>` (e.g. a `linear-gradient(to right, …)`) for the filled part of the track, which renders intact clipped to the current percentage; `--hub-slider-value-space` is the value-bubble headroom and collapses to `0` on a `[showValue]="false"` (flush) slider:
 
@@ -799,7 +934,9 @@ import { HubSignalFieldControl, hubSignalErrorMessages } from 'ng-hub-ui-forms/s
 
 ## ♿ Accessibility
 
-- Labels are associated with their control (`for`/`id`); required fields are marked.
+- Labels are associated with their control (`for`/`id`); required fields are marked. The colour
+  grid is a radio group, which a `<label for>` cannot name, so it points at the label's `id` through
+  `aria-labelledby`.
 - **`labelType="visually-hidden"` names a control that has no room for a visible label.** A
   toolbar search box or a compact grid cell cannot repeat the same word down every row, and the
   alternative was a control with no accessible name at all — a placeholder is not a name. The

@@ -47,8 +47,30 @@ export interface HubFileItem {
 	readonly response: unknown | null;
 }
 
-/** How the accepted files are previewed below the dropzone. */
-export type HubFilePreview = 'none' | 'list' | 'grid';
+/**
+ * How the held files are previewed: not at all, as a list below the dropzone, as tiles below it
+ * (`grid`), or as tiles inside the field (`inline`) — one tile filling the field, the shape a logo,
+ * an avatar or a single document takes, or with `multiple` a grid ending in an add tile. Only
+ * `inline` shows the files a record already has, through `currentFile`.
+ */
+export type HubFilePreview = 'none' | 'list' | 'grid' | 'inline';
+
+/**
+ * A file the record already has on the server, shown by `preview="inline"` while nothing is picked.
+ *
+ * Only `url` is required. `name` and `type` are for the cases where the URL does not reveal them —
+ * `/api/contracts/42/file` says nothing about being a PDF called `contract.pdf`. When they are
+ * missing, the name is taken from the URL's last segment if it carries an extension, and the MIME
+ * type from a `data:` URL.
+ */
+export interface HubCurrentFile {
+	/** Where the file lives: a URL, a `data:` URL or an object URL. Rendered as the image when it is one. */
+	url: string;
+	/** The file name shown in the field and read out by assistive technology. */
+	name?: string | null;
+	/** The MIME type, e.g. `application/pdf`. Picks the icon when the file is not an image. */
+	type?: string | null;
+}
 
 /** The active restrictions of a `<hub-file-input>`, handed to the `constraints` label. */
 export interface HubFileConstraints {
@@ -79,6 +101,23 @@ export interface HubFileInputLabels {
 	dropSubtext: string;
 	/** Accessible name of the per-file remove button. */
 	remove: string;
+	/**
+	 * Accessible name of the button that removes the file shown by `preview="inline"`. It names the
+	 * file because the button sits over it, and "Remove file" alone would not say which one.
+	 */
+	removeFile: (name: string) => string;
+	/** Accessible name of the control that opens a tile's file — enlarged, or in a new tab. */
+	open: (name: string) => string;
+	/** Visible text of the pill that replaces one tile's file. */
+	replace: string;
+	/** Accessible name of that pill, naming the file it replaces. */
+	replaceFile: (name: string) => string;
+	/** Accessible name of the button that closes the enlarged image. */
+	close: string;
+	/** The file counter shown with `maxFiles`: how many files the field holds out of how many it takes. */
+	count: (count: number, max: number) => string;
+	/** Stand-in name for a stored file whose name neither `currentFile` nor its URL gives. */
+	currentFile: string;
 	/** Text + accessible name of the "remove all" button. */
 	clear: string;
 	/** Accessible name of the per-file retry button (uploader only). */
@@ -101,6 +140,13 @@ export const defaultHubFileInputLabels: HubFileInputLabels = {
 	dropHere: 'Drag files here, or',
 	dropSubtext: '',
 	remove: 'Remove file',
+	removeFile: (name: string) => `Remove ${name}`,
+	open: (name: string) => `Open ${name}`,
+	replace: 'Replace',
+	replaceFile: (name: string) => `Replace ${name}`,
+	close: 'Close',
+	count: (count: number, max: number) => `${count} of ${max} files`,
+	currentFile: 'Current file',
 	clear: 'Remove all',
 	retry: 'Retry upload',
 	cancel: 'Cancel upload',
