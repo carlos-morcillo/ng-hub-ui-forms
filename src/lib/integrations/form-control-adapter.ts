@@ -36,6 +36,25 @@ export interface HubFormControlConfig {
 	ariaLabel?: string;
 	cssClass?: string;
 	options?: ReadonlyArray<HubFormControlOption>;
+	/**
+	 * Whether a select offers a search box. Off unless asked for.
+	 *
+	 * A control built into somebody else's chrome is usually a short list in a tight space — a
+	 * table's rows-per-page, a filter — where a search box is noise. A cell of a spreadsheet is
+	 * the other case, and a long list there is the whole reason for wiring an adapter at all.
+	 */
+	searchable?: boolean;
+	/** Whether it offers to clear itself. On unless the host says otherwise, as the field does. */
+	clearable?: boolean;
+	/**
+	 * Whether a select opens as it appears, and on what term.
+	 *
+	 * For a control that something else has already opened for the reader: a cell that becomes an
+	 * editor, a row that becomes a form. Their gesture has been spent by the time the control
+	 * exists, and the character they typed belongs in its search box.
+	 */
+	autoOpen?: boolean;
+	searchTerm?: string;
 	onValueChange: (value: unknown) => void;
 }
 
@@ -116,8 +135,14 @@ export const hubFormControlAdapter: HubFormControlAdapter = {
 			);
 			ref.setInput('bindLabel', 'label');
 			ref.setInput('bindValue', 'value');
-			ref.setInput('clearable', false);
-			ref.setInput('searchable', false);
+			ref.setInput('clearable', config.clearable ?? false);
+			ref.setInput('searchable', config.searchable ?? false);
+			if (config.autoOpen) {
+				ref.setInput('autoOpen', true);
+			}
+			if (config.searchTerm) {
+				ref.setInput('initialSearchTerm', config.searchTerm);
+			}
 			if (config.placeholder) {
 				ref.setInput('placeholder', config.placeholder);
 			}

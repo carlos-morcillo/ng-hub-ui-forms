@@ -1,5 +1,6 @@
 import { KeyValuePipe, NgTemplateOutlet } from '@angular/common';
 import {
+	afterNextRender,
 	booleanAttribute,
 	ChangeDetectionStrategy,
 	Component,
@@ -11,6 +12,7 @@ import {
 	output,
 	signal,
 	TemplateRef,
+	viewChild,
 	ViewEncapsulation
 } from '@angular/core';
 import { Subject } from 'rxjs';
@@ -105,6 +107,36 @@ export class HubSelectComponent extends HubFieldControl {
 	 * one sync away from disappearing. See {@link placeholder}.
 	 */
 	protected readonly _ngSelectConfig = inject(NgSelectConfig);
+
+	/**
+	 * The engine behind the field, kept only so the list can be worked from outside.
+	 *
+	 * A select that something else opens — a grid cell that turns into an editor, a row that turns
+	 * into a form — is created after the reader's click has already been spent, so there is no
+	 * gesture left for it to answer. Without a way in, reaching the field takes one click and
+	 * seeing the list takes another.
+	 */
+	private readonly _engine = viewChild(NgSelectComponent);
+
+	/**
+	 * Honours {@link autoOpen} once, after the first render.
+	 *
+	 * Not an effect: the intent is a one-off at birth, and an effect would re-open the list every
+	 * time the flag or the items changed underneath the reader.
+	 */
+	private readonly _openOnArrival = afterNextRender(() => {
+		const term = this.initialSearchTerm();
+
+		// Before opening: the list then comes up already narrowed, instead of showing everything
+		// for a frame and then jumping.
+		if (term && this.searchable()) {
+			this.search(term);
+		}
+
+		if (this.autoOpen()) {
+			this.open();
+		}
+	});
 
 	protected readonly _labelTypes = HubLabelTypes;
 	protected readonly _selectFormats = HubSelectFormats;
@@ -307,6 +339,26 @@ export class HubSelectComponent extends HubFieldControl {
 
 	/** Whether the control is read-only. */
 	readonly readonly = input(false, { transform: booleanAttribute });
+
+	/**
+	 * Opens the list as soon as the field appears.
+	 *
+	 * For a field that something else has already opened for the reader: a spreadsheet cell that
+	 * becomes an editor, a row that becomes a form. The click that got them there has been spent by
+	 * the time the field exists, so without this reaching the field costs one click and seeing the
+	 * list costs another. A field with nothing to offer opens all the same and says so, which is
+	 * what it would do had the reader opened it by hand.
+	 */
+	readonly autoOpen = input(false, { transform: booleanAttribute });
+
+	/**
+	 * A search term the field starts with.
+	 *
+	 * For the same case as {@link autoOpen}, one keystroke earlier: the character that opened the
+	 * field belongs in its search box, or the reader has to type it a second time. Applied once,
+	 * on arrival, and only when the field is searchable.
+	 */
+	readonly initialSearchTerm = input<string | null>(null);
 
 	/**
 	 * Text shown when no items match. Left undefined so the engine falls back to the app's
@@ -603,5 +655,50 @@ export class HubSelectComponent extends HubFieldControl {
 		}
 
 		return value ? [value] : [];
+	}
+
+	/**
+	 * Opens the list.
+	 *
+	 * Refused while the field is disabled, while it is already open, and while there is nothing to
+	 * choose from, so calling it the moment the field appears is safe whatever state it is in.
+	 */
+	open(): void {
+		this._engine()?.open();
+	}
+
+	/** Closes the list, keeping whatever was chosen. */
+	close(): void {
+		this._engine()?.close();
+	}
+
+	/** Puts the keyboard in the field without opening the list. */
+	focus(): void {
+		this._engine()?.focus();
+	}
+
+	/**
+	 * Narrows the list by a term, as typing into the search box would.
+	 *
+	 * @param term - What to search for; an empty string clears the search.
+	 */
+	search(term: string): void {
+		const engine = this._engine();
+
+		if (!engine) {
+			return;
+		}
+
+		engine.filter(term);
+
+		// The box shows what it is filtering by. Its value is bound to the term, but that binding
+		// is refreshed on the engine's own schedule, and a term that arrives from outside can land
+		// after the refresh has been and gone — leaving a list narrowed by a word the reader
+		// cannot see, and a next keystroke that replaces it instead of continuing it.
+		const input = engine.searchInput()?.nativeElement;
+
+		if (input) {
+			input.value = term;
+		}
 	}
 }

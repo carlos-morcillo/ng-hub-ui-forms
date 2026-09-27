@@ -5,6 +5,33 @@ All notable changes to `ng-hub-ui-forms` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [22.41.0] - 2026-09-27
+
+### Added
+
+- **`autoOpen` on `<hub-select>`.** The list comes up as the field appears, for a field something
+  else has already opened for the reader: a spreadsheet cell that becomes an editor, a row that
+  becomes a form. The click that got them there has been spent by the time the field exists, so
+  until now reaching the field cost one click and seeing the list cost another. A query in the
+  surrounding component cannot do this job, because a field inside a template that another
+  component mounts is outside that component's own view.
+- **`hubFormControlAdapter` serves a cell as well as a toolbar.** `HubFormControlConfig` takes
+  `searchable`, `clearable`, `autoOpen` and `searchTerm`, and the adapter honours them. A control
+  built into somebody else's chrome used to be assumed short and quiet — a table's rows-per-page,
+  a filter — which is wrong for a spreadsheet cell, where a long searchable list is the whole
+  reason for wiring an adapter. The defaults do not move: a host that asks for nothing gets what it
+  got before.
+- **`initialSearchTerm` on `<hub-select>`, and `search()`.** A term the field starts filtered by,
+  applied on arrival and before the list opens, so it comes up already narrowed instead of showing
+  everything for a frame. Same case again, one keystroke earlier: the character that opened the
+  field belongs in its search box, or the reader types it twice. `search(term)` does it later, and
+  writes the term into the box as well as into the filter — the box's value is refreshed on the
+  engine's own schedule, and a term arriving from outside can land after that refresh has gone,
+  leaving a list narrowed by a word nobody can see.
+- **`open()`, `close()` and `focus()` on `<hub-select>`.** The same three, for code that decides
+  later rather than at birth. `open()` is refused while the field is disabled and while it is
+  already open, so calling it whenever suits is safe.
+
 ## [22.40.0] - 2026-09-24
 
 ### Fixed
